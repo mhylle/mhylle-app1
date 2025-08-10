@@ -350,3 +350,4 @@ For issues related to:
 **Infrastructure**: mhylle.com  
 **Deployment URL**: https://mhylle.com/app1
 # Deployment triggered at Sun Aug 10 13:01:13 CEST 2025
+# Trigger deployment after fixes
