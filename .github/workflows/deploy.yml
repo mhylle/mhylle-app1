@@ -252,8 +252,6 @@ jobs:
           
           # Verify deployment
           if docker ps | grep -q "app1-backend.*Up" && docker ps | grep -q "app1-frontend.*Up"; then
-          # Verify deployment
-          if docker ps | grep -q "app1-backend.*Up" && docker ps | grep -q "app1-frontend.*Up"; then
             echo "✅ Deployment successful!"
             
             # Log successful deployment
