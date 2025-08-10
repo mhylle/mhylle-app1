@@ -1,0 +1,273 @@
+name: Deploy App1 to mhylle.com
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  FRONTEND_IMAGE_NAME: ${{ github.repository }}-frontend
+  BACKEND_IMAGE_NAME: ${{ github.repository }}-backend
+  APP_NAME: app1
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    # Test Frontend
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: npm ci
+
+    - name: Lint frontend
+      working-directory: ./frontend
+      run: npm run lint
+
+    - name: Test frontend
+      working-directory: ./frontend
+      run: npm run test:ci
+
+    # Test Backend
+    - name: Install backend dependencies
+      working-directory: ./backend
+      run: npm ci
+
+    - name: Lint backend
+      working-directory: ./backend
+      run: npm run lint
+
+    - name: Test backend
+      working-directory: ./backend
+      run: npm run test
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      frontend-image: ${{ steps.meta-frontend.outputs.tags }}
+      backend-image: ${{ steps.meta-backend.outputs.tags }}
+      frontend-digest: ${{ steps.build-frontend.outputs.digest }}
+      backend-digest: ${{ steps.build-backend.outputs.digest }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Generate version
+      id: version
+      run: |
+        if [[ ${{ github.ref }} == 'refs/heads/main' ]]; then
+          VERSION="v$(date +%Y%m%d)-$(echo ${{ github.sha }} | cut -c1-7)"
+        else
+          VERSION="pr-${{ github.event.number }}-$(echo ${{ github.sha }} | cut -c1-7)"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Generated version: $VERSION"
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # Build Frontend
+    - name: Extract frontend metadata
+      id: meta-frontend
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=raw,value=latest,enable={{is_default_branch}}
+          type=raw,value=${{ steps.version.outputs.version }}
+
+    - name: Build and push frontend image
+      id: build-frontend
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./frontend/Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta-frontend.outputs.tags }}
+        labels: ${{ steps.meta-frontend.outputs.labels }}
+        build-args: |
+          BASE_HREF=/app1/
+          DEPLOY_URL=/app1/
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    # Build Backend
+    - name: Extract backend metadata
+      id: meta-backend
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=raw,value=latest,enable={{is_default_branch}}
+          type=raw,value=${{ steps.version.outputs.version }}
+
+    - name: Build and push backend image
+      id: build-backend
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./backend/Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta-backend.outputs.tags }}
+        labels: ${{ steps.meta-backend.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+    - name: Deploy to Scaleway
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || 22 }}
+        script: |
+          set -e
+          
+          echo "🚀 Starting deployment of ${{ env.APP_NAME }}..."
+          
+          # Navigate to infrastructure directory
+          cd ~/infrastructure
+          
+          # Log deployment start
+          echo "📝 Logging deployment..."
+          docker exec mhylle-postgres psql -U $POSTGRES_USER -d $POSTGRES_DB -c "
+            INSERT INTO deployment_logs (
+              app_name, deployment_id, status, frontend_image, backend_image, 
+              version, deployed_by, metadata
+            ) VALUES (
+              '${{ env.APP_NAME }}', 
+              'gh-${{ github.run_id }}', 
+              'started', 
+              '${{ needs.build.outputs.frontend-image }}',
+              '${{ needs.build.outputs.backend-image }}',
+              '${{ needs.build.outputs.version }}',
+              '${{ github.actor }}',
+              '{\"github_run_id\": \"${{ github.run_id }}\", \"commit_sha\": \"${{ github.sha }}\"}'
+            );
+          " || echo "Warning: Failed to log deployment start"
+          
+          # Run deployment script
+          if ./scripts/deploy-app.sh \
+            ${{ env.APP_NAME }} \
+            ${{ needs.build.outputs.frontend-image }} \
+            ${{ needs.build.outputs.backend-image }} \
+            ${{ needs.build.outputs.version }}; then
+            
+            echo "✅ Deployment successful!"
+            
+            # Log successful deployment
+            docker exec mhylle-postgres psql -U $POSTGRES_USER -d $POSTGRES_DB -c "
+              UPDATE deployment_logs 
+              SET status = 'success', completed_at = NOW() 
+              WHERE deployment_id = 'gh-${{ github.run_id }}';
+            " || echo "Warning: Failed to log deployment success"
+            
+          else
+            echo "❌ Deployment failed!"
+            
+            # Log failed deployment
+            docker exec mhylle-postgres psql -U $POSTGRES_USER -d $POSTGRES_DB -c "
+              UPDATE deployment_logs 
+              SET status = 'failed', completed_at = NOW(), error_message = 'Deployment script failed' 
+              WHERE deployment_id = 'gh-${{ github.run_id }}';
+            " || echo "Warning: Failed to log deployment failure"
+            
+            exit 1
+          fi
+
+    - name: Verify deployment
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || 22 }}
+        script: |
+          echo "🔍 Verifying deployment..."
+          
+          # Wait for services to be ready
+          sleep 30
+          
+          # Check if containers are running
+          if docker ps | grep -E "${{ env.APP_NAME }}-(frontend|backend)"; then
+            echo "✅ Containers are running"
+          else
+            echo "❌ Containers not found"
+            exit 1
+          fi
+          
+          # Test health endpoint
+          if curl -f -s "https://mhylle.com/health/${{ env.APP_NAME }}" > /dev/null; then
+            echo "✅ Health check passed"
+          else
+            echo "⚠️  Health check failed, but deployment may still be successful"
+          fi
+          
+          # Test main application
+          if curl -f -s "https://mhylle.com/${{ env.APP_NAME }}" > /dev/null; then
+            echo "✅ Application is accessible"
+          else
+            echo "⚠️  Application accessibility test failed"
+          fi
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [build, deploy]
+    if: always()
+
+    steps:
+    - name: Notify deployment status
+      run: |
+        if [[ "${{ needs.deploy.result }}" == "success" ]]; then
+          echo "🎉 Deployment successful!"
+          echo "Application: https://mhylle.com/${{ env.APP_NAME }}"
+          echo "API: https://mhylle.com/api/${{ env.APP_NAME }}"
+          echo "Version: ${{ needs.build.outputs.version }}"
+        elif [[ "${{ needs.deploy.result }}" == "failure" ]]; then
+          echo "💥 Deployment failed!"
+          echo "Check the deployment logs for details."
+          exit 1
+        elif [[ "${{ needs.deploy.result }}" == "skipped" ]]; then
+          echo "⏭️ Deployment skipped (not main branch)"
+        else
+          echo "❓ Deployment status unknown: ${{ needs.deploy.result }}"
+        fi

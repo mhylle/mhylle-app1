@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # PostgreSQL for local development
+  postgres:
+    image: postgres:15-alpine
+    container_name: app1-postgres-dev
+    environment:
+      POSTGRES_DB: app1_db
+      POSTGRES_USER: app1_user
+      POSTGRES_PASSWORD: app1_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app1_user -d app1_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend development server
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile.dev
+    container_name: app1-backend-dev
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: app1_db
+      DB_USER: app1_user
+      DB_PASSWORD: app1_password
+      API_PREFIX: ""
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/package.json:/app/package.json
+      - ./backend/package-lock.json:/app/package-lock.json
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: npm run start:dev
+
+  # Frontend development server
+  frontend:
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile.dev
+    container_name: app1-frontend-dev
+    environment:
+      NODE_ENV: development
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/package.json:/app/package.json
+      - ./frontend/package-lock.json:/app/package-lock.json
+      - ./frontend/angular.json:/app/angular.json
+      - /app/node_modules
+    command: npm run start
+
+  # Nginx for local development (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: app1-nginx-dev
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.dev.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - frontend
+      - backend
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: app1-dev-network
