@@ -143,7 +143,7 @@ jobs:
           echo "🚀 Starting deployment of ${{ env.APP_NAME }}..."
           
           # Navigate to infrastructure directory
-          cd ~/projects/mhylle.com
+          cd /home/mhylle/projects/mhylle.com
           
           # Source environment variables
           source .env
