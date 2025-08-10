@@ -16,8 +16,8 @@ RUN mkdir -p /var/cache/nginx/client_temp && \
     chown -R nginx:nginx /usr/share/nginx/html && \
     chmod -R 755 /usr/share/nginx/html
 
-# Switch to non-root user
-USER nginx
+# Don't switch to non-root user - run as root for simplicity
+# USER nginx
 
 # Expose port 80
 EXPOSE 80
