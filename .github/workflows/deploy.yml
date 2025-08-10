@@ -145,6 +145,9 @@ jobs:
           # Navigate to infrastructure directory
           cd ~/projects/mhylle.com
           
+          # Source environment variables
+          source .env
+          
           # Log deployment start
           echo "📝 Logging deployment..."
           docker exec mhylle-postgres psql -U $POSTGRES_USER -d $POSTGRES_DB -c "
