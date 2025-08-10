@@ -167,11 +167,16 @@ jobs:
           " || echo "Warning: Failed to log deployment start"
           
           # Run deployment script
-          FRONTEND_IMAGE=$(echo "${{ needs.build.outputs.frontend-image }}" | head -n1)
-          BACKEND_IMAGE=$(echo "${{ needs.build.outputs.backend-image }}" | head -n1)
+          FRONTEND_FULL=$(echo "${{ needs.build.outputs.frontend-image }}" | head -n1)
+          BACKEND_FULL=$(echo "${{ needs.build.outputs.backend-image }}" | head -n1)
+          
+          # Extract base image name (remove tag)
+          FRONTEND_IMAGE=${FRONTEND_FULL%:*}
+          BACKEND_IMAGE=${BACKEND_FULL%:*}
           
           echo "Frontend image: $FRONTEND_IMAGE"
           echo "Backend image: $BACKEND_IMAGE"
+          echo "Version: ${{ needs.build.outputs.version }}"
           
           if ./scripts/deploy-app.sh \
             ${{ env.APP_NAME }} \
