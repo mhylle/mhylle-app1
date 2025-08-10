@@ -166,7 +166,7 @@ jobs:
             );
           " || echo "Warning: Failed to log deployment start"
           
-          # Run deployment script
+          # Run deployment using docker-compose
           FRONTEND_FULL=$(echo "${{ needs.build.outputs.frontend-image }}" | head -n1)
           BACKEND_FULL=$(echo "${{ needs.build.outputs.backend-image }}" | head -n1)
           
@@ -178,12 +178,38 @@ jobs:
           echo "Backend image: $BACKEND_IMAGE"
           echo "Version: ${{ needs.build.outputs.version }}"
           
-          if ./scripts/deploy-app.sh \
-            ${{ env.APP_NAME }} \
-            "$FRONTEND_IMAGE" \
-            "$BACKEND_IMAGE" \
-            ${{ needs.build.outputs.version }}; then
-            
+          # Navigate to app1 directory
+          cd /home/mhylle/projects/mhylle.com/example-app1
+          
+          # Pull latest application code
+          git pull origin main || echo "Git pull failed, continuing with existing code"
+          
+          # Set environment variables for docker-compose
+          export FRONTEND_IMAGE="$FRONTEND_IMAGE"
+          export BACKEND_IMAGE="$BACKEND_IMAGE"
+          export IMAGE_TAG="${{ needs.build.outputs.version }}"
+          
+          # Source main environment variables
+          source ../infrastructure/.env 2>/dev/null || source ../.env || echo "Warning: .env not found"
+          
+          # Stop existing containers gracefully
+          docker-compose down --remove-orphans || true
+          
+          # Pull latest images
+          docker-compose pull
+          
+          # Start services
+          docker-compose up -d
+          
+          # Wait for services to be healthy
+          echo "⏳ Waiting for services to be healthy..."
+          timeout 120 bash -c 'until [ "$(docker inspect --format="{{.State.Health.Status}}" app1-backend 2>/dev/null)" = "healthy" ]; do echo "Waiting for backend to be healthy..."; sleep 5; done' || echo "⚠️ Backend health check timeout"
+          timeout 60 bash -c 'until [ "$(docker inspect --format="{{.State.Health.Status}}" app1-frontend 2>/dev/null)" = "healthy" ]; do echo "Waiting for frontend to be healthy..."; sleep 5; done' || echo "⚠️ Frontend health check timeout"
+          
+          # Verify deployment
+          if docker ps | grep -q "app1-backend.*Up" && docker ps | grep -q "app1-frontend.*Up"; then
+          # Verify deployment
+          if docker ps | grep -q "app1-backend.*Up" && docker ps | grep -q "app1-frontend.*Up"; then
             echo "✅ Deployment successful!"
             
             # Log successful deployment
@@ -195,11 +221,16 @@ jobs:
             
           else
             echo "❌ Deployment failed!"
+            echo "Container status:"
+            docker ps | grep app1 || echo "No app1 containers found"
+            echo "Recent logs:"
+            docker logs app1-backend --tail=20 2>/dev/null || echo "No backend logs"
+            docker logs app1-frontend --tail=20 2>/dev/null || echo "No frontend logs"
             
             # Log failed deployment
             docker exec mhylle-postgres psql -U $POSTGRES_USER -d $POSTGRES_DB -c "
               UPDATE deployment_logs 
-              SET status = 'failed', completed_at = NOW(), error_message = 'Deployment script failed' 
+              SET status = 'failed', completed_at = NOW(), error_message = 'Docker containers not running' 
               WHERE deployment_id = 'gh-${{ github.run_id }}';
             " || echo "Warning: Failed to log deployment failure"
             
