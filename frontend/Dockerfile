@@ -14,8 +14,8 @@ RUN addgroup -g 1001 -S nodejs && \
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies (use npm ci for faster, reliable builds)
-RUN npm ci --only=production && npm cache clean --force
+# Install dependencies
+RUN npm install --production && npm cache clean --force
 
 # Copy source code
 COPY . .
