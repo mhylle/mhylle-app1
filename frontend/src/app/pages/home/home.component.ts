@@ -1,13 +1,17 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { HelloWorld } from '../../hello-world/hello-world';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, HelloWorld],
   template: `
     <div class="home-container">
+      <!-- Hello World Component -->
+      <app-hello-world></app-hello-world>
+      
       <section class="hero">
         <h1>Welcome to App1</h1>
         <p class="hero-subtitle">A demonstration application for the mhylle.com infrastructure</p>
