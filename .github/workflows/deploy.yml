@@ -178,28 +178,96 @@ jobs:
           echo "Backend image: $BACKEND_IMAGE"
           echo "Version: ${{ needs.build.outputs.version }}"
           
-          # Navigate to app1 directory
-          cd /home/mhylle/projects/mhylle.com/example-app1
-          
-          # Pull latest application code
-          git pull origin main || echo "Git pull failed, continuing with existing code"
+          # Log in to GitHub Container Registry
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           
           # Set environment variables for docker-compose
           export FRONTEND_IMAGE="$FRONTEND_IMAGE"
           export BACKEND_IMAGE="$BACKEND_IMAGE"
           export IMAGE_TAG="${{ needs.build.outputs.version }}"
           
-          # Source main environment variables
-          source ../infrastructure/.env 2>/dev/null || source ../.env || echo "Warning: .env not found"
+          # Create temporary docker-compose for app1 deployment
+          cat > docker-compose.app1.yml << EOF
+          version: '3.8'
           
-          # Stop existing containers gracefully
-          docker-compose down --remove-orphans || true
+          services:
+            app1-frontend:
+              image: \${FRONTEND_IMAGE}:\${IMAGE_TAG}
+              container_name: app1-frontend
+              restart: unless-stopped
+              ports:
+                - "3001:80"
+              environment:
+                - NODE_ENV=production
+              networks:
+                - mhylle_app-network
+              healthcheck:
+                test: ["CMD", "curl", "-f", "http://localhost:80/"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+                start_period: 30s
+          
+            app1-backend:
+              image: \${BACKEND_IMAGE}:\${IMAGE_TAG}
+              container_name: app1-backend
+              restart: unless-stopped
+              ports:
+                - "8001:3000"
+              environment:
+                - NODE_ENV=production
+                - DB_HOST=mhylle-postgres
+                - DB_PORT=5432
+                - DB_NAME=\${APP1_DB_NAME:-mhylle_app1}
+                - DB_USER=\${APP1_DB_USER:-app1_user}
+                - DB_PASSWORD=\${APP1_DB_PASSWORD}
+                - API_PREFIX=/api/app1
+              networks:
+                - mhylle_app-network
+              healthcheck:
+                test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+                start_period: 40s
+              depends_on:
+                - postgres
+          
+            postgres:
+              image: postgres:15-alpine
+              container_name: mhylle-postgres
+              restart: unless-stopped
+              environment:
+                - POSTGRES_DB=\${POSTGRES_DB}
+                - POSTGRES_USER=\${POSTGRES_USER}
+                - POSTGRES_PASSWORD=\${POSTGRES_PASSWORD}
+              volumes:
+                - postgres_data:/var/lib/postgresql/data
+              networks:
+                - mhylle_app-network
+              healthcheck:
+                test: ["CMD-SHELL", "pg_isready -U \${POSTGRES_USER} -d \${POSTGRES_DB}"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+          
+          networks:
+            mhylle_app-network:
+              external: true
+          
+          volumes:
+            postgres_data:
+              external: true
+          EOF
+          
+          # Stop existing app1 containers gracefully
+          docker-compose -f docker-compose.app1.yml down --remove-orphans || true
           
           # Pull latest images
-          docker-compose pull
+          docker-compose -f docker-compose.app1.yml pull
           
           # Start services
-          docker-compose up -d
+          docker-compose -f docker-compose.app1.yml up -d
           
           # Wait for services to be healthy
           echo "⏳ Waiting for services to be healthy..."
