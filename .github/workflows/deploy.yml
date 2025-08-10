@@ -165,7 +165,7 @@ jobs:
           echo "🚀 Starting deployment of ${{ env.APP_NAME }}..."
           
           # Navigate to infrastructure directory
-          cd ~/infrastructure
+          cd ~/projects/mhylle.com
           
           # Log deployment start
           echo "📝 Logging deployment..."
