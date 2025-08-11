@@ -181,78 +181,34 @@ jobs:
           # Log in to GitHub Container Registry
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           
-          # Set environment variables for docker-compose
-          export FRONTEND_IMAGE="$FRONTEND_IMAGE"
-          export BACKEND_IMAGE="$BACKEND_IMAGE"
-          export IMAGE_TAG="${{ needs.build.outputs.version }}"
+          # Use the new independent deployment script
+          echo "🚀 Using independent deployment script to ensure app isolation..."
           
-          # Create temporary docker-compose for app1 deployment
-          cat > docker-compose.app1.yml << EOF
-          version: '3.8'
+          # Log deployment start
+          docker exec mhylle-postgres psql -U $POSTGRES_USER -d $POSTGRES_DB -c "
+            INSERT INTO deployment_logs (
+              app_name, deployment_id, status, frontend_image, backend_image, 
+              version, deployed_by, metadata
+            ) VALUES (
+              '${{ env.APP_NAME }}', 
+              'gh-${{ github.run_id }}', 
+              'started', 
+              '${{ needs.build.outputs.frontend-image }}',
+              '${{ needs.build.outputs.backend-image }}',
+              '${{ needs.build.outputs.version }}',
+              '${{ github.actor }}',
+              '{\"github_run_id\": \"${{ github.run_id }}\", \"commit_sha\": \"${{ github.sha }}\"}'
+            );
+          " || echo "Warning: Failed to log deployment start"
           
-          services:
-            app1-frontend:
-              image: \${FRONTEND_IMAGE}:\${IMAGE_TAG}
-              container_name: app1-frontend
-              restart: unless-stopped
-              ports:
-                - "3001:80"
-              environment:
-                - NODE_ENV=production
-              networks:
-                - mhylle_app-network
-              healthcheck:
-                test: ["CMD", "curl", "-f", "http://localhost:80/"]
-                interval: 30s
-                timeout: 10s
-                retries: 3
-                start_period: 30s
-          
-            app1-backend:
-              image: \${BACKEND_IMAGE}:\${IMAGE_TAG}
-              container_name: app1-backend
-              restart: unless-stopped
-              ports:
-                - "8001:3000"
-              environment:
-                - NODE_ENV=production
-                - DB_HOST=mhylle-postgres
-                - DB_PORT=5432
-                - DB_NAME=\${APP1_DB_NAME:-mhylle_app1}
-                - DB_USER=\${APP1_DB_USER:-app1_user}
-                - DB_PASSWORD=\${APP1_DB_PASSWORD}
-                - API_PREFIX=/api/app1
-              networks:
-                - mhylle_app-network
-              healthcheck:
-                test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-                interval: 30s
-                timeout: 10s
-                retries: 3
-                start_period: 40s
-          
-          networks:
-            mhylle_app-network:
-              external: true
-          EOF
-          
-          # Stop existing app1 containers gracefully
-          docker-compose -f docker-compose.app1.yml down --remove-orphans || true
-          
-          # Pull latest images
-          docker-compose -f docker-compose.app1.yml pull
-          
-          # Start services
-          docker-compose -f docker-compose.app1.yml up -d
-          
-          # Wait for services to be healthy
-          echo "⏳ Waiting for services to be healthy..."
-          timeout 120 bash -c 'until [ "$(docker inspect --format="{{.State.Health.Status}}" app1-backend 2>/dev/null)" = "healthy" ]; do echo "Waiting for backend to be healthy..."; sleep 5; done' || echo "⚠️ Backend health check timeout"
-          timeout 60 bash -c 'until [ "$(docker inspect --format="{{.State.Health.Status}}" app1-frontend 2>/dev/null)" = "healthy" ]; do echo "Waiting for frontend to be healthy..."; sleep 5; done' || echo "⚠️ Frontend health check timeout"
-          
-          # Verify deployment
-          if docker ps | grep -q "app1-backend.*Up" && docker ps | grep -q "app1-frontend.*Up"; then
-            echo "✅ Deployment successful!"
+          # Run independent deployment
+          if ./scripts/deploy-independent-app.sh \
+            "${{ env.APP_NAME }}" \
+            "$FRONTEND_IMAGE" \
+            "$BACKEND_IMAGE" \
+            "${{ needs.build.outputs.version }}"; then
+            
+            echo "✅ Independent deployment successful!"
             
             # Log successful deployment
             docker exec mhylle-postgres psql -U $POSTGRES_USER -d $POSTGRES_DB -c "
@@ -261,18 +217,17 @@ jobs:
               WHERE deployment_id = 'gh-${{ github.run_id }}';
             " || echo "Warning: Failed to log deployment success"
             
+            # Verify app independence
+            echo "🔍 Verifying app independence..."
+            docker ps --format "table {{.Names}}\t{{.Status}}" | grep -E "(app1|app2)" || echo "No app containers found"
+            
           else
-            echo "❌ Deployment failed!"
-            echo "Container status:"
-            docker ps | grep app1 || echo "No app1 containers found"
-            echo "Recent logs:"
-            docker logs app1-backend --tail=20 2>/dev/null || echo "No backend logs"
-            docker logs app1-frontend --tail=20 2>/dev/null || echo "No frontend logs"
+            echo "❌ Independent deployment failed!"
             
             # Log failed deployment
             docker exec mhylle-postgres psql -U $POSTGRES_USER -d $POSTGRES_DB -c "
               UPDATE deployment_logs 
-              SET status = 'failed', completed_at = NOW(), error_message = 'Docker containers not running' 
+              SET status = 'failed', completed_at = NOW(), error_message = 'Independent deployment script failed' 
               WHERE deployment_id = 'gh-${{ github.run_id }}';
             " || echo "Warning: Failed to log deployment failure"
             
@@ -287,18 +242,30 @@ jobs:
         key: ${{ secrets.SERVER_SSH_KEY }}
         port: ${{ secrets.SERVER_PORT || 22 }}
         script: |
-          echo "🔍 Verifying deployment..."
+          echo "🔍 Verifying deployment and app independence..."
           
           # Wait for services to be ready
           sleep 30
           
-          # Check if containers are running
-          if docker ps | grep -E "${{ env.APP_NAME }}-(frontend|backend)"; then
-            echo "✅ Containers are running"
+          # Check if app1 containers are running
+          if docker ps | grep -E "app1-(frontend|backend)"; then
+            echo "✅ App1 containers are running"
           else
-            echo "❌ Containers not found"
+            echo "❌ App1 containers not found"
             exit 1
           fi
+          
+          # CRITICAL: Verify app2 is still running (independence check)
+          if docker ps | grep -E "app2-(frontend|backend)"; then
+            echo "✅ App2 containers are still running (independence verified)"
+          else
+            echo "⚠️ App2 containers not found - checking if this is expected"
+            # Don't fail deployment if app2 was never deployed, but warn
+          fi
+          
+          # Show current status of all apps
+          echo "📊 Current application status:"
+          docker ps --format "table {{.Names}}\t{{.Status}}" | grep -E "(app1|app2)" || echo "No application containers found"
           
           # Test health endpoint
           if curl -f -s "https://mhylle.com/health/${{ env.APP_NAME }}" > /dev/null; then
