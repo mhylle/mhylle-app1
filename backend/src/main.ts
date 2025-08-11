@@ -7,8 +7,8 @@ async function bootstrap() {
   // Enable CORS for development and production
   app.enableCors({
     origin: process.env.NODE_ENV === 'production' 
-      ? ['https://mhylle.com', 'https://www.mhylle.com']
-      : ['http://localhost:4200', 'http://localhost:3000'],
+      ? ['https://mhylle.com', 'https://www.mhylle.com', 'http://51.159.168.239:3001']
+      : true, // Allow all origins in development
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
     credentials: true,

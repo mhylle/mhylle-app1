@@ -1,0 +1,65 @@
+<div class="message-manager">
+  <!-- Message Form -->
+  <div class="form-container">
+    <h3>📝 Add New Message</h3>
+    <form (ngSubmit)="onSubmit()" #messageForm="ngForm">
+      <div class="form-group">
+        <label for="author">Your Name:</label>
+        <input 
+          type="text" 
+          id="author" 
+          [(ngModel)]="newMessage.author"
+          name="author"
+          placeholder="Enter your name (optional)"
+          class="form-control">
+      </div>
+      <div class="form-group">
+        <label for="content">Message:</label>
+        <textarea 
+          id="content" 
+          [(ngModel)]="newMessage.content"
+          name="content"
+          placeholder="Enter your message here..." 
+          required
+          class="form-control"
+          rows="4"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" [disabled]="loading || !newMessage.content.trim()" class="btn btn-primary">
+          💾 {{ loading ? 'Saving...' : 'Save Message' }}
+        </button>
+        <button type="button" (click)="loadMessages()" [disabled]="loading" class="btn btn-secondary">
+          🔄 Refresh Messages
+        </button>
+      </div>
+    </form>
+    
+    <div *ngIf="error" class="error">{{ error }}</div>
+  </div>
+
+  <!-- Messages Display -->
+  <div class="messages-container">
+    <h3>📋 Saved Messages</h3>
+    
+    <div *ngIf="loading" class="loading">Loading messages...</div>
+    
+    <div *ngIf="!loading && messages.length === 0" class="no-messages">
+      No messages yet. Add the first one!
+    </div>
+    
+    <div *ngIf="!loading && messages.length > 0" class="messages-list">
+      <div *ngFor="let message of messages" class="message-item">
+        <div class="message-header">
+          <span class="message-author">{{ message.author || 'Anonymous' }}</span>
+          <span class="message-date">{{ message.createdAt | date:'medium' }}</span>
+        </div>
+        <div class="message-content">{{ message.content }}</div>
+        <div class="message-actions">
+          <button (click)="deleteMessage(message.id)" class="btn btn-danger btn-sm">
+            🗑️ Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
