@@ -13,8 +13,8 @@ RUN npm ci
 # Copy source code
 COPY frontend/ .
 
-# Build the Angular application
-RUN npm run build
+# Build the Angular application with correct base href for app1 subpath
+RUN npm run build -- --base-href="/app1/"
 
 # Production stage with nginx
 FROM nginx:alpine
