@@ -1,0 +1,246 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterOutlet, RouterModule, Router, NavigationEnd } from '@angular/router';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { filter } from 'rxjs/operators';
+
+interface AppInfo {
+  name: string;
+  version: string;
+  environment: string;
+  apiUrl: string;
+}
+
+interface HealthStatus {
+  status: string;
+  timestamp: string;
+  database: string;
+  version: string;
+}
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [CommonModule, RouterOutlet, RouterModule, HttpClientModule],
+  template: `
+    <div class="app-container" [class.fullscreen-game]="isFullscreenRoute">
+      <header class="app-header" *ngIf="!isFullscreenRoute">
+        <h1>{{ appInfo.name }}</h1>
+        <div class="app-info">
+          <span class="version">v{{ appInfo.version }}</span>
+          <span class="environment" [class]="appInfo.environment">{{ appInfo.environment }}</span>
+        </div>
+      </header>
+
+      <nav class="app-nav" *ngIf="!isFullscreenRoute">
+        <a routerLink="/candy-factory" routerLinkActive="active">🍭 Candy Factory</a>
+        <a routerLink="/home" routerLinkActive="active">Home</a>
+        <a routerLink="/health" routerLinkActive="active">Health</a>
+      </nav>
+
+      <main class="app-main" [class.fullscreen-main]="isFullscreenRoute">
+        <router-outlet></router-outlet>
+      </main>
+
+      <footer class="app-footer" *ngIf="!isFullscreenRoute">
+        <div class="footer-content">
+          <p>&copy; 2025 mhylle.com - Infrastructure Demo Application</p>
+          <div class="footer-links">
+            <a href="https://github.com/mhylle" target="_blank">GitHub</a>
+            <a href="/api/app1/health" target="_blank">API Health</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  `,
+  styles: [`
+    .app-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .app-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .app-header h1 {
+      margin: 0;
+      font-size: 2rem;
+      font-weight: 300;
+    }
+
+    .app-info {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .version {
+      background: rgba(255,255,255,0.2);
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.875rem;
+    }
+
+    .environment {
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .environment.production {
+      background: #28a745;
+      color: white;
+    }
+
+    .environment.development {
+      background: #ffc107;
+      color: #212529;
+    }
+
+    .app-nav {
+      background: #f8f9fa;
+      padding: 0 2rem;
+      border-bottom: 1px solid #dee2e6;
+      display: flex;
+      gap: 2rem;
+    }
+
+    .app-nav a {
+      padding: 1rem 0;
+      text-decoration: none;
+      color: #495057;
+      font-weight: 500;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    .app-nav a:hover {
+      color: #667eea;
+      border-bottom-color: rgba(102, 126, 234, 0.3);
+    }
+
+    .app-nav a.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+
+    .app-main {
+      flex: 1;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .fullscreen-game {
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .fullscreen-main {
+      height: 100vh;
+      width: 100vw;
+      position: relative;
+    }
+
+    .app-footer {
+      background: #343a40;
+      color: white;
+      padding: 2rem;
+      margin-top: auto;
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .footer-links a {
+      color: #adb5bd;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .footer-links a:hover {
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .app-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+
+      .app-nav {
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      .app-main {
+        padding: 1rem;
+      }
+
+      .footer-content {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+    }
+  `]
+})
+export class AppComponent implements OnInit {
+  appInfo: AppInfo = {
+    name: 'App1 - Demo Application',
+    version: '1.0.0',
+    environment: 'production',
+    apiUrl: '/api/app1'
+  };
+
+  isFullscreenRoute = false;
+
+  constructor(private http: HttpClient, private router: Router) {}
+
+  ngOnInit(): void {
+    // Load app configuration from environment or API
+    this.loadAppInfo();
+    
+    // Listen for route changes to determine if we should show fullscreen
+    this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe((event: NavigationEnd) => {
+        this.isFullscreenRoute = event.url === '/candy-factory' || event.url === '/';
+      });
+      
+    // Check initial route
+    this.isFullscreenRoute = this.router.url === '/candy-factory' || this.router.url === '/';
+  }
+
+  private loadAppInfo(): void {
+    // In a real application, this would come from environment config or API
+    const isProduction = window.location.hostname !== 'localhost';
+    
+    this.appInfo = {
+      ...this.appInfo,
+      environment: isProduction ? 'production' : 'development',
+      apiUrl: isProduction ? '/api/app1' : 'http://localhost:3000'
+    };
+  }
+}
