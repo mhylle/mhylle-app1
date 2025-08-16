@@ -145,6 +145,25 @@ jobs:
           # Navigate to infrastructure directory
           cd /home/mhylle/projects/mhylle.com
           
+          # Check disk space before deployment
+          echo "📊 Checking disk space before deployment..."
+          df -h
+          
+          # Perform Docker cleanup to free space
+          echo "🧹 Performing automatic Docker cleanup..."
+          docker container prune -f || echo "No containers to prune"
+          docker image prune -f || echo "No images to prune"
+          docker buildx prune -f || echo "No build cache to prune"
+          
+          # Remove old app1 images (keep only latest 3 versions)
+          echo "🧹 Cleaning up old app1 images..."
+          docker images "ghcr.io/mhylle/mhylle-app1-frontend" --format="{{.Repository}}:{{.Tag}}" | grep -v "latest" | tail -n +4 | xargs -r docker rmi || echo "No old frontend images to remove"
+          docker images "ghcr.io/mhylle/mhylle-app1-backend" --format="{{.Repository}}:{{.Tag}}" | grep -v "latest" | tail -n +4 | xargs -r docker rmi || echo "No old backend images to remove"
+          
+          # Show space after cleanup
+          echo "📊 Disk space after cleanup:"
+          df -h
+          
           # Source environment variables
           source .env
           
@@ -237,8 +256,8 @@ jobs:
             -e NODE_ENV=production \
             -e DB_HOST=mhylle-postgres \
             -e DB_PORT=5432 \
-            -e DB_NAME=mhylle_app1 \
-            -e DB_USER=app1_user \
+            -e DB_NAME=app1_db \
+            -e DB_USER=app_app1 \
             -e DB_PASSWORD="${APP1_DB_PASSWORD}" \
             -e API_PREFIX=/api/app1 \
             --health-cmd="curl -f http://localhost:3000/health || exit 1" \
