@@ -316,6 +316,40 @@
   text-align: center;
 }
 
+/* Prevent Text Selection */
+.candy-factory {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.candy-planet,
+.candy-planet * {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.upgrade-item,
+.buy-btn,
+.reset-btn {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Allow text selection only for specific informational text */
+.upgrade-description,
+.unlock-requirement {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
 /* Visual Effects */
 .floating-numbers {
   position: fixed;
