@@ -1,5 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import * as crypto from 'crypto';
+
+// Make crypto available globally for TypeORM in Node.js 18+
+if (!globalThis.crypto) {
+  globalThis.crypto = crypto;
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
