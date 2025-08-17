@@ -7,7 +7,9 @@ import {
   ProductionTick,
   ClickEvent,
   FloatingNumber,
-  Particle
+  Particle,
+  FlyingCandy,
+  PrestigeData
 } from '../models/candy-factory.interface';
 import { CANDY_UPGRADES } from '../models/candy-upgrades.data';
 
@@ -18,11 +20,15 @@ export class CandyFactoryService {
   private readonly SAVE_KEY = 'cosmic-candy-factory-save';
   private readonly PRODUCTION_INTERVAL = 100; // Update every 100ms for smooth production
   private readonly AUTOSAVE_INTERVAL = 1000; // Autosave every second
+  private readonly FLYING_CANDY_INTERVAL = 8000; // Spawn flying candy every 8 seconds
+  private readonly FLYING_CANDY_LIFETIME = 12000; // Flying candy lasts 12 seconds
 
   private gameState: GameState;
   private gameStateSubject = new BehaviorSubject<GameState>(this.getInitialGameState());
   private productionSubscription?: Subscription;
   private autosaveSubscription?: Subscription;
+  private flyingCandySubscription?: Subscription;
+  private flyingCandyAnimationSubscription?: Subscription;
 
   // Observables for UI
   public gameState$ = this.gameStateSubject.asObservable();
@@ -35,12 +41,15 @@ export class CandyFactoryService {
   public floatingNumbers$ = this.floatingNumbersSubject.asObservable();
   private particlesSubject = new BehaviorSubject<Particle[]>([]);
   public particles$ = this.particlesSubject.asObservable();
+  private flyingCandiesSubject = new BehaviorSubject<FlyingCandy[]>([]);
+  public flyingCandies$ = this.flyingCandiesSubject.asObservable();
 
   constructor() {
     this.gameState = this.loadGameState() || this.getInitialGameState();
     this.gameStateSubject.next(this.gameState);
     this.startProductionLoop();
     this.startAutosave();
+    this.startFlyingCandySystem();
     this.updateUnlockedUpgrades();
   }
 
@@ -54,7 +63,11 @@ export class CandyFactoryService {
       unlockedUpgrades: [],
       sessionId: this.generateSessionId(),
       lastSaved: Date.now(),
-      startTime: Date.now()
+      startTime: Date.now(),
+      prestigeLevel: 0,
+      prestigePoints: 0,
+      prestigeMultiplier: 1,
+      totalPrestigePoints: 0
     };
   }
 
@@ -165,19 +178,28 @@ export class CandyFactoryService {
   }
 
   private recalculateStats(): void {
-    // Calculate click power
-    this.gameState.clickPower = 1; // Base click power
-    for (const upgrade of CANDY_UPGRADES.filter(u => u.type === 'click')) {
-      const level = this.gameState.upgrades[upgrade.id] || 0;
-      this.gameState.clickPower += level * upgrade.powerPerLevel;
+    // Ensure prestige multiplier is valid
+    if (!this.gameState.prestigeMultiplier || isNaN(this.gameState.prestigeMultiplier)) {
+      this.gameState.prestigeMultiplier = 1;
     }
 
-    // Calculate production per second
-    this.gameState.productionPerSecond = 0;
+    // Calculate base click power
+    let baseClickPower = 1;
+    for (const upgrade of CANDY_UPGRADES.filter(u => u.type === 'click')) {
+      const level = this.gameState.upgrades[upgrade.id] || 0;
+      baseClickPower += level * upgrade.powerPerLevel;
+    }
+    // Apply prestige multiplier
+    this.gameState.clickPower = Math.floor(baseClickPower * this.gameState.prestigeMultiplier);
+
+    // Calculate base production per second
+    let baseProduction = 0;
     for (const upgrade of CANDY_UPGRADES.filter(u => u.type === 'production')) {
       const level = this.gameState.upgrades[upgrade.id] || 0;
-      this.gameState.productionPerSecond += level * (upgrade.productionPerSecond || 0);
+      baseProduction += level * (upgrade.productionPerSecond || 0);
     }
+    // Apply prestige multiplier
+    this.gameState.productionPerSecond = baseProduction * this.gameState.prestigeMultiplier;
   }
 
   // Production loop
@@ -219,6 +241,12 @@ export class CandyFactoryService {
   }
 
   private recalculateStatsForLoadedState(state: GameState): void {
+    // Ensure prestige fields exist (for backward compatibility)
+    if (typeof state.prestigeLevel === 'undefined') state.prestigeLevel = 0;
+    if (typeof state.prestigePoints === 'undefined') state.prestigePoints = 0;
+    if (typeof state.prestigeMultiplier === 'undefined') state.prestigeMultiplier = 1;
+    if (typeof state.totalPrestigePoints === 'undefined') state.totalPrestigePoints = 0;
+    
     // Recalculate derived stats after loading
     const tempState = this.gameState;
     this.gameState = state;
@@ -271,6 +299,208 @@ export class CandyFactoryService {
     }, 1000);
   }
 
+  // Flying Candy System
+  private startFlyingCandySystem(): void {
+    // Spawn flying candies periodically with more random variation
+    this.flyingCandySubscription = interval(this.FLYING_CANDY_INTERVAL + Math.random() * 4000).subscribe(() => {
+      if (this.gameState.totalCandyEarned > 10) { // Spawn earlier for testing
+        this.spawnFlyingCandy();
+      }
+    });
+
+    // Animate flying candies slower for better interaction
+    this.flyingCandyAnimationSubscription = interval(120).subscribe(() => { // Slower animation for easier clicking
+      this.updateFlyingCandies();
+    });
+  }
+
+  private spawnFlyingCandy(): void {
+    const progressMultiplier = Math.log10(this.gameState.totalCandyEarned + 1) / 10;
+    const baseValue = Math.max(1, Math.floor(this.gameState.clickPower * 5 * (1 + progressMultiplier)));
+    
+    // Rare chance for golden candy with higher value
+    const isGolden = Math.random() < 0.1;
+    const value = isGolden ? baseValue * 10 : baseValue;
+    const color = isGolden ? '#ffd700' : '#ff69b4';
+    
+    const startSide = Math.random() < 0.5 ? 'left' : 'right';
+    const startX = startSide === 'left' ? -50 : window.innerWidth + 50;
+    const startY = Math.random() * (window.innerHeight * 0.7) + 100;
+    
+    const targetX = startSide === 'left' ? window.innerWidth + 50 : -50;
+    const targetY = Math.random() * (window.innerHeight * 0.7) + 100;
+    
+    const distance = Math.abs(targetX - startX);
+    const duration = 15000 + Math.random() * 10000; // 15-25 seconds to cross screen (much slower)
+    const velocityX = (targetX - startX) / (duration / 120); // Slower movement due to 120ms intervals
+    const velocityY = (targetY - startY) / (duration / 120);
+
+    const flyingCandy: FlyingCandy = {
+      id: 'flying_' + Date.now() + '_' + Math.random(),
+      x: startX,
+      y: startY,
+      velocityX,
+      velocityY,
+      size: isGolden ? 80 : 70, // Larger size for easier clicking
+      value,
+      color,
+      life: 1,
+      maxLife: 1,
+      startTime: Date.now()
+    };
+
+    const current = this.flyingCandiesSubject.value;
+    this.flyingCandiesSubject.next([...current, flyingCandy]);
+
+    // Remove after lifetime
+    setTimeout(() => {
+      const updated = this.flyingCandiesSubject.value.filter(fc => fc.id !== flyingCandy.id);
+      this.flyingCandiesSubject.next(updated);
+    }, this.FLYING_CANDY_LIFETIME);
+  }
+
+  private updateFlyingCandies(): void {
+    const current = this.flyingCandiesSubject.value;
+    const updated = current.map(candy => ({
+      ...candy,
+      x: candy.x + candy.velocityX,
+      y: candy.y + candy.velocityY,
+      life: Math.max(0, 1 - (Date.now() - candy.startTime) / this.FLYING_CANDY_LIFETIME)
+    }));
+    
+    this.flyingCandiesSubject.next(updated);
+  }
+
+  clickFlyingCandy(candyId: string): void {
+    const current = this.flyingCandiesSubject.value;
+    const candy = current.find(c => c.id === candyId);
+    
+    if (candy) {
+      // Apply prestige multiplier to bonus value
+      const bonusValue = Math.floor(candy.value * this.gameState.prestigeMultiplier);
+      this.gameState.candy += bonusValue;
+      this.gameState.totalCandyEarned += bonusValue;
+
+      // Create special floating number for flying candy bonus
+      this.addFloatingNumber({
+        id: 'flying_bonus_' + Date.now(),
+        x: candy.x,
+        y: candy.y,
+        value: bonusValue,
+        timestamp: Date.now(),
+        color: candy.color === '#ffd700' ? '#ffff00' : '#ff1493'
+      });
+
+      // Create burst of particles
+      this.createFlyingCandyParticles(candy.x, candy.y, candy.color);
+
+      // Remove the clicked candy
+      const updated = current.filter(c => c.id !== candyId);
+      this.flyingCandiesSubject.next(updated);
+
+      this.gameStateSubject.next(this.gameState);
+    }
+  }
+
+  private createFlyingCandyParticles(x: number, y: number, baseColor: string): void {
+    const particleCount = 15;
+    const newParticles: Particle[] = [];
+
+    for (let i = 0; i < particleCount; i++) {
+      const particle: Particle = {
+        id: 'bonus_particle_' + Date.now() + '_' + i,
+        x,
+        y,
+        velocityX: (Math.random() - 0.5) * 300,
+        velocityY: (Math.random() - 0.5) * 300 - 100,
+        size: Math.random() * 8 + 4,
+        color: baseColor,
+        life: 1,
+        maxLife: 1
+      };
+      newParticles.push(particle);
+    }
+
+    const current = this.particlesSubject.value;
+    this.particlesSubject.next([...current, ...newParticles]);
+
+    setTimeout(() => {
+      const updated = this.particlesSubject.value.filter(p => 
+        !newParticles.some(np => np.id === p.id)
+      );
+      this.particlesSubject.next(updated);
+    }, 1500);
+  }
+
+  // Prestige System
+  getPrestigeData(): PrestigeData {
+    const requiredCandy = this.calculatePrestigeRequirement();
+    const prestigePointsGained = this.calculatePrestigePoints();
+    const newMultiplier = this.calculateNewPrestigeMultiplier(this.gameState.prestigePoints + prestigePointsGained);
+    const canPrestige = this.gameState.totalCandyEarned >= requiredCandy;
+
+    return {
+      requiredCandy,
+      prestigePointsGained,
+      newMultiplier,
+      canPrestige
+    };
+  }
+
+  private calculatePrestigeRequirement(): number {
+    const baseRequirement = 1000000; // 1 million for first prestige
+    return Math.floor(baseRequirement * Math.pow(10, this.gameState.prestigeLevel));
+  }
+
+  private calculatePrestigePoints(): number {
+    if (this.gameState.totalCandyEarned < this.calculatePrestigeRequirement()) {
+      return 0;
+    }
+    
+    // More candy earned = more prestige points
+    const candyRatio = this.gameState.totalCandyEarned / this.calculatePrestigeRequirement();
+    return Math.floor(Math.sqrt(candyRatio) * (1 + this.gameState.prestigeLevel * 0.1));
+  }
+
+  private calculateNewPrestigeMultiplier(totalPrestigePoints: number): number {
+    return 1 + (totalPrestigePoints * 0.1); // Each prestige point gives 10% multiplier
+  }
+
+  performPrestige(): boolean {
+    const prestigeData = this.getPrestigeData();
+    
+    if (!prestigeData.canPrestige) {
+      return false;
+    }
+
+    // Store prestige progress
+    this.gameState.prestigeLevel++;
+    this.gameState.prestigePoints += prestigeData.prestigePointsGained;
+    this.gameState.totalPrestigePoints += prestigeData.prestigePointsGained;
+    this.gameState.prestigeMultiplier = prestigeData.newMultiplier;
+
+    // Reset progress but keep prestige stats
+    const sessionId = this.generateSessionId();
+    this.gameState = {
+      ...this.getInitialGameState(),
+      sessionId,
+      prestigeLevel: this.gameState.prestigeLevel,
+      prestigePoints: this.gameState.prestigePoints,
+      prestigeMultiplier: this.gameState.prestigeMultiplier,
+      totalPrestigePoints: this.gameState.totalPrestigePoints
+    };
+
+    // Clear visual effects
+    this.floatingNumbersSubject.next([]);
+    this.particlesSubject.next([]);
+    this.flyingCandiesSubject.next([]);
+
+    this.gameStateSubject.next(this.gameState);
+    this.updateUnlockedUpgrades();
+    
+    return true;
+  }
+
   // Game management
   resetGame(): void {
     localStorage.removeItem(this.SAVE_KEY);
@@ -278,15 +508,17 @@ export class CandyFactoryService {
     this.gameStateSubject.next(this.gameState);
     this.floatingNumbersSubject.next([]);
     this.particlesSubject.next([]);
+    this.flyingCandiesSubject.next([]);
   }
 
   // Utility methods
   formatNumber(num: number): string {
+    if (isNaN(num) || !isFinite(num)) return '0';
     if (num < 1000) return Math.floor(num).toString();
-    if (num < 1000000) return (Math.floor(num / 100) / 10).toFixed(1) + 'K';
-    if (num < 1000000000) return (Math.floor(num / 100000) / 10).toFixed(1) + 'M';
-    if (num < 1000000000000) return (Math.floor(num / 100000000) / 10).toFixed(1) + 'B';
-    return (Math.floor(num / 100000000000) / 10).toFixed(1) + 'T';
+    if (num < 1000000) return (num / 1000).toFixed(1) + 'K';
+    if (num < 1000000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num < 1000000000000) return (num / 1000000000).toFixed(1) + 'B';
+    return (num / 1000000000000).toFixed(1) + 'T';
   }
 
   getAvailableUpgrades(): CandyUpgrade[] {
@@ -296,6 +528,8 @@ export class CandyFactoryService {
   ngOnDestroy(): void {
     this.productionSubscription?.unsubscribe();
     this.autosaveSubscription?.unsubscribe();
+    this.flyingCandySubscription?.unsubscribe();
+    this.flyingCandyAnimationSubscription?.unsubscribe();
     this.saveGameState();
   }
 }

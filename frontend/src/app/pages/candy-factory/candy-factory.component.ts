@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CandyFactoryService } from '../../services/candy-factory.service';
-import { GameState, CandyUpgrade, FloatingNumber, Particle } from '../../models/candy-factory.interface';
+import { GameState, CandyUpgrade, FloatingNumber, Particle, FlyingCandy, PrestigeData } from '../../models/candy-factory.interface';
 import { CANDY_UPGRADES, UPGRADE_TIERS } from '../../models/candy-upgrades.data';
 import { Observable } from 'rxjs';
 
@@ -28,9 +28,18 @@ import { Observable } from 'rxjs';
               <span class="label">Per Second:</span>
               <span class="value">{{candyFactoryService.formatNumber((gameState$ | async)?.productionPerSecond || 0)}}</span>
             </div>
+            <div class="stat" *ngIf="(gameState$ | async)?.prestigeLevel! > 0">
+              <span class="label">Prestige:</span>
+              <span class="value">Level {{(gameState$ | async)?.prestigeLevel}} ({{candyFactoryService.formatNumber((gameState$ | async)?.prestigeMultiplier || 1)}}x)</span>
+            </div>
           </div>
         </div>
         <div class="game-controls">
+          <button class="prestige-btn" 
+                  (click)="showPrestigeModal = true"
+                  *ngIf="getPrestigeData().canPrestige || (gameState$ | async)?.prestigeLevel! > 0">
+            ⭐ Prestige
+          </button>
           <button class="reset-btn" (click)="resetGame()">🔄 Reset Game</button>
         </div>
       </div>
@@ -130,6 +139,73 @@ import { Observable } from 'rxjs';
              [style.background-color]="particle.color">
         </div>
       </div>
+
+      <!-- Flying Candies -->
+      <div class="flying-candies">
+        <div *ngFor="let flyingCandy of flyingCandies$ | async"
+             class="flying-candy"
+             [style.left.px]="flyingCandy.x - (flyingCandy.size / 2)"
+             [style.top.px]="flyingCandy.y - (flyingCandy.size / 2)"
+             [style.width.px]="flyingCandy.size"
+             [style.height.px]="flyingCandy.size"
+             [style.background-color]="flyingCandy.color"
+             [style.opacity]="flyingCandy.life"
+             [style.border-color]="flyingCandy.color === '#ffd700' ? '#ffff00' : '#ff1493'"
+             (click)="onFlyingCandyClick(flyingCandy.id, $event)"
+             title="Click for bonus candy! Value: {{candyFactoryService.formatNumber(flyingCandy.value)}}">
+          🍬
+        </div>
+      </div>
+
+      <!-- Prestige Modal -->
+      <div class="prestige-modal-overlay" *ngIf="showPrestigeModal" (click)="showPrestigeModal = false">
+        <div class="prestige-modal" (click)="$event.stopPropagation()">
+          <h2>⭐ Prestige System</h2>
+          <div class="prestige-info">
+            <p>Prestiging will reset your progress but give you permanent bonuses!</p>
+            
+            <div class="prestige-stats">
+              <div class="prestige-stat">
+                <span class="label">Required Candy:</span>
+                <span class="value">{{candyFactoryService.formatNumber(getPrestigeData().requiredCandy)}}</span>
+              </div>
+              <div class="prestige-stat">
+                <span class="label">Prestige Points Gained:</span>
+                <span class="value">{{getPrestigeData().prestigePointsGained}}</span>
+              </div>
+              <div class="prestige-stat">
+                <span class="label">New Multiplier:</span>
+                <span class="value">{{getPrestigeData().newMultiplier.toFixed(1)}}x</span>
+              </div>
+              <div class="prestige-stat" *ngIf="(gameState$ | async)?.prestigeLevel! > 0">
+                <span class="label">Current Level:</span>
+                <span class="value">{{(gameState$ | async)?.prestigeLevel}}</span>
+              </div>
+            </div>
+
+            <div class="prestige-warning" *ngIf="getPrestigeData().canPrestige">
+              <p>⚠️ This will reset all candy, upgrades, and progress!</p>
+              <p>✅ You will keep prestige bonuses and multipliers!</p>
+            </div>
+
+            <div class="prestige-requirement" *ngIf="!getPrestigeData().canPrestige">
+              <p>You need {{candyFactoryService.formatNumber(getPrestigeData().requiredCandy)}} total candy earned to prestige.</p>
+              <p>Current: {{candyFactoryService.formatNumber((gameState$ | async)?.totalCandyEarned || 0)}}</p>
+            </div>
+          </div>
+
+          <div class="prestige-actions">
+            <button class="prestige-confirm-btn" 
+                    [disabled]="!getPrestigeData().canPrestige"
+                    (click)="performPrestige()">
+              ⭐ Prestige Now!
+            </button>
+            <button class="prestige-cancel-btn" (click)="showPrestigeModal = false">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   `,
   styleUrls: ['./candy-factory.component.css']
@@ -138,15 +214,18 @@ export class CandyFactoryComponent implements OnInit, OnDestroy {
   gameState$: Observable<GameState>;
   floatingNumbers$: Observable<FloatingNumber[]>;
   particles$: Observable<Particle[]>;
+  flyingCandies$: Observable<FlyingCandy[]>;
   
   upgradeTiers = UPGRADE_TIERS;
   planetClicked = false;
   starfieldBackground: string;
+  showPrestigeModal = false;
 
   constructor(public candyFactoryService: CandyFactoryService) {
     this.gameState$ = this.candyFactoryService.gameState$;
     this.floatingNumbers$ = this.candyFactoryService.floatingNumbers$;
     this.particles$ = this.candyFactoryService.particles$;
+    this.flyingCandies$ = this.candyFactoryService.flyingCandies$;
     this.starfieldBackground = this.generateStarfieldBackground();
   }
 
@@ -216,6 +295,28 @@ export class CandyFactoryComponent implements OnInit, OnDestroy {
     const angle = (index * 45) % 360;
     const radius = 120 + (index * 10);
     return `rotate(${angle}deg) translateX(${radius}px)`;
+  }
+
+  onFlyingCandyClick(candyId: string, event?: MouseEvent): void {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    console.log('Flying candy clicked:', candyId);
+    this.candyFactoryService.clickFlyingCandy(candyId);
+  }
+
+  getPrestigeData(): PrestigeData {
+    return this.candyFactoryService.getPrestigeData();
+  }
+
+  performPrestige(): void {
+    if (confirm('Are you sure you want to prestige? This will reset your progress but give you permanent bonuses!')) {
+      const success = this.candyFactoryService.performPrestige();
+      if (success) {
+        this.showPrestigeModal = false;
+      }
+    }
   }
 
   resetGame(): void {

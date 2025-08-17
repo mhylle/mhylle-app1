@@ -24,6 +24,10 @@ export interface GameState {
   sessionId: string;
   lastSaved: number;
   startTime: number;
+  prestigeLevel: number;
+  prestigePoints: number;
+  prestigeMultiplier: number;
+  totalPrestigePoints: number;
 }
 
 export interface ClickEvent {
@@ -64,4 +68,25 @@ export interface UpgradePurchaseResult {
 export interface ProductionTick {
   amount: number;
   timestamp: number;
+}
+
+export interface FlyingCandy {
+  id: string;
+  x: number;
+  y: number;
+  velocityX: number;
+  velocityY: number;
+  size: number;
+  value: number;
+  color: string;
+  life: number;
+  maxLife: number;
+  startTime: number;
+}
+
+export interface PrestigeData {
+  requiredCandy: number;
+  prestigePointsGained: number;
+  newMultiplier: number;
+  canPrestige: boolean;
 }
