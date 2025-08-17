@@ -200,20 +200,6 @@ jobs:
           # Log in to GitHub Container Registry
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           
-          # Update nginx configuration first
-          echo "🔧 Updating nginx configuration..."
-          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3.raw" \
-            -o /tmp/apps.conf \
-            "https://api.github.com/repos/${{ github.repository }}/contents/infrastructure-nginx-apps.conf"
-          
-          # Copy to nginx container and reload
-          docker cp /tmp/apps.conf mhylle-nginx:/etc/nginx/conf.d/apps.conf
-          docker exec mhylle-nginx nginx -t
-          docker exec mhylle-nginx nginx -s reload
-          rm /tmp/apps.conf
-          echo "✅ Nginx configuration updated successfully"
-          
           # Deploy App1 independently using Docker directly
           echo "🚀 Deploying App1 using Docker containers..."
           
@@ -289,11 +275,27 @@ jobs:
           
           # Final verification
           if docker ps | grep -q "app1-backend.*Up" && docker ps | grep -q "app1-frontend.*Up"; then
-            echo "✅ App1 deployment successful!"
+            echo "✅ App1 containers started successfully!"
+            
+            # Update nginx configuration after containers are running
+            echo "🔧 Updating nginx configuration..."
+            curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github.v3.raw" \
+              -o /tmp/apps.conf \
+              "https://api.github.com/repos/${{ github.repository }}/contents/infrastructure-nginx-apps.conf"
+            
+            # Copy to nginx container and reload
+            docker cp /tmp/apps.conf mhylle-nginx:/etc/nginx/conf.d/apps.conf
+            docker exec mhylle-nginx nginx -t
+            docker exec mhylle-nginx nginx -s reload
+            rm /tmp/apps.conf
+            echo "✅ Nginx configuration updated successfully"
             
             # Show final status ensuring both apps are independent
-            echo "� Current application status:"
+            echo "📋 Current application status:"
             docker ps --format "table {{.Names}}\t{{.Status}}" | grep -E "(app1|app2)" || echo "No app containers found"
+            
+            echo "✅ App1 deployment completed successfully!"
             
           else
             echo "❌ App1 deployment failed!"
