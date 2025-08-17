@@ -9,7 +9,7 @@ This is **App1** - an example Angular/NestJS application deployed to mhylle.com 
 ## Application Stack
 
 - **Frontend**: Angular 20 with standalone components and subpath routing (`/app1/`)
-- **Backend**: NestJS 11 with TypeORM and PostgreSQL integration
+- **Backend**: NestJS 11 with TypeORM and PostgreSQL integration (requires Node.js 20+)
 - **Database**: PostgreSQL 15 (shared instance with dedicated `app1_db` database)
 - **Deployment**: GitHub Actions → GitHub Container Registry → Docker containers
 
@@ -215,6 +215,12 @@ DEPLOY_URL=/app1/
 - Use hostname `mhylle-postgres` not `localhost` or `postgres`
 - Ensure container is on `mhylle_app-network`
 - Database name is `app1_db` not `mhylle_app1`
+- Database user is `app_app1` not `app1_user` (verify in init script)
+
+### Node.js/NestJS Version Issues
+- NestJS 11 requires Node.js 20+ (not 18)
+- Update Dockerfile: `FROM node:20-alpine` 
+- Crypto polyfill needed: `globalThis.crypto = webcrypto as any`
 
 ### CORS Issues
 - Backend CORS must include production domain
@@ -224,6 +230,12 @@ DEPLOY_URL=/app1/
 - Backend must respond to `/health` with 200 status
 - Frontend nginx must serve static files
 - Allow sufficient start_period (30-40s)
+
+### Deployment Failures
+- **Always check server container logs**: `ssh root@51.159.168.239 "docker logs container-name --tail 50"`
+- **Check container status**: `ssh root@51.159.168.239 "docker ps | grep app1"`
+- **Verify image versions**: `ssh root@51.159.168.239 "docker images | grep mhylle-app1"`
+- **Check GitHub Actions logs**: `gh run view --log-failed` for build issues
 
 ## Testing Strategy
 
@@ -280,3 +292,42 @@ When adding new features:
 - Gzip compression enabled
 - Database uses connection pooling
 - Container health checks prevent unhealthy instances from receiving traffic
+
+## Claude Code Guidance
+
+### Critical Debugging Workflow
+When deployment failures occur, ALWAYS follow this sequence:
+
+1. **Check server container logs first**: `ssh root@51.159.168.239 "docker logs app1-backend --tail 50"`
+2. **Verify container status**: `ssh root@51.159.168.239 "docker ps | grep app1"`
+3. **Check GitHub Actions logs**: `gh run view --log-failed` for build/deploy errors
+4. **Verify image versions**: Ensure latest images were pulled and containers updated
+
+### Configuration Verification Rules
+Before making changes, ALWAYS verify:
+
+- **Database credentials**: `app1_db` database, `app_app1` user (match infrastructure/scripts/init-databases.sql)
+- **Node.js version**: Use Node.js 20+ for NestJS 11 (check Dockerfile base image)
+- **Environment variables**: Match actual infrastructure setup, not assumptions
+- **Container network**: Ensure containers use `mhylle_app-network`
+- **Health endpoints**: Backend `/health`, frontend root `/`
+
+### Deployment Order Requirements
+Critical sequence for deployment changes:
+
+1. **Start containers first** - Before updating nginx configuration
+2. **Wait for health checks** - Containers must be healthy before proceeding  
+3. **Update nginx config** - Only after upstream hosts exist
+4. **Verify independently** - Ensure app2 containers unaffected
+
+### Version Compatibility Matrix
+- **NestJS 11** → Node.js 20+
+- **Angular 20** → Node.js 18+ (but use 20 for consistency)
+- **TypeORM** → Requires crypto polyfill in Node.js 18+
+
+### Avoiding Common Mistakes
+- **Never update configurations before containers exist**
+- **Always check actual database schema vs assumed names**
+- **Verify framework version requirements before Dockerfile changes**
+- **Test deployment order locally when possible**
+- **Use SSH to verify server state, don't rely only on CI logs**
