@@ -36,5 +36,6 @@ async function bootstrap() {
   await app.listen(port, '0.0.0.0');
   console.log(`🚀 App1 Backend is running on port ${port}`);
   console.log(`🏥 Health Check: http://localhost:${port}/health`);
+  console.log(`🐳 Container started successfully with Node.js ${process.version}`);
 }
 bootstrap();
