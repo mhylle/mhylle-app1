@@ -41,15 +41,34 @@ import { Achievement } from '../../models/candy-factory.interface';
           </div>
         </div>
         <div class="game-controls">
-          <button class="achievement-btn" (click)="showAchievementGallery = true">
-            🏆 Achievements
-          </button>
-          <button class="prestige-btn" 
-                  (click)="showPrestigeModal = true"
-                  *ngIf="getPrestigeData().canPrestige || (gameState$ | async)?.prestigeLevel! > 0">
-            ⭐ Prestige
-          </button>
-          <button class="reset-btn" (click)="resetGame()">🔄 Reset Game</button>
+          <div class="user-controls">
+            <div *ngIf="currentUser$ | async as user" class="user-status">
+              <span class="welcome">👋 {{ user.firstName }}</span>
+              <button class="sync-btn" (click)="manualSync()" [disabled]="isSyncing">
+                <span *ngIf="!isSyncing">🔄 Sync</span>
+                <span *ngIf="isSyncing">⏳ Syncing...</span>
+              </button>
+              <button class="logout-btn" (click)="logout()">Logout</button>
+            </div>
+            <div *ngIf="!(currentUser$ | async)" class="login-prompt">
+              <button class="login-btn" (click)="showLogin()">
+                🔑 Login to Save Progress
+              </button>
+              <span class="offline-mode">Playing offline - progress saved locally</span>
+            </div>
+          </div>
+          
+          <div class="game-actions">
+            <button class="achievement-btn" (click)="showAchievementGallery = true">
+              🏆 Achievements
+            </button>
+            <button class="prestige-btn" 
+                    (click)="showPrestigeModal = true"
+                    *ngIf="getPrestigeData().canPrestige || (gameState$ | async)?.prestigeLevel! > 0">
+              ⭐ Prestige
+            </button>
+            <button class="reset-btn" (click)="resetGame()">🔄 Reset Game</button>
+          </div>
         </div>
       </div>
 
@@ -265,6 +284,8 @@ export class CandyFactoryComponent implements OnInit, OnDestroy {
   showPrestigeModal = false;
   showAchievementGallery = false;
   showMigrationDialog = false;
+  isSyncing = false;
+  currentUser$!: Observable<any>;
 
   constructor(
     public candyFactoryService: CandyFactoryService,
@@ -281,6 +302,9 @@ export class CandyFactoryComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Initialize observables
+    this.currentUser$ = this.authService.currentUser$;
+    
     // Check if user needs migration
     this.checkMigrationNeeded();
     
@@ -309,6 +333,35 @@ export class CandyFactoryComponent implements OnInit, OnDestroy {
     if (result.success && result.migrated) {
       // Trigger a manual sync to reload the migrated data
       this.candyFactoryService.manualSync();
+    }
+  }
+
+  showLogin(): void {
+    // Dispatch custom event to show login modal
+    window.dispatchEvent(new CustomEvent('show-login'));
+  }
+
+  async logout(): Promise<void> {
+    await this.authService.logout();
+  }
+
+  async manualSync(): Promise<void> {
+    if (this.isSyncing || !this.authService.isAuthenticated()) {
+      return;
+    }
+
+    this.isSyncing = true;
+    try {
+      const success = await this.candyFactoryService.manualSync();
+      if (success) {
+        console.log('Game synchronized successfully!');
+      } else {
+        console.warn('Sync failed - check connection');
+      }
+    } catch (error) {
+      console.error('Sync error:', error);
+    } finally {
+      this.isSyncing = false;
     }
   }
 
