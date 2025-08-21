@@ -12,6 +12,7 @@ import {
   PrestigeData
 } from '../models/candy-factory.interface';
 import { CANDY_UPGRADES } from '../models/candy-upgrades.data';
+import { AchievementService } from './achievement.service';
 
 @Injectable({
   providedIn: 'root'
@@ -44,13 +45,14 @@ export class CandyFactoryService {
   private flyingCandiesSubject = new BehaviorSubject<FlyingCandy[]>([]);
   public flyingCandies$ = this.flyingCandiesSubject.asObservable();
 
-  constructor() {
+  constructor(private achievementService: AchievementService) {
     this.gameState = this.loadGameState() || this.getInitialGameState();
     this.gameStateSubject.next(this.gameState);
     this.startProductionLoop();
     this.startAutosave();
     this.startFlyingCandySystem();
     this.updateUnlockedUpgrades();
+    this.achievementService.updateAchievements(this.gameState);
   }
 
   private getInitialGameState(): GameState {
@@ -67,7 +69,16 @@ export class CandyFactoryService {
       prestigeLevel: 0,
       prestigePoints: 0,
       prestigeMultiplier: 1,
-      totalPrestigePoints: 0
+      totalPrestigePoints: 0,
+      
+      // Achievement & Collection System
+      achievements: {},
+      unlockedAchievements: [],
+      collectedCandies: {},
+      discoveredCandies: [],
+      totalClicks: 0,
+      totalFlyingCandiesCaught: 0,
+      totalPlayTime: 0
     };
   }
 
@@ -77,9 +88,17 @@ export class CandyFactoryService {
 
   // Core clicking functionality
   clickPlanet(event: { clientX: number, clientY: number }): void {
-    const candyEarned = this.gameState.clickPower;
+    // Apply achievement bonuses
+    const bonuses = this.achievementService.calculatePassiveBonuses(this.gameState);
+    const baseCandyEarned = this.gameState.clickPower;
+    const candyEarned = Math.floor(baseCandyEarned * bonuses.clickMultiplier);
+    
     this.gameState.candy += candyEarned;
     this.gameState.totalCandyEarned += candyEarned;
+    this.gameState.totalClicks++;
+
+    // Track click for achievements
+    this.achievementService.trackClick();
 
     // Create floating number
     this.addFloatingNumber({
@@ -95,6 +114,7 @@ export class CandyFactoryService {
     this.createClickParticles(event.clientX, event.clientY);
 
     this.updateUnlockedUpgrades();
+    this.achievementService.updateAchievements(this.gameState);
     this.gameStateSubject.next(this.gameState);
   }
 
@@ -205,10 +225,23 @@ export class CandyFactoryService {
   // Production loop
   private startProductionLoop(): void {
     this.productionSubscription = interval(this.PRODUCTION_INTERVAL).subscribe(() => {
+      // Update total play time
+      this.gameState.totalPlayTime += this.PRODUCTION_INTERVAL;
+
       if (this.gameState.productionPerSecond > 0) {
-        const candyToAdd = (this.gameState.productionPerSecond * this.PRODUCTION_INTERVAL) / 1000;
+        // Apply achievement bonuses to production
+        const bonuses = this.achievementService.calculatePassiveBonuses(this.gameState);
+        const effectiveProduction = this.gameState.productionPerSecond * bonuses.productionMultiplier;
+        const candyToAdd = (effectiveProduction * this.PRODUCTION_INTERVAL) / 1000;
+        
         this.gameState.candy += candyToAdd;
         this.gameState.totalCandyEarned += candyToAdd;
+        
+        // Periodically update achievements (every second to avoid performance issues)
+        if (Date.now() % 1000 < this.PRODUCTION_INTERVAL) {
+          this.achievementService.updateAchievements(this.gameState);
+        }
+        
         this.gameStateSubject.next(this.gameState);
       }
     });
@@ -246,6 +279,15 @@ export class CandyFactoryService {
     if (typeof state.prestigePoints === 'undefined') state.prestigePoints = 0;
     if (typeof state.prestigeMultiplier === 'undefined') state.prestigeMultiplier = 1;
     if (typeof state.totalPrestigePoints === 'undefined') state.totalPrestigePoints = 0;
+    
+    // Ensure achievement fields exist (for backward compatibility)
+    if (typeof state.achievements === 'undefined') state.achievements = {};
+    if (typeof state.unlockedAchievements === 'undefined') state.unlockedAchievements = [];
+    if (typeof state.collectedCandies === 'undefined') state.collectedCandies = {};
+    if (typeof state.discoveredCandies === 'undefined') state.discoveredCandies = [];
+    if (typeof state.totalClicks === 'undefined') state.totalClicks = 0;
+    if (typeof state.totalFlyingCandiesCaught === 'undefined') state.totalFlyingCandiesCaught = 0;
+    if (typeof state.totalPlayTime === 'undefined') state.totalPlayTime = 0;
     
     // Recalculate derived stats after loading
     const tempState = this.gameState;
@@ -376,10 +418,25 @@ export class CandyFactoryService {
     const candy = current.find(c => c.id === candyId);
     
     if (candy) {
-      // Apply prestige multiplier to bonus value
-      const bonusValue = Math.floor(candy.value * this.gameState.prestigeMultiplier);
+      const isGolden = candy.color === '#ffd700';
+      
+      // Apply prestige and achievement multipliers
+      const bonuses = this.achievementService.calculatePassiveBonuses(this.gameState);
+      const bonusValue = Math.floor(candy.value * this.gameState.prestigeMultiplier * bonuses.clickMultiplier);
+      
       this.gameState.candy += bonusValue;
       this.gameState.totalCandyEarned += bonusValue;
+      this.gameState.totalFlyingCandiesCaught++;
+
+      // Track flying candy catch for achievements
+      this.achievementService.trackFlyingCandyCatch(isGolden);
+
+      // Discover basic candy or special candy based on type
+      if (isGolden) {
+        this.achievementService.discoverCandy('golden_star', this.gameState);
+      } else {
+        this.achievementService.discoverCandy('basic_candy', this.gameState);
+      }
 
       // Create special floating number for flying candy bonus
       this.addFloatingNumber({
@@ -398,6 +455,7 @@ export class CandyFactoryService {
       const updated = current.filter(c => c.id !== candyId);
       this.flyingCandiesSubject.next(updated);
 
+      this.achievementService.updateAchievements(this.gameState);
       this.gameStateSubject.next(this.gameState);
     }
   }

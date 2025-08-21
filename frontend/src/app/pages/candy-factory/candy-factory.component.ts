@@ -1,14 +1,17 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CandyFactoryService } from '../../services/candy-factory.service';
+import { AchievementService } from '../../services/achievement.service';
 import { GameState, CandyUpgrade, FloatingNumber, Particle, FlyingCandy, PrestigeData } from '../../models/candy-factory.interface';
 import { CANDY_UPGRADES, UPGRADE_TIERS } from '../../models/candy-upgrades.data';
+import { AchievementGalleryComponent } from '../../components/achievement-gallery/achievement-gallery.component';
 import { Observable } from 'rxjs';
+import { Achievement } from '../../models/candy-factory.interface';
 
 @Component({
   selector: 'app-candy-factory',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AchievementGalleryComponent],
   template: `
     <div class="candy-factory" [style.background]="'url(data:image/svg+xml;base64,' + starfieldBackground + ') repeat'">
       <!-- Game Header -->
@@ -35,6 +38,9 @@ import { Observable } from 'rxjs';
           </div>
         </div>
         <div class="game-controls">
+          <button class="achievement-btn" (click)="showAchievementGallery = true">
+            🏆 Achievements
+          </button>
           <button class="prestige-btn" 
                   (click)="showPrestigeModal = true"
                   *ngIf="getPrestigeData().canPrestige || (gameState$ | async)?.prestigeLevel! > 0">
@@ -206,6 +212,32 @@ import { Observable } from 'rxjs';
           </div>
         </div>
       </div>
+
+      <!-- Achievement Notifications -->
+      <div class="achievement-notifications">
+        <div *ngFor="let achievement of recentAchievements$ | async" 
+             class="achievement-notification"
+             [style.border-color]="getRarityColor(achievement.rarity)"
+             [style.box-shadow]="'0 0 20px ' + getRarityGlow(achievement.rarity)">
+          <div class="notification-header">🎉 Achievement Unlocked!</div>
+          <div class="notification-icon" 
+               [style.color]="getRarityColor(achievement.rarity)"
+               [style.text-shadow]="'0 0 10px ' + getRarityColor(achievement.rarity)">
+            {{achievement.icon}}
+          </div>
+          <div class="notification-name" [style.color]="getRarityColor(achievement.rarity)">
+            {{achievement.name}}
+          </div>
+          <div class="notification-description">{{achievement.description}}</div>
+          <div class="notification-rarity" [style.color]="getRarityColor(achievement.rarity)">
+            {{achievement.rarity.toUpperCase()}}
+          </div>
+        </div>
+      </div>
+
+      <!-- Achievement Gallery -->
+      <app-achievement-gallery *ngIf="showAchievementGallery" (closeGalleryEvent)="showAchievementGallery = false">
+      </app-achievement-gallery>
     </div>
   `,
   styleUrls: ['./candy-factory.component.css']
@@ -215,17 +247,23 @@ export class CandyFactoryComponent implements OnInit, OnDestroy {
   floatingNumbers$: Observable<FloatingNumber[]>;
   particles$: Observable<Particle[]>;
   flyingCandies$: Observable<FlyingCandy[]>;
+  recentAchievements$: Observable<Achievement[]>;
   
   upgradeTiers = UPGRADE_TIERS;
   planetClicked = false;
   starfieldBackground: string;
   showPrestigeModal = false;
+  showAchievementGallery = false;
 
-  constructor(public candyFactoryService: CandyFactoryService) {
+  constructor(
+    public candyFactoryService: CandyFactoryService,
+    public achievementService: AchievementService
+  ) {
     this.gameState$ = this.candyFactoryService.gameState$;
     this.floatingNumbers$ = this.candyFactoryService.floatingNumbers$;
     this.particles$ = this.candyFactoryService.particles$;
     this.flyingCandies$ = this.candyFactoryService.flyingCandies$;
+    this.recentAchievements$ = this.achievementService.recentlyUnlocked$;
     this.starfieldBackground = this.generateStarfieldBackground();
   }
 
@@ -302,7 +340,6 @@ export class CandyFactoryComponent implements OnInit, OnDestroy {
       event.stopPropagation();
       event.preventDefault();
     }
-    console.log('Flying candy clicked:', candyId);
     this.candyFactoryService.clickFlyingCandy(candyId);
   }
 
@@ -340,6 +377,21 @@ export class CandyFactoryComponent implements OnInit, OnDestroy {
       </svg>
     `;
     return btoa(svg);
+  }
+
+  getRarityColor(rarity: string): string {
+    return this.achievementService.getRarityColor(rarity);
+  }
+
+  getRarityGlow(rarity: string): string {
+    const glowColors = {
+      common: 'rgba(255, 255, 255, 0.3)',
+      rare: 'rgba(0, 255, 0, 0.4)',
+      epic: 'rgba(138, 43, 226, 0.5)',
+      legendary: 'rgba(255, 165, 0, 0.6)',
+      mythic: 'rgba(255, 20, 147, 0.7)'
+    };
+    return glowColors[rarity as keyof typeof glowColors] || 'rgba(255, 255, 255, 0.3)';
   }
 
   @HostListener('window:beforeunload')
