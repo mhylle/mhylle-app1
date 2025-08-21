@@ -2,16 +2,19 @@ import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CandyFactoryService } from '../../services/candy-factory.service';
 import { AchievementService } from '../../services/achievement.service';
+import { MigrationService, MigrationResult } from '../../services/migration.service';
+import { AuthService } from '../../services/auth.service';
 import { GameState, CandyUpgrade, FloatingNumber, Particle, FlyingCandy, PrestigeData } from '../../models/candy-factory.interface';
 import { CANDY_UPGRADES, UPGRADE_TIERS } from '../../models/candy-upgrades.data';
 import { AchievementGalleryComponent } from '../../components/achievement-gallery/achievement-gallery.component';
+import { MigrationDialogComponent } from '../../components/migration-dialog/migration-dialog.component';
 import { Observable } from 'rxjs';
 import { Achievement } from '../../models/candy-factory.interface';
 
 @Component({
   selector: 'app-candy-factory',
   standalone: true,
-  imports: [CommonModule, AchievementGalleryComponent],
+  imports: [CommonModule, AchievementGalleryComponent, MigrationDialogComponent],
   template: `
     <div class="candy-factory" [style.background]="'url(data:image/svg+xml;base64,' + starfieldBackground + ') repeat'">
       <!-- Game Header -->
@@ -238,6 +241,13 @@ import { Achievement } from '../../models/candy-factory.interface';
       <!-- Achievement Gallery -->
       <app-achievement-gallery *ngIf="showAchievementGallery" (closeGalleryEvent)="showAchievementGallery = false">
       </app-achievement-gallery>
+
+      <!-- Migration Dialog -->
+      <app-migration-dialog 
+        [showDialog]="showMigrationDialog"
+        (closeDialogEvent)="onMigrationDialogClose()"
+        (migrationCompleteEvent)="onMigrationComplete($event)">
+      </app-migration-dialog>
     </div>
   `,
   styleUrls: ['./candy-factory.component.css']
@@ -254,10 +264,13 @@ export class CandyFactoryComponent implements OnInit, OnDestroy {
   starfieldBackground: string;
   showPrestigeModal = false;
   showAchievementGallery = false;
+  showMigrationDialog = false;
 
   constructor(
     public candyFactoryService: CandyFactoryService,
-    public achievementService: AchievementService
+    public achievementService: AchievementService,
+    private migrationService: MigrationService,
+    private authService: AuthService
   ) {
     this.gameState$ = this.candyFactoryService.gameState$;
     this.floatingNumbers$ = this.candyFactoryService.floatingNumbers$;
@@ -268,7 +281,35 @@ export class CandyFactoryComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Component initialization
+    // Check if user needs migration
+    this.checkMigrationNeeded();
+    
+    // Subscribe to auth changes to trigger migration check
+    this.authService.currentUser$.subscribe(user => {
+      if (user) {
+        // User logged in, check for migration
+        setTimeout(() => this.checkMigrationNeeded(), 1000);
+      }
+    });
+  }
+
+  private checkMigrationNeeded(): void {
+    if (this.migrationService.hasUnmigratedLocalData()) {
+      this.showMigrationDialog = true;
+    }
+  }
+
+  onMigrationDialogClose(): void {
+    this.showMigrationDialog = false;
+  }
+
+  onMigrationComplete(result: MigrationResult): void {
+    this.showMigrationDialog = false;
+    
+    if (result.success && result.migrated) {
+      // Trigger a manual sync to reload the migrated data
+      this.candyFactoryService.manualSync();
+    }
   }
 
   ngOnDestroy(): void {

@@ -13,6 +13,8 @@ import {
 } from '../models/candy-factory.interface';
 import { CANDY_UPGRADES } from '../models/candy-upgrades.data';
 import { AchievementService } from './achievement.service';
+import { GameApiService } from './game-api.service';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -21,6 +23,7 @@ export class CandyFactoryService {
   private readonly SAVE_KEY = 'cosmic-candy-factory-save';
   private readonly PRODUCTION_INTERVAL = 100; // Update every 100ms for smooth production
   private readonly AUTOSAVE_INTERVAL = 1000; // Autosave every second
+  private readonly SERVER_SYNC_INTERVAL = 30000; // Sync with server every 30 seconds
   private readonly FLYING_CANDY_INTERVAL = 8000; // Spawn flying candy every 8 seconds
   private readonly FLYING_CANDY_LIFETIME = 12000; // Flying candy lasts 12 seconds
 
@@ -28,6 +31,7 @@ export class CandyFactoryService {
   private gameStateSubject = new BehaviorSubject<GameState>(this.getInitialGameState());
   private productionSubscription?: Subscription;
   private autosaveSubscription?: Subscription;
+  private serverSyncSubscription?: Subscription;
   private flyingCandySubscription?: Subscription;
   private flyingCandyAnimationSubscription?: Subscription;
 
@@ -45,14 +49,22 @@ export class CandyFactoryService {
   private flyingCandiesSubject = new BehaviorSubject<FlyingCandy[]>([]);
   public flyingCandies$ = this.flyingCandiesSubject.asObservable();
 
-  constructor(private achievementService: AchievementService) {
+  constructor(
+    private achievementService: AchievementService,
+    private gameApiService: GameApiService,
+    private authService: AuthService
+  ) {
     this.gameState = this.loadGameState() || this.getInitialGameState();
     this.gameStateSubject.next(this.gameState);
     this.startProductionLoop();
     this.startAutosave();
+    this.startServerSync();
     this.startFlyingCandySystem();
     this.updateUnlockedUpgrades();
     this.achievementService.updateAchievements(this.gameState);
+    
+    // Try to load game state from server if user is authenticated
+    this.loadFromServerIfAuthenticated();
   }
 
   private getInitialGameState(): GameState {
@@ -257,6 +269,11 @@ export class CandyFactoryService {
   private saveGameState(): void {
     this.gameState.lastSaved = Date.now();
     localStorage.setItem(this.SAVE_KEY, JSON.stringify(this.gameState));
+    
+    // Also save to server if user is authenticated (async, don't wait)
+    this.saveToServer().catch(error => {
+      console.error('Background server save failed:', error);
+    });
   }
 
   private loadGameState(): GameState | null {
@@ -295,6 +312,83 @@ export class CandyFactoryService {
     this.recalculateStats();
     if (!tempState) {
       this.gameState = state;
+    }
+  }
+
+  // Server synchronization methods
+  private async loadFromServerIfAuthenticated(): Promise<void> {
+    if (!this.authService.isAuthenticated()) {
+      return;
+    }
+
+    try {
+      const serverGameState = await this.gameApiService.loadGameState();
+      if (serverGameState) {
+        console.log('Loaded game state from server');
+        this.gameState = serverGameState;
+        this.recalculateStatsForLoadedState(this.gameState);
+        this.gameStateSubject.next(this.gameState);
+        this.updateUnlockedUpgrades();
+        this.achievementService.updateAchievements(this.gameState);
+      }
+    } catch (error) {
+      console.error('Failed to load game state from server:', error);
+    }
+  }
+
+  private startServerSync(): void {
+    this.serverSyncSubscription = interval(this.SERVER_SYNC_INTERVAL).subscribe(() => {
+      this.syncWithServer();
+    });
+  }
+
+  private async syncWithServer(): Promise<void> {
+    if (!this.authService.isAuthenticated()) {
+      return;
+    }
+
+    try {
+      const syncResult = await this.gameApiService.syncGameState(this.gameState);
+      if (syncResult) {
+        if (syncResult.conflictResolved) {
+          console.log('Game state conflict resolved:', syncResult.message);
+          this.gameState = syncResult.gameData;
+          this.recalculateStatsForLoadedState(this.gameState);
+          this.gameStateSubject.next(this.gameState);
+          this.updateUnlockedUpgrades();
+          this.achievementService.updateAchievements(this.gameState);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to sync with server:', error);
+    }
+  }
+
+  private async saveToServer(): Promise<void> {
+    if (!this.authService.isAuthenticated()) {
+      return;
+    }
+
+    try {
+      await this.gameApiService.saveGameState(this.gameState);
+    } catch (error) {
+      console.error('Failed to save game state to server:', error);
+    }
+  }
+
+  // Public method to manually sync with server
+  public async manualSync(): Promise<boolean> {
+    if (!this.authService.isAuthenticated()) {
+      console.warn('Cannot sync: user not authenticated');
+      return false;
+    }
+
+    try {
+      await this.syncWithServer();
+      return true;
+    } catch (error) {
+      console.error('Manual sync failed:', error);
+      return false;
     }
   }
 
@@ -586,6 +680,7 @@ export class CandyFactoryService {
   ngOnDestroy(): void {
     this.productionSubscription?.unsubscribe();
     this.autosaveSubscription?.unsubscribe();
+    this.serverSyncSubscription?.unsubscribe();
     this.flyingCandySubscription?.unsubscribe();
     this.flyingCandyAnimationSubscription?.unsubscribe();
     this.saveGameState();

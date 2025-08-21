@@ -37,7 +37,13 @@ export class AuthService {
       
       if (response.ok) {
         const result = await response.json();
-        const user = result.data;
+        const user = result.user || result.data;
+        
+        // Store JWT token if provided
+        if (result.access_token) {
+          localStorage.setItem('auth_token', result.access_token);
+        }
+        
         this.currentUserSubject.next(user);
         return user;
       }
@@ -65,7 +71,13 @@ export class AuthService {
     }
 
     const result = await response.json();
-    const user = result.data;
+    const user = result.user || result.data;
+    
+    // Store JWT token if provided
+    if (result.access_token) {
+      localStorage.setItem('auth_token', result.access_token);
+    }
+    
     this.currentUserSubject.next(user);
     return user;
   }
@@ -80,6 +92,8 @@ export class AuthService {
       console.error('Logout error:', error);
     }
     
+    // Clear stored token
+    localStorage.removeItem('auth_token');
     this.currentUserSubject.next(null);
   }
 
