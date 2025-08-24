@@ -18,6 +18,14 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface RegisterRequest {
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  confirmPassword: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -61,6 +69,29 @@ export class AuthService {
     
     this.currentUserSubject.next(null);
     return null;
+  }
+
+  async register(credentials: RegisterRequest): Promise<UserInfo> {
+    const response = await fetch(`${environment.authUrl}/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include', // Include cookies
+      body: JSON.stringify(credentials)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Registration failed');
+    }
+
+    const result = await response.json();
+    const user = result.data;
+    
+    // Don't automatically log in after registration
+    // User needs to login separately for security
+    return user;
   }
 
   async login(credentials: LoginRequest): Promise<UserInfo> {

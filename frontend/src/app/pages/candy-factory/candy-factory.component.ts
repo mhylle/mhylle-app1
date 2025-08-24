@@ -57,7 +57,10 @@ import { Achievement } from '../../models/candy-factory.interface';
           
           <div class="game-actions">
             <button class="login-btn" (click)="showLogin()" *ngIf="!(currentUser$ | async)">
-              🔑 Login to Save Progress
+              🔑 Login
+            </button>
+            <button class="register-btn" (click)="showRegister()" *ngIf="!(currentUser$ | async)">
+              ✨ Register
             </button>
             <button class="achievement-btn" (click)="showAchievementGallery = true">
               🏆 Achievements
@@ -339,6 +342,11 @@ export class CandyFactoryComponent implements OnInit, OnDestroy {
   showLogin(): void {
     // Dispatch custom event to show login modal
     window.dispatchEvent(new CustomEvent('show-login'));
+  }
+
+  showRegister(): void {
+    // Dispatch custom event to show registration modal
+    window.dispatchEvent(new CustomEvent('show-register'));
   }
 
   async logout(): Promise<void> {
