@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { environment } from '../../environments/environment';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -11,7 +12,7 @@ export interface ApiResponse<T = any> {
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = '/api/app1';
+  private baseUrl = environment.apiUrl;
 
   constructor() {}
 
@@ -24,7 +25,7 @@ export class ApiService {
 
     // If no token in localStorage, try to validate current session with auth service
     try {
-      const response = await fetch('/api/auth/validate', {
+      const response = await fetch('http://localhost:8081/api/auth/validate', {
         credentials: 'include'
       });
       

@@ -53,19 +53,44 @@ npm run lint               # Run ESLint
 npm run format             # Format with Prettier
 ```
 
-### Docker Development
+### Docker Development (Production-Parity Architecture)
 ```bash
-# Local development with Docker
-docker-compose -f docker-compose.dev.yml up -d     # Start all services
-docker-compose -f docker-compose.dev.yml logs -f   # View logs
-docker-compose -f docker-compose.dev.yml down      # Stop services
-docker-compose -f docker-compose.dev.yml down -v   # Stop and clean volumes
+# CRITICAL: Development mirrors production deployment pattern - NO mock services
+# Uses same infrastructure + applications pattern as production
+
+# Start complete development environment (from repo root)
+./start-dev-environment.sh
+
+# Or start manually (infrastructure first, then applications):
+# 1. Start infrastructure (nginx, postgres)
+docker-compose -f docker-compose.dev-infrastructure.yml up -d
+
+# 2. Start auth service  
+docker-compose -f docker-compose.dev-apps.yml --profile auth up -d
+
+# 3. Start app1 services
+docker-compose -f docker-compose.dev-apps.yml --profile app1 up -d
+
+# View logs
+docker-compose -f docker-compose.dev-infrastructure.yml logs -f nginx postgres
+docker-compose -f docker-compose.dev-apps.yml logs -f
+
+# Stop services (reverse order)
+docker-compose -f docker-compose.dev-apps.yml --profile auth --profile app1 down
+docker-compose -f docker-compose.dev-infrastructure.yml down
 
 # Access points:
-# Frontend: http://localhost:4200 (with proxy to backend)
-# Backend: http://localhost:3000 (direct access)
-# Full stack via nginx: http://localhost:8080/app1
+# Full application via nginx: http://localhost:8080/app1/
+# Auth service: http://localhost:8080/api/auth/health (via nginx)
+# App1 API: http://localhost:8080/api/app1/health (via nginx)
+# Direct container access: Frontend (3001), Backend (8001), Auth (3003)
 ```
+
+**ARCHITECTURE MATCH**: Development uses the SAME deployment pattern as production:
+- Shared infrastructure (nginx, postgres) starts first
+- Auth service runs as separate local container (NOT external/mock)
+- Applications connect to local auth via nginx routing
+- Same networks, same routing, same service discovery
 
 ## Architecture
 
@@ -325,9 +350,28 @@ Critical sequence for deployment changes:
 - **Angular 20** → Node.js 18+ (but use 20 for consistency)
 - **TypeORM** → Requires crypto polyfill in Node.js 18+
 
+### Development-Production Parity Rules
+**CRITICAL**: Development environment must mirror production deployment architecture
+
+- **NO MOCK SERVICES**: Never create mock auth services or external dependencies for development
+  - Mock services hide integration issues and create false confidence
+  - All external services must be real or point to actual development/staging environments
+  - If production uses external auth service, development must use external auth service
+  
+- **Architecture Consistency**: Development containers must match production deployment patterns
+  - Same network topology and service discovery patterns
+  - Same environment variable structures and external dependencies
+  - Same database connection patterns and service endpoints
+  
+- **External Dependencies**: All production external services must have development equivalents
+  - Auth service: Use development auth service endpoint, not local mock
+  - Databases: Use separate development databases with same structure
+  - APIs: Use development/staging versions of external APIs, never mocks
+
 ### Avoiding Common Mistakes
 - **Never update configurations before containers exist**
 - **Always check actual database schema vs assumed names**
 - **Verify framework version requirements before Dockerfile changes**
 - **Test deployment order locally when possible**
 - **Use SSH to verify server state, don't rely only on CI logs**
+- **NEVER use mock services in development - they hide real integration issues**

@@ -1,40 +1,52 @@
 version: '3.8'
 
 services:
-  # PostgreSQL for local development
+  # PostgreSQL for local development - matches production pattern
   postgres:
     image: postgres:15-alpine
-    container_name: app1-postgres-dev
+    container_name: mhylle-postgres-dev
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: app1_db
-      POSTGRES_USER: app1_user
-      POSTGRES_PASSWORD: app1_password
+      POSTGRES_DB: ${POSTGRES_DB:-mhylle_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-mhylle_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password}
     ports:
-      - "5432:5432"
+      - "5436:5432"  # Use different port to avoid conflicts with production/other dev DBs
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./init-db-dev.sql:/docker-entrypoint-initdb.d/init-db-dev.sql:ro
+    networks:
+      - mhylle_app-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U app1_user -d app1_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mhylle_user} -d ${POSTGRES_DB:-mhylle_dev}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Backend development server
+  # NOTE: Auth service is EXTERNAL in production - use development auth endpoint
+  # DO NOT create local auth service - this hides integration issues
+  # Point frontend/backend to development auth service URL
+
+  # Backend development server - matches production patterns
   backend:
     build:
-      context: .
-      dockerfile: ./backend/Dockerfile.dev
+      context: ./backend
+      dockerfile: Dockerfile.dev
     container_name: app1-backend-dev
+    restart: unless-stopped
     environment:
       NODE_ENV: development
-      DB_HOST: postgres
+      # Use same DB pattern as production
+      DB_HOST: mhylle-postgres-dev
       DB_PORT: 5432
       DB_NAME: app1_db
-      DB_USER: app1_user
-      DB_PASSWORD: app1_password
-      API_PREFIX: ""
+      DB_USER: app_app1  # Matches production user pattern
+      DB_PASSWORD: ${APP1_DB_PASSWORD:-dev_app1_password}
+      API_PREFIX: /api/app1  # Matches production prefix
       PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret}
+      # Use EXTERNAL auth service - NO local auth
+      AUTH_SERVICE_URL: ${DEV_AUTH_SERVICE_URL:-https://auth.dev.mhylle.com}
     ports:
       - "3000:3000"
     volumes:
@@ -42,19 +54,30 @@ services:
       - ./backend/package.json:/app/package.json
       - ./backend/package-lock.json:/app/package-lock.json
       - /app/node_modules
+    networks:
+      - mhylle_app-network
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     command: npm run start:dev
 
-  # Frontend development server
+  # Frontend development server - matches production patterns
   frontend:
     build:
-      context: .
-      dockerfile: ./frontend/Dockerfile.dev
+      context: ./frontend
+      dockerfile: Dockerfile.dev
     container_name: app1-frontend-dev
+    restart: unless-stopped
     environment:
       NODE_ENV: development
+      # Use external auth service URL like production
+      DEV_AUTH_SERVICE_URL: ${DEV_AUTH_SERVICE_URL:-https://auth.dev.mhylle.com}
     ports:
       - "4200:4200"
     volumes:
@@ -63,24 +86,45 @@ services:
       - ./frontend/package-lock.json:/app/package-lock.json
       - ./frontend/angular.json:/app/angular.json
       - /app/node_modules
-    command: npm run start
+    networks:
+      - mhylle_app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4200/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    command: sh -c "npm run start -- --host 0.0.0.0 --poll 2000"
 
-  # Nginx for local development (optional)
+  # Nginx for development - matches production routing patterns
   nginx:
     image: nginx:alpine
     container_name: app1-nginx-dev
+    restart: unless-stopped
     ports:
-      - "8080:80"
+      - "8081:80"
     volumes:
       - ./nginx.dev.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - mhylle_app-network
     depends_on:
       - frontend
       - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/app1/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
+# Network configuration - matches production
+networks:
+  mhylle_app-network:
+    name: mhylle_app-network-dev
+    driver: bridge
+
+# Volume configuration - matches production patterns  
 volumes:
   postgres_data:
+    name: mhylle_postgres_data_dev
     driver: local
-
-networks:
-  default:
-    name: app1-dev-network

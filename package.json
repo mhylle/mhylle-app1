@@ -1,0 +1,29 @@
+{
+  "name": "cosmic-candy-factory-tests",
+  "version": "1.0.0",
+  "description": "End-to-end testing for Cosmic Candy Factory application",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:auth": "playwright test auth",
+    "test:report": "playwright show-report",
+    "install:playwright": "playwright install"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.41.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "playwright",
+    "testing",
+    "e2e",
+    "angular",
+    "nestjs",
+    "authentication"
+  ],
+  "author": "Cosmic Candy Factory Team",
+  "license": "MIT"
+}

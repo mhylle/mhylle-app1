@@ -1,0 +1,53 @@
+<testsuites id="" name="" tests="1" failures="1" skipped="0" errors="0" time="10.972228000000001">
+<testsuite name="auth-streamlined.spec.ts" timestamp="2025-08-24T10:19:36.199Z" hostname="chromium" tests="1" failures="1" skipped="0" time="6.597" errors="0">
+<testcase name="Authentication System - Streamlined Tests › should complete full authentication flow without 404 errors" classname="auth-streamlined.spec.ts" time="6.597">
+<failure message="auth-streamlined.spec.ts:12:7 should complete full authentication flow without 404 errors" type="FAILURE">
+<![CDATA[  [chromium] › auth-streamlined.spec.ts:12:7 › Authentication System - Streamlined Tests › should complete full authentication flow without 404 errors 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  locator('.welcome')
+    Expected: visible
+    Received: <element(s) not found>
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('.welcome')
+
+
+       at helpers/auth.helpers.ts:173
+
+      171 |     // Check for welcome message
+      172 |     const welcomeMessage = this.page.locator('.welcome');
+    > 173 |     await expect(welcomeMessage).toBeVisible();
+          |                                  ^
+      174 |     await expect(welcomeMessage).toContainText('👋');
+      175 |     
+      176 |     // Check for sync and logout buttons
+        at AuthTestHelpers.verifyAuthenticatedState (/home/mhylle/projects/mhylle.com/example-app1/tests/helpers/auth.helpers.ts:173:34)
+        at /home/mhylle/projects/mhylle.com/example-app1/tests/auth-streamlined.spec.ts:31:23
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../test-results/auth-streamlined-Authentic-8e9f2-ion-flow-without-404-errors-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../test-results/auth-streamlined-Authentic-8e9f2-ion-flow-without-404-errors-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../test-results/auth-streamlined-Authentic-8e9f2-ion-flow-without-404-errors-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|auth-streamlined-Authentic-8e9f2-ion-flow-without-404-errors-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|auth-streamlined-Authentic-8e9f2-ion-flow-without-404-errors-chromium/video.webm]]
+
+[[ATTACHMENT|auth-streamlined-Authentic-8e9f2-ion-flow-without-404-errors-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

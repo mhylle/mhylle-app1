@@ -183,6 +183,11 @@ export class CandyFactoryService {
   }
 
   private updateUnlockedUpgrades(): void {
+    // Ensure unlockedUpgrades array exists
+    if (!this.gameState.unlockedUpgrades) {
+      this.gameState.unlockedUpgrades = [];
+    }
+
     for (const upgrade of CANDY_UPGRADES) {
       if (this.gameState.unlockedUpgrades.includes(upgrade.id)) {
         continue; // Already unlocked

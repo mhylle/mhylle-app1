@@ -1,7 +1,13 @@
 {
+  "/api/auth/*": {
+    "target": "http://localhost:8081",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
   "/api/app1/*": {
-    "target": "http://localhost:3000",
-    "secure": true,
+    "target": "http://backend:3000",
+    "secure": false,
     "changeOrigin": true,
     "logLevel": "debug",
     "pathRewrite": {

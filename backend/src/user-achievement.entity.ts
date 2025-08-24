@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, Index } from 'typeorm';
 
 @Entity('user_achievements')
+@Index(['user_id', 'achievement_id'], { unique: true })
 export class UserAchievement {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -25,8 +26,4 @@ export class UserAchievement {
 
   @CreateDateColumn()
   created_at: Date;
-
-  // Composite index for efficient lookups
-  @Index(['user_id', 'achievement_id'], { unique: true })
-  uniqueUserAchievement: never;
 }
