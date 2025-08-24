@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface UserInfo {
   id: string;
@@ -31,7 +32,7 @@ export class AuthService {
 
   async validateSession(): Promise<UserInfo | null> {
     try {
-      const response = await fetch('/api/auth/validate', {
+      const response = await fetch(`${environment.authUrl}/validate`, {
         credentials: 'include' // Include cookies
       });
       
@@ -46,9 +47,16 @@ export class AuthService {
         
         this.currentUserSubject.next(user);
         return user;
+      } else if (response.status === 401) {
+        // 401 Unauthorized is expected when not logged in - don't log as error
+        this.currentUserSubject.next(null);
+        return null;
       }
     } catch (error) {
-      console.error('Session validation failed:', error);
+      // Only log actual network/unexpected errors, not authentication failures
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        console.error('Session validation network error:', error);
+      }
     }
     
     this.currentUserSubject.next(null);
@@ -56,7 +64,7 @@ export class AuthService {
   }
 
   async login(credentials: LoginRequest): Promise<UserInfo> {
-    const response = await fetch('/api/auth/login', {
+    const response = await fetch(`${environment.authUrl}/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -84,7 +92,7 @@ export class AuthService {
 
   async logout(): Promise<void> {
     try {
-      await fetch('/api/auth/logout', {
+      await fetch(`${environment.authUrl}/logout`, {
         method: 'POST',
         credentials: 'include'
       });

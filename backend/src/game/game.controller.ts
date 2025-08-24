@@ -18,7 +18,7 @@ interface AuthenticatedRequest extends Request {
   user: AuthUser;
 }
 
-@Controller('api/app1/game')
+@Controller('game')
 @UseGuards(JwtAuthGuard)
 export class GameController {
   constructor(private readonly gameService: GameService) {}

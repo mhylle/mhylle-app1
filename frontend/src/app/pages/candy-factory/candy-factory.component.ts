@@ -50,15 +50,15 @@ import { Achievement } from '../../models/candy-factory.interface';
               </button>
               <button class="logout-btn" (click)="logout()">Logout</button>
             </div>
-            <div *ngIf="!(currentUser$ | async)" class="login-prompt">
-              <button class="login-btn" (click)="showLogin()">
-                🔑 Login to Save Progress
-              </button>
+            <div *ngIf="!(currentUser$ | async)" class="offline-status">
               <span class="offline-mode">Playing offline - progress saved locally</span>
             </div>
           </div>
           
           <div class="game-actions">
+            <button class="login-btn" (click)="showLogin()" *ngIf="!(currentUser$ | async)">
+              🔑 Login to Save Progress
+            </button>
             <button class="achievement-btn" (click)="showAchievementGallery = true">
               🏆 Achievements
             </button>
