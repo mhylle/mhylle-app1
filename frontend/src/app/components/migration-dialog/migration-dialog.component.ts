@@ -420,7 +420,20 @@ import { GameState } from '../../models/candy-factory.interface';
   `]
 })
 export class MigrationDialogComponent {
-  @Input() showDialog = false;
+  private _showDialog = false;
+  @Input() 
+  set showDialog(value: boolean) {
+    this._showDialog = value;
+    if (value) {
+      // Reset state and load data when dialog is shown
+      this.resetState();
+      this.loadDataComparison();
+    }
+  }
+  get showDialog(): boolean {
+    return this._showDialog;
+  }
+  
   @Output() closeDialogEvent = new EventEmitter<void>();
   @Output() migrationCompleteEvent = new EventEmitter<MigrationResult>();
 
@@ -436,10 +449,13 @@ export class MigrationDialogComponent {
 
   constructor(private migrationService: MigrationService) {}
 
-  async ngOnInit(): Promise<void> {
-    if (this.showDialog) {
-      await this.loadDataComparison();
-    }
+  private resetState(): void {
+    this.isLoadingComparison = false;
+    this.isProcessing = false;
+    this.loadingError = null;
+    this.processingMessage = '';
+    this.dataComparison = null;
+    this.migrationResult = null;
   }
 
   private async loadDataComparison(): Promise<void> {
