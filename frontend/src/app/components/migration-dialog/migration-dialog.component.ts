@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MigrationService, MigrationResult } from '../../services/migration.service';
+import { MigrationService, MigrationResult, DataComparisonResult } from '../../services/migration.service';
 import { GameState } from '../../models/candy-factory.interface';
 
 @Component({
@@ -10,74 +10,143 @@ import { GameState } from '../../models/candy-factory.interface';
   template: `
     <div class="migration-overlay" *ngIf="showDialog">
       <div class="migration-dialog" (click)="$event.stopPropagation()">
-        <div class="migration-header">
-          <h2>🔄 Migrate Your Save Data</h2>
-          <p>We found existing game data on your device. Would you like to sync it with your account?</p>
+        
+        <!-- Step 1: Loading data comparison -->
+        <div *ngIf="isLoadingComparison" class="migration-header">
+          <h2>🔄 Checking Your Save Data</h2>
+          <p>⏳ Comparing local and server data...</p>
         </div>
 
-        <div class="migration-content">
-          <div class="local-save-preview" *ngIf="localSaveData">
-            <h3>📱 Local Save Data Preview:</h3>
-            <div class="save-stats">
-              <div class="stat">
-                <span class="label">Candy:</span>
-                <span class="value">{{formatNumber(localSaveData.candy)}}</span>
+        <!-- Step 2: Show data comparison and choice -->
+        <div *ngIf="dataComparison && !migrationResult && !isProcessing" class="migration-content">
+          <div class="migration-header">
+            <h2>🎮 Choose Your Save Data</h2>
+            <p>We found save data both on your device and server. Which would you like to use?</p>
+          </div>
+
+          <div class="data-comparison">
+            <!-- Local Data Option -->
+            <div class="data-option" [class.recommended]="dataComparison.recommendLocal">
+              <div class="option-header">
+                <h3>📱 Local Device Data</h3>
+                <span *ngIf="dataComparison.recommendLocal" class="recommendation">✨ Recommended</span>
               </div>
-              <div class="stat">
-                <span class="label">Total Earned:</span>
-                <span class="value">{{formatNumber(localSaveData.totalCandyEarned)}}</span>
+              <div class="save-stats">
+                <div class="stat">
+                  <span class="label">Candy:</span>
+                  <span class="value">{{formatNumber(dataComparison.localData?.candy || 0)}}</span>
+                </div>
+                <div class="stat">
+                  <span class="label">Total Earned:</span>
+                  <span class="value">{{formatNumber(dataComparison.localData?.totalCandyEarned || 0)}}</span>
+                </div>
+                <div class="stat">
+                  <span class="label">Prestige Level:</span>
+                  <span class="value">{{dataComparison.localData?.prestigeLevel || 0}}</span>
+                </div>
+                <div class="stat">
+                  <span class="label">Achievements:</span>
+                  <span class="value">{{(dataComparison.localData?.unlockedAchievements?.length) || 0}}</span>
+                </div>
               </div>
-              <div class="stat">
-                <span class="label">Prestige Level:</span>
-                <span class="value">{{localSaveData.prestigeLevel || 0}}</span>
+              <p class="option-description">
+                <strong>Choose this to:</strong> Upload your local progress and overwrite server data
+              </p>
+            </div>
+
+            <!-- Server Data Option -->
+            <div class="data-option" [class.recommended]="!dataComparison.recommendLocal && dataComparison.hasServerData">
+              <div class="option-header">
+                <h3>☁️ Server Data</h3>
+                <span *ngIf="!dataComparison.recommendLocal && dataComparison.hasServerData" class="recommendation">✨ Recommended</span>
               </div>
-              <div class="stat">
-                <span class="label">Achievements:</span>
-                <span class="value">{{(localSaveData.unlockedAchievements && localSaveData.unlockedAchievements.length) || 0}}</span>
+              <div class="save-stats" *ngIf="dataComparison.serverData">
+                <div class="stat">
+                  <span class="label">Candy:</span>
+                  <span class="value">{{formatNumber(dataComparison.serverData.candy || 0)}}</span>
+                </div>
+                <div class="stat">
+                  <span class="label">Total Earned:</span>
+                  <span class="value">{{formatNumber(dataComparison.serverData.totalCandyEarned || 0)}}</span>
+                </div>
+                <div class="stat">
+                  <span class="label">Prestige Level:</span>
+                  <span class="value">{{dataComparison.serverData.prestigeLevel || 0}}</span>
+                </div>
+                <div class="stat">
+                  <span class="label">Achievements:</span>
+                  <span class="value">{{(dataComparison.serverData.unlockedAchievements?.length) || 0}}</span>
+                </div>
               </div>
+              <div *ngIf="!dataComparison.hasServerData" class="no-server-data">
+                <p>No server data found</p>
+              </div>
+              <p class="option-description" *ngIf="dataComparison.hasServerData">
+                <strong>Choose this to:</strong> Use your server progress and keep local data as backup
+              </p>
             </div>
           </div>
 
-          <div class="migration-options">
-            <div class="option-info">
-              <p><strong>✅ Recommended:</strong> Migrate your local progress to your account for cross-device play.</p>
-              <p><strong>📱 Local data will be preserved</strong> as backup even after migration.</p>
-            </div>
-          </div>
-
-          <div class="migration-result" *ngIf="migrationResult">
-            <div class="result-message" 
-                 [class.success]="migrationResult.success"
-                 [class.error]="!migrationResult.success">
-              <span class="result-icon">{{migrationResult.success ? '✅' : '❌'}}</span>
-              {{migrationResult.message}}
-            </div>
+          <div class="choice-actions">
+            <button 
+              class="choice-btn local-choice"
+              [disabled]="!dataComparison.localData"
+              (click)="chooseLocalData()">
+              📱 Use Local Data
+            </button>
+            
+            <button 
+              class="choice-btn server-choice"
+              [disabled]="!dataComparison.hasServerData"
+              (click)="chooseServerData()">
+              ☁️ Use Server Data
+            </button>
+            
+            <button 
+              class="skip-btn secondary"
+              (click)="skipMigration()">
+              Skip for Now
+            </button>
           </div>
         </div>
 
-        <div class="migration-actions">
-          <button 
-            class="migrate-btn primary"
-            [disabled]="isProcessing"
-            (click)="startMigration()">
-            <span *ngIf="!isProcessing">🔄 Migrate Data</span>
-            <span *ngIf="isProcessing">⏳ Migrating...</span>
-          </button>
+        <!-- Step 3: Processing migration -->
+        <div *ngIf="isProcessing" class="migration-header">
+          <h2>⏳ Processing Your Choice</h2>
+          <p>{{processingMessage}}</p>
+        </div>
+
+        <!-- Step 4: Show migration result -->
+        <div *ngIf="migrationResult" class="migration-result-content">
+          <div class="migration-header">
+            <h2>{{migrationResult.success ? '✅ Migration Complete' : '❌ Migration Failed'}}</h2>
+          </div>
           
-          <button 
-            class="skip-btn secondary"
-            [disabled]="isProcessing"
-            (click)="skipMigration()">
-            Skip for Now
-          </button>
-          
-          <button 
-            class="close-btn"
-            *ngIf="migrationResult?.success"
-            (click)="closeMigration()">
-            Continue Playing
+          <div class="result-message" 
+               [class.success]="migrationResult.success"
+               [class.error]="!migrationResult.success">
+            <span class="result-icon">{{migrationResult.success ? '✅' : '❌'}}</span>
+            {{migrationResult.message}}
+          </div>
+
+          <div class="final-actions">
+            <button 
+              class="close-btn primary"
+              (click)="closeMigration()">
+              Continue Playing
+            </button>
+          </div>
+        </div>
+
+        <!-- Error loading comparison -->
+        <div *ngIf="loadingError" class="migration-header">
+          <h2>❌ Error Loading Data</h2>
+          <p>{{loadingError}}</p>
+          <button class="close-btn secondary" (click)="skipMigration()">
+            Continue Without Migration
           </button>
         </div>
+
       </div>
     </div>
   `,
@@ -101,8 +170,10 @@ import { GameState } from '../../models/candy-factory.interface';
       border: 2px solid #4a90e2;
       border-radius: 15px;
       padding: 30px;
-      max-width: 500px;
+      max-width: 700px;
       width: 90vw;
+      max-height: 90vh;
+      overflow-y: auto;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
       animation: slideIn 0.3s ease-out;
     }
@@ -124,23 +195,53 @@ import { GameState } from '../../models/candy-factory.interface';
       line-height: 1.4;
     }
 
-    .local-save-preview {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 20px;
+    .data-comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 25px;
     }
 
-    .local-save-preview h3 {
-      color: #4a90e2;
-      margin: 0 0 15px 0;
+    .data-option {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .data-option.recommended {
+      border-color: #4a90e2;
+      background: rgba(74, 144, 226, 0.1);
+    }
+
+    .option-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .option-header h3 {
+      color: #ffffff;
+      margin: 0;
       font-size: 1.2em;
+    }
+
+    .recommendation {
+      background: linear-gradient(135deg, #4a90e2, #357abd);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8em;
+      font-weight: bold;
     }
 
     .save-stats {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 15px;
     }
 
     .stat {
@@ -162,46 +263,31 @@ import { GameState } from '../../models/candy-factory.interface';
       font-weight: bold;
     }
 
-    .migration-options {
-      margin-bottom: 20px;
-    }
-
-    .option-info p {
+    .option-description {
       color: #b0b0b0;
-      margin: 8px 0;
-      font-size: 0.95em;
+      font-size: 0.9em;
       line-height: 1.4;
+      margin: 0;
     }
 
-    .migration-result {
-      margin: 20px 0;
+    .no-server-data {
+      text-align: center;
+      color: #888;
+      padding: 20px;
+      font-style: italic;
     }
 
-    .result-message {
-      padding: 15px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .result-message.success {
-      background: rgba(76, 175, 80, 0.2);
-      border: 1px solid #4caf50;
-      color: #4caf50;
-    }
-
-    .result-message.error {
-      background: rgba(244, 67, 54, 0.2);
-      border: 1px solid #f44336;
-      color: #f44336;
-    }
-
-    .migration-actions {
+    .choice-actions {
       display: flex;
       gap: 15px;
       justify-content: center;
       flex-wrap: wrap;
+    }
+
+    .final-actions {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
     }
 
     button {
@@ -212,12 +298,39 @@ import { GameState } from '../../models/candy-factory.interface';
       font-weight: bold;
       cursor: pointer;
       transition: all 0.3s ease;
-      min-width: 120px;
+      min-width: 140px;
     }
 
     button:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+    }
+
+    .choice-btn {
+      background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+      color: white;
+      border: 2px solid transparent;
+    }
+
+    .choice-btn:hover:not(:disabled) {
+      background: linear-gradient(135deg, #357abd 0%, #2968a3 100%);
+      transform: translateY(-2px);
+    }
+
+    .local-choice {
+      background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+    }
+
+    .local-choice:hover:not(:disabled) {
+      background: linear-gradient(135deg, #388e3c 0%, #2e7d32 100%);
+    }
+
+    .server-choice {
+      background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+    }
+
+    .server-choice:hover:not(:disabled) {
+      background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
     }
 
     .primary {
@@ -250,6 +363,27 @@ import { GameState } from '../../models/candy-factory.interface';
       background: linear-gradient(135deg, #388e3c 0%, #2e7d32 100%);
     }
 
+    .result-message {
+      padding: 15px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .result-message.success {
+      background: rgba(76, 175, 80, 0.2);
+      border: 1px solid #4caf50;
+      color: #4caf50;
+    }
+
+    .result-message.error {
+      background: rgba(244, 67, 54, 0.2);
+      border: 1px solid #f44336;
+      color: #f44336;
+    }
+
     @keyframes fadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
@@ -266,17 +400,21 @@ import { GameState } from '../../models/candy-factory.interface';
       }
     }
 
-    @media (max-width: 600px) {
-      .migration-dialog {
-        padding: 20px;
+    @media (max-width: 800px) {
+      .data-comparison {
+        grid-template-columns: 1fr;
       }
       
       .save-stats {
         grid-template-columns: 1fr;
       }
       
-      .migration-actions {
+      .choice-actions {
         flex-direction: column;
+      }
+      
+      .migration-dialog {
+        padding: 20px;
       }
     }
   `]
@@ -286,24 +424,58 @@ export class MigrationDialogComponent {
   @Output() closeDialogEvent = new EventEmitter<void>();
   @Output() migrationCompleteEvent = new EventEmitter<MigrationResult>();
 
-  localSaveData: GameState | null = null;
+  // Component state
+  isLoadingComparison = false;
   isProcessing = false;
+  loadingError: string | null = null;
+  processingMessage = '';
+  
+  // Data
+  dataComparison: DataComparisonResult | null = null;
   migrationResult: MigrationResult | null = null;
 
   constructor(private migrationService: MigrationService) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     if (this.showDialog) {
-      this.localSaveData = this.migrationService.getLocalSaveData();
+      await this.loadDataComparison();
     }
   }
 
-  async startMigration(): Promise<void> {
+  private async loadDataComparison(): Promise<void> {
+    this.isLoadingComparison = true;
+    this.loadingError = null;
+
+    try {
+      this.dataComparison = await this.migrationService.getDataComparison();
+      
+      // If no local data, skip migration
+      if (!this.dataComparison.localData) {
+        this.migrationService.markMigrationCompleted();
+        this.closeDialogEvent.emit();
+        return;
+      }
+      
+      // If no server data, auto-migrate local data
+      if (!this.dataComparison.hasServerData) {
+        await this.chooseLocalData();
+        return;
+      }
+      
+    } catch (error) {
+      this.loadingError = `Failed to load save data: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    } finally {
+      this.isLoadingComparison = false;
+    }
+  }
+
+  async chooseLocalData(): Promise<void> {
     this.isProcessing = true;
+    this.processingMessage = 'Uploading your local data to server...';
     this.migrationResult = null;
 
     try {
-      const result = await this.migrationService.migrateLocalSaveToServer();
+      const result = await this.migrationService.migrateUseLocalData();
       this.migrationResult = result;
       
       if (result.success) {
@@ -315,7 +487,34 @@ export class MigrationDialogComponent {
     } catch (error) {
       this.migrationResult = {
         success: false,
-        message: `Migration failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to upload local data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        migrated: false,
+        hadLocalData: true
+      };
+    } finally {
+      this.isProcessing = false;
+    }
+  }
+
+  async chooseServerData(): Promise<void> {
+    this.isProcessing = true;
+    this.processingMessage = 'Setting up to use server data...';
+    this.migrationResult = null;
+
+    try {
+      const result = await this.migrationService.migrateUseServerData();
+      this.migrationResult = result;
+      
+      if (result.success) {
+        // Emit migration complete event after a brief delay
+        setTimeout(() => {
+          this.migrationCompleteEvent.emit(result);
+        }, 1500);
+      }
+    } catch (error) {
+      this.migrationResult = {
+        success: false,
+        message: `Failed to configure server data: ${error instanceof Error ? error.message : 'Unknown error'}`,
         migrated: false,
         hadLocalData: true
       };

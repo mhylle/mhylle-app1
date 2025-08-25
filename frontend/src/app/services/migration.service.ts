@@ -10,6 +10,13 @@ export interface MigrationResult {
   hadLocalData: boolean;
 }
 
+export interface DataComparisonResult {
+  hasServerData: boolean;
+  localData: GameState | null;
+  serverData: GameState | null;
+  recommendLocal: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -49,6 +56,149 @@ export class MigrationService {
     } catch (error) {
       console.error('Failed to parse local save data:', error);
       return null;
+    }
+  }
+
+  /**
+   * Get data comparison for user choice migration
+   */
+  async getDataComparison(): Promise<DataComparisonResult> {
+    const localData = this.getLocalSaveData();
+    
+    if (!localData) {
+      return {
+        hasServerData: false,
+        localData: null,
+        serverData: null,
+        recommendLocal: false
+      };
+    }
+
+    try {
+      const serverData = await this.gameApiService.loadGameState();
+      const recommendLocal = serverData ? this.shouldUseLocalData(localData, serverData) : true;
+      
+      return {
+        hasServerData: !!serverData,
+        localData,
+        serverData,
+        recommendLocal
+      };
+    } catch (error) {
+      console.error('Failed to load server data for comparison:', error);
+      return {
+        hasServerData: false,
+        localData,
+        serverData: null,
+        recommendLocal: true
+      };
+    }
+  }
+
+  /**
+   * Migrate with user choice - use local data and overwrite server
+   */
+  async migrateUseLocalData(): Promise<MigrationResult> {
+    if (!this.authService.isAuthenticated()) {
+      return {
+        success: false,
+        message: 'User must be logged in to migrate data',
+        migrated: false,
+        hadLocalData: false
+      };
+    }
+
+    const localData = this.getLocalSaveData();
+    if (!localData) {
+      return {
+        success: false,
+        message: 'No local save data found to migrate',
+        migrated: false,
+        hadLocalData: false
+      };
+    }
+
+    try {
+      const success = await this.gameApiService.saveGameState(localData);
+      if (success) {
+        localStorage.setItem(this.MIGRATION_COMPLETED_KEY, 'true');
+        return {
+          success: true,
+          message: 'Local save data uploaded successfully - server data has been overwritten',
+          migrated: true,
+          hadLocalData: true
+        };
+      } else {
+        return {
+          success: false,
+          message: 'Failed to upload local data to server',
+          migrated: false,
+          hadLocalData: true
+        };
+      }
+    } catch (error) {
+      console.error('Migration failed:', error);
+      return {
+        success: false,
+        message: `Migration failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        migrated: false,
+        hadLocalData: true
+      };
+    }
+  }
+
+  /**
+   * Use server data and mark migration as complete - local data is preserved as backup
+   */
+  async migrateUseServerData(): Promise<MigrationResult> {
+    if (!this.authService.isAuthenticated()) {
+      return {
+        success: false,
+        message: 'User must be logged in to access server data',
+        migrated: false,
+        hadLocalData: false
+      };
+    }
+
+    const localData = this.getLocalSaveData();
+    if (!localData) {
+      return {
+        success: false,
+        message: 'No local save data found',
+        migrated: false,
+        hadLocalData: false
+      };
+    }
+
+    try {
+      // Verify server has data
+      const serverData = await this.gameApiService.loadGameState();
+      if (!serverData) {
+        return {
+          success: false,
+          message: 'No server data found to use',
+          migrated: false,
+          hadLocalData: true
+        };
+      }
+
+      // Mark migration as completed - this will cause the game to load server data
+      localStorage.setItem(this.MIGRATION_COMPLETED_KEY, 'true');
+      
+      return {
+        success: true,
+        message: 'Server save data will be used - local data preserved as backup',
+        migrated: true,
+        hadLocalData: true
+      };
+    } catch (error) {
+      console.error('Failed to verify server data:', error);
+      return {
+        success: false,
+        message: `Failed to verify server data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        migrated: false,
+        hadLocalData: true
+      };
     }
   }
 
