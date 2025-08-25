@@ -1,32 +1,42 @@
-import { Injectable } from '@angular/core';
-import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse } from '@angular/common/http';
+import { HttpRequest, HttpHandlerFn, HttpEvent, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 
-@Injectable()
-export class AuthInterceptor implements HttpInterceptor {
-  constructor(private authService: AuthService) {}
+export function authInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
+  const authService = inject(AuthService);
+  
+  // Get JWT token from localStorage
+  const token = localStorage.getItem('auth_token');
+  
+  // Clone request and add headers
+  let authReq = req.clone({
+    setHeaders: {
+      'Content-Type': 'application/json'
+    },
+    withCredentials: true // Include cookies for session-based auth
+  });
 
-  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // Add credentials to all requests (for cookies)
-    const authReq = req.clone({
+  // Add JWT Authorization header if token exists
+  if (token) {
+    authReq = authReq.clone({
       setHeaders: {
-        'Content-Type': 'application/json'
-      },
-      withCredentials: true
+        ...authReq.headers,
+        'Authorization': `Bearer ${token}`
+      }
     });
-
-    return next.handle(authReq).pipe(
-      catchError((error: HttpErrorResponse) => {
-        if (error.status === 401) {
-          // Unauthorized - clear user and show login
-          this.authService.logout();
-          const event = new CustomEvent('show-login');
-          window.dispatchEvent(event);
-        }
-        return throwError(() => error);
-      })
-    );
   }
+
+  return next(authReq).pipe(
+    catchError((error: HttpErrorResponse) => {
+      if (error.status === 401) {
+        // Unauthorized - clear user and show login
+        authService.logout();
+        const event = new CustomEvent('show-login');
+        window.dispatchEvent(event);
+      }
+      return throwError(() => error);
+    })
+  );
 }
