@@ -40,7 +40,16 @@ export class AuthService {
 
   async validateSession(): Promise<UserInfo | null> {
     try {
+      // Get the auth token if it exists
+      const token = localStorage.getItem('auth_token');
+      const headers: HeadersInit = {};
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`${environment.authUrl}/validate`, {
+        headers,
         credentials: 'include' // Include cookies
       });
       
