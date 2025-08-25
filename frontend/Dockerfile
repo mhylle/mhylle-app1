@@ -14,7 +14,8 @@ RUN npm ci
 COPY frontend/ .
 
 # Build the Angular application with correct base href for app1 subpath
-RUN npm run build -- --base-href="/app1/"
+# Explicitly use production configuration to ensure environment file replacement
+RUN npm run build -- --configuration=production --base-href="/app1/"
 
 # Production stage with nginx
 FROM nginx:alpine
