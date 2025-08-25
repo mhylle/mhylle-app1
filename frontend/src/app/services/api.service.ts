@@ -16,47 +16,31 @@ export class ApiService {
 
   constructor() {}
 
-  private async getAuthToken(): Promise<string | null> {
-    // First, try to get token from localStorage (if stored there)
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      return token;
-    }
-
-    // If no token in localStorage, try to validate current session with auth service
+  private async isAuthenticated(): Promise<boolean> {
+    // Check if user is authenticated by validating session with auth service
     try {
       const response = await fetch(`${environment.authUrl}/validate`, {
         credentials: 'include'
       });
-      
-      if (response.ok) {
-        const result = await response.json();
-        // The auth service might return a token we can use
-        if (result.access_token) {
-          localStorage.setItem('auth_token', result.access_token);
-          return result.access_token;
-        }
-      }
+      return response.ok;
     } catch (error) {
-      console.error('Failed to get auth token:', error);
+      console.error('Failed to validate authentication:', error);
+      return false;
     }
-
-    return null;
   }
 
   private async makeAuthenticatedRequest<T>(
     endpoint: string, 
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    const token = await this.getAuthToken();
+    const isAuth = await this.isAuthenticated();
     
-    if (!token) {
-      throw new Error('No authentication token available');
+    if (!isAuth) {
+      throw new Error('User is not authenticated');
     }
 
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
       ...options.headers,
     };
 
@@ -64,7 +48,7 @@ export class ApiService {
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         ...options,
         headers,
-        credentials: 'include',
+        credentials: 'include', // Include cookies for authentication
       });
 
       if (!response.ok) {
