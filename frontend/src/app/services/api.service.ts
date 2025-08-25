@@ -25,7 +25,7 @@ export class ApiService {
 
     // If no token in localStorage, try to validate current session with auth service
     try {
-      const response = await fetch('http://localhost:8081/api/auth/validate', {
+      const response = await fetch(`${environment.authUrl}/validate`, {
         credentials: 'include'
       });
       

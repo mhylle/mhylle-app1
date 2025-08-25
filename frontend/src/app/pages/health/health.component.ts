@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { Observable, timer, of } from 'rxjs';
 import { switchMap, catchError, startWith } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 interface HealthStatus {
   status: 'healthy' | 'unhealthy' | 'unknown';
@@ -507,9 +508,7 @@ export class HealthComponent implements OnInit {
   }
 
   private getApiUrl(): string {
-    return window.location.hostname === 'localhost' 
-      ? 'http://localhost:3000' 
-      : '/api/app1';
+    return environment.apiUrl;
   }
 
   private getMockHealthData(): HealthStatus {

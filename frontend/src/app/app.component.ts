@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { AuthService, UserInfo } from './services/auth.service';
 import { LoginComponent } from './components/login/login.component';
+import { environment } from '../environments/environment';
 
 interface AppInfo {
   name: string;
@@ -281,13 +282,11 @@ export class AppComponent implements OnInit {
   }
 
   private loadAppInfo(): void {
-    // In a real application, this would come from environment config or API
-    const isProduction = window.location.hostname !== 'localhost';
-    
+    // Load from environment configuration
     this.appInfo = {
       ...this.appInfo,
-      environment: isProduction ? 'production' : 'development',
-      apiUrl: isProduction ? '/api/app1' : 'http://localhost:3000'
+      environment: environment.production ? 'production' : 'development',
+      apiUrl: environment.apiUrl
     };
   }
 }
