@@ -134,13 +134,13 @@ import { AuthService, LoginRequest, RegisterRequest } from '../../services/auth.
               [(ngModel)]="registerCredentials.password" 
               required 
               minlength="8"
-              pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$"
+              pattern="^(?=.*\d).{8,}$"
               #regPassword="ngModel"
-              placeholder="Password123!">
+              placeholder="password123">
             <div *ngIf="regPassword.invalid && regPassword.touched" class="error">
               <span *ngIf="regPassword.errors?.['required']">Password is required</span>
               <span *ngIf="regPassword.errors?.['minlength']">Password must be at least 8 characters</span>
-              <span *ngIf="regPassword.errors?.['pattern']">Password must contain uppercase, lowercase, number, and special character</span>
+              <span *ngIf="regPassword.errors?.['pattern']">Password must contain at least one number</span>
             </div>
           </div>
 
@@ -153,7 +153,7 @@ import { AuthService, LoginRequest, RegisterRequest } from '../../services/auth.
               [(ngModel)]="registerCredentials.confirmPassword" 
               required 
               #regConfirmPassword="ngModel"
-              placeholder="Password123!">
+              placeholder="password123">
             <div *ngIf="regConfirmPassword.invalid && regConfirmPassword.touched" class="error">
               Confirm password is required
             </div>
