@@ -40,27 +40,13 @@ export class AuthService {
 
   async validateSession(): Promise<UserInfo | null> {
     try {
-      // Get the auth token if it exists
-      const token = localStorage.getItem('auth_token');
-      const headers: HeadersInit = {};
-      
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
       const response = await fetch(`${environment.authUrl}/validate`, {
-        headers,
-        credentials: 'include' // Include cookies
+        credentials: 'include' // Cookie-based authentication
       });
       
       if (response.ok) {
         const result = await response.json();
         const user = result.user || result.data;
-        
-        // Store JWT token if provided
-        if (result.access_token) {
-          localStorage.setItem('auth_token', result.access_token);
-        }
         
         this.currentUserSubject.next(user);
         return user;
@@ -109,7 +95,7 @@ export class AuthService {
       headers: {
         'Content-Type': 'application/json'
       },
-      credentials: 'include', // Include cookies
+      credentials: 'include', // Include cookies for authentication
       body: JSON.stringify(credentials)
     });
 
@@ -121,11 +107,7 @@ export class AuthService {
     const result = await response.json();
     const user = result.user || result.data;
     
-    // Store JWT token if provided
-    if (result.access_token) {
-      localStorage.setItem('auth_token', result.access_token);
-    }
-    
+    // Authentication is cookie-based, no JWT token storage needed
     this.currentUserSubject.next(user);
     return user;
   }
@@ -140,8 +122,6 @@ export class AuthService {
       console.error('Logout error:', error);
     }
     
-    // Clear stored token
-    localStorage.removeItem('auth_token');
     this.currentUserSubject.next(null);
   }
 

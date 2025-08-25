@@ -7,26 +7,13 @@ import { AuthService } from '../services/auth.service';
 export function authInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
   const authService = inject(AuthService);
   
-  // Get JWT token from localStorage
-  const token = localStorage.getItem('auth_token');
-  
-  // Clone request and add headers
-  let authReq = req.clone({
+  // Clone request to ensure cookies are included for authentication
+  const authReq = req.clone({
     setHeaders: {
       'Content-Type': 'application/json'
     },
-    withCredentials: true // Include cookies for session-based auth
+    withCredentials: true // Include cookies for authentication
   });
-
-  // Add JWT Authorization header if token exists
-  if (token) {
-    authReq = authReq.clone({
-      setHeaders: {
-        ...authReq.headers,
-        'Authorization': `Bearer ${token}`
-      }
-    });
-  }
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
