@@ -133,14 +133,14 @@ import { AuthService, LoginRequest, RegisterRequest } from '../../services/auth.
               name="regPassword"
               [(ngModel)]="registerCredentials.password" 
               required 
-              minlength="8"
-              pattern="^(?=.*\d).{8,}$"
+              minlength="6"
+              pattern="^(?=.*\d)[a-zA-Z\d]+$"
               #regPassword="ngModel"
               placeholder="password123">
             <div *ngIf="regPassword.invalid && regPassword.touched" class="error">
               <span *ngIf="regPassword.errors?.['required']">Password is required</span>
-              <span *ngIf="regPassword.errors?.['minlength']">Password must be at least 8 characters</span>
-              <span *ngIf="regPassword.errors?.['pattern']">Password must contain at least one number</span>
+              <span *ngIf="regPassword.errors?.['minlength']">Password must be at least 6 characters</span>
+              <span *ngIf="regPassword.errors?.['pattern']">Password must contain at least one number and only letters/numbers</span>
             </div>
           </div>
 
