@@ -35,10 +35,19 @@ export class JwtAuthGuard implements CanActivate {
     const authUrl = this.configService.get<string>('AUTH_URL', 'http://mhylle-auth-service:3000/api/auth');
     
     try {
+      // Send token either as Authorization header or Cookie depending on source
+      const headers: any = {};
+      
+      if (request.cookies && request.cookies.auth_token) {
+        // Token came from cookie - forward as cookie
+        headers['Cookie'] = `auth_token=${token}`;
+      } else {
+        // Token came from Authorization header - forward as Bearer token
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`${authUrl}/validate`, {
-        headers: {
-          'Cookie': `auth_token=${token}`
-        }
+        headers
       });
 
       if (!response.ok) {
