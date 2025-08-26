@@ -13,6 +13,11 @@ export class JwtAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     
+    // Debug logging to see what's in the request
+    console.log('[JwtAuthGuard] Request headers:', JSON.stringify(request.headers, null, 2));
+    console.log('[JwtAuthGuard] Request cookies:', request.cookies);
+    console.log('[JwtAuthGuard] Request URL:', request.url);
+    
     // Get token from Authorization header or cookie
     let token = null;
     
@@ -20,12 +25,16 @@ export class JwtAuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.substring(7);
+      console.log('[JwtAuthGuard] Found token in Authorization header');
     }
     
     // If no Authorization header, try cookie (for browser requests)
     if (!token && request.cookies && request.cookies.auth_token) {
       token = request.cookies.auth_token;
+      console.log('[JwtAuthGuard] Found token in cookie');
     }
+    
+    console.log('[JwtAuthGuard] Final token:', token ? 'present' : 'missing');
     
     if (!token) {
       throw new UnauthorizedException('Invalid authorization header');
