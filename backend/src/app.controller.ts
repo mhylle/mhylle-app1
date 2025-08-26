@@ -1,10 +1,15 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Headers, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Headers, UnauthorizedException, Req, Res } from '@nestjs/common';
+import { Request, Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 import { AppService } from './app.service';
 import { CreateMessageDto, MessageResponseDto } from './message.dto';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Get()
   getHello(): string {
@@ -31,29 +36,116 @@ export class AppController {
     return this.appService.deleteMessage(parseInt(id));
   }
 
-  // Game State Endpoints
+  // Game State Endpoints  
   @Get('game/state')
-  async getGameState(@Headers('authorization') authHeader: string) {
-    const userId = this.extractUserIdFromAuth(authHeader);
-    return this.appService.getGameState(userId);
+  async getGameState(@Req() request: Request) {
+    const user = await this.validateUserFromRequest(request);
+    return this.appService.getGameState(user.id);
   }
 
   @Put('game/state')
-  async saveGameState(@Headers('authorization') authHeader: string, @Body() gameState: any) {
-    const userId = this.extractUserIdFromAuth(authHeader);
-    return this.appService.saveGameState(userId, gameState);
+  async saveGameState(@Req() request: Request, @Body() gameState: any) {
+    const user = await this.validateUserFromRequest(request);
+    return this.appService.saveGameState(user.id, gameState);
   }
 
   @Get('achievements')
-  async getAchievements(@Headers('authorization') authHeader: string) {
-    const userId = this.extractUserIdFromAuth(authHeader);
-    return this.appService.getUserAchievements(userId);
+  async getAchievements(@Req() request: Request) {
+    const user = await this.validateUserFromRequest(request);
+    return this.appService.getUserAchievements(user.id);
   }
 
   @Post('achievements')
-  async unlockAchievement(@Headers('authorization') authHeader: string, @Body() achievement: any) {
-    const userId = this.extractUserIdFromAuth(authHeader);
-    return this.appService.unlockAchievement(userId, achievement);
+  async unlockAchievement(@Req() request: Request, @Body() achievement: any) {
+    const user = await this.validateUserFromRequest(request);
+    return this.appService.unlockAchievement(user.id, achievement);
+  }
+
+  // Auth proxy endpoints - all auth goes through app1 backend
+  @Post('auth/login')
+  async login(@Body() loginData: any, @Res({ passthrough: true }) response: Response) {
+    const authUrl = this.configService.get<string>('AUTH_URL', 'http://mhylle-auth-service:3000/api/auth');
+    
+    const authResponse = await fetch(`${authUrl}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(loginData),
+    });
+
+    if (!authResponse.ok) {
+      const error = await authResponse.json();
+      throw new UnauthorizedException(error.message || 'Login failed');
+    }
+
+    const result = await authResponse.json();
+    
+    // Forward cookie from auth service to client
+    const cookies = authResponse.headers.get('set-cookie');
+    if (cookies) {
+      response.setHeader('Set-Cookie', cookies);
+    }
+
+    return result;
+  }
+
+  @Post('auth/logout')
+  async logout(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
+    const authUrl = this.configService.get<string>('AUTH_URL', 'http://mhylle-auth-service:3000/api/auth');
+    
+    // Forward cookies to auth service
+    const authResponse = await fetch(`${authUrl}/logout`, {
+      method: 'POST',
+      headers: {
+        'Cookie': request.headers.cookie || '',
+      },
+    });
+
+    // Forward cookie clearing from auth service
+    const cookies = authResponse.headers.get('set-cookie');
+    if (cookies) {
+      response.setHeader('Set-Cookie', cookies);
+    }
+
+    const result = await authResponse.json();
+    return result;
+  }
+
+  @Get('auth/validate')
+  async validate(@Req() request: Request) {
+    const authUrl = this.configService.get<string>('AUTH_URL', 'http://mhylle-auth-service:3000/api/auth');
+    
+    // Forward cookies to auth service  
+    const authResponse = await fetch(`${authUrl}/validate`, {
+      headers: {
+        'Cookie': request.headers.cookie || '',
+      },
+    });
+
+    if (!authResponse.ok) {
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    const result = await authResponse.json();
+    return result;
+  }
+
+  @Post('auth/register')
+  async register(@Body() registerData: any) {
+    const authUrl = this.configService.get<string>('AUTH_URL', 'http://mhylle-auth-service:3000/api/auth');
+    
+    const authResponse = await fetch(`${authUrl}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(registerData),
+    });
+
+    if (!authResponse.ok) {
+      const error = await authResponse.json();
+      throw new UnauthorizedException(error.message || 'Registration failed');
+    }
+
+    const result = await authResponse.json();
+    return result;
   }
 
   @Get('health')
@@ -65,13 +157,21 @@ export class AppController {
     };
   }
 
-  private extractUserIdFromAuth(authHeader: string): string {
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Invalid authorization header');
-    }
+  private async validateUserFromRequest(request: Request): Promise<any> {
+    const authUrl = this.configService.get<string>('AUTH_URL', 'http://mhylle-auth-service:3000/api/auth');
     
-    // For now, return a mock user ID - in production you'd decode the JWT
-    // TODO: Implement proper JWT validation with auth service
-    return 'd104f50a-ee94-4bbc-a644-91ff90f6e0df'; // Admin user ID
+    // Forward cookies to auth service for validation
+    const authResponse = await fetch(`${authUrl}/validate`, {
+      headers: {
+        'Cookie': request.headers.cookie || '',
+      },
+    });
+
+    if (!authResponse.ok) {
+      throw new UnauthorizedException('Invalid authentication');
+    }
+
+    const result = await authResponse.json();
+    return result.data; // Return user data from auth service
   }
 }

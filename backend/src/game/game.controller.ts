@@ -5,28 +5,31 @@ import {
   Post, 
   Body, 
   Param,
-  UseGuards,
   Request,
   HttpException,
-  HttpStatus
+  HttpStatus,
+  UnauthorizedException
 } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
+import { ConfigService } from '@nestjs/config';
 import { GameService, GameStateData } from './game.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { AuthUser } from '../auth/jwt.strategy';
 
-interface AuthenticatedRequest extends Request {
-  user: AuthUser;
+interface AuthenticatedRequest extends ExpressRequest {
+  user: any;
 }
 
 @Controller('game')
-@UseGuards(JwtAuthGuard)
 export class GameController {
-  constructor(private readonly gameService: GameService) {}
+  constructor(
+    private readonly gameService: GameService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Get('state')
-  async getGameState(@Request() req: AuthenticatedRequest) {
+  async getGameState(@Request() req: ExpressRequest) {
     try {
-      const gameData = await this.gameService.getGameState(req.user.userId);
+      const user = await this.validateUserFromRequest(req);
+      const gameData = await this.gameService.getGameState(user.id);
       
       if (!gameData) {
         return {
@@ -52,11 +55,12 @@ export class GameController {
 
   @Put('state')
   async saveGameState(
-    @Request() req: AuthenticatedRequest,
+    @Request() req: ExpressRequest,
     @Body() gameData: GameStateData
   ) {
     try {
-      const savedState = await this.gameService.saveGameState(req.user.userId, gameData);
+      const user = await this.validateUserFromRequest(req);
+      const savedState = await this.gameService.saveGameState(user.id, gameData);
       
       return {
         success: true,
@@ -75,11 +79,12 @@ export class GameController {
 
   @Post('sync')
   async syncGameState(
-    @Request() req: AuthenticatedRequest,
+    @Request() req: ExpressRequest,
     @Body() clientGameData: GameStateData
   ) {
     try {
-      const result = await this.gameService.syncGameState(req.user.userId, clientGameData);
+      const user = await this.validateUserFromRequest(req);
+      const result = await this.gameService.syncGameState(user.id, clientGameData);
       
       return {
         success: true,
@@ -100,9 +105,10 @@ export class GameController {
   }
 
   @Get('achievements')
-  async getUserAchievements(@Request() req: AuthenticatedRequest) {
+  async getUserAchievements(@Request() req: ExpressRequest) {
     try {
-      const achievements = await this.gameService.getUserAchievements(req.user.userId);
+      const user = await this.validateUserFromRequest(req);
+      const achievements = await this.gameService.getUserAchievements(user.id);
       
       return {
         success: true,
@@ -120,13 +126,14 @@ export class GameController {
 
   @Post('achievements/:achievementId')
   async unlockAchievement(
-    @Request() req: AuthenticatedRequest,
+    @Request() req: ExpressRequest,
     @Param('achievementId') achievementId: string,
     @Body() metadata?: any
   ) {
     try {
+      const user = await this.validateUserFromRequest(req);
       const achievement = await this.gameService.unlockAchievement(
-        req.user.userId, 
+        user.id, 
         achievementId, 
         metadata
       );
@@ -150,5 +157,23 @@ export class GameController {
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
+  }
+
+  private async validateUserFromRequest(request: ExpressRequest): Promise<any> {
+    const authUrl = this.configService.get<string>('AUTH_URL', 'http://mhylle-auth-service:3000/api/auth');
+    
+    // Forward cookies to auth service for validation
+    const authResponse = await fetch(`${authUrl}/validate`, {
+      headers: {
+        'Cookie': request.headers.cookie || '',
+      },
+    });
+
+    if (!authResponse.ok) {
+      throw new UnauthorizedException('Invalid authentication');
+    }
+
+    const result = await authResponse.json();
+    return result.data; // Return user data from auth service
   }
 }
