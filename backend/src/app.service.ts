@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Message } from './message.entity';
+import { GameState } from './game-state.entity';
 import { CreateMessageDto, MessageResponseDto } from './message.dto';
 
 @Injectable()
@@ -9,6 +10,8 @@ export class AppService {
   constructor(
     @InjectRepository(Message)
     private messageRepository: Repository<Message>,
+    @InjectRepository(GameState)
+    private gameStateRepository: Repository<GameState>,
   ) {}
 
   getHello(): string {
@@ -60,21 +63,35 @@ export class AppService {
 
   // Game State Management
   async getGameState(userId: string) {
-    // For now, return a mock game state that matches the frontend interface
-    // TODO: Implement proper database storage with GameState entity
-    return {
-      success: true,
-      data: {
+    console.log(`Loading game state for user ${userId}`);
+    
+    try {
+      // Look for existing game state in database
+      const existingGameState = await this.gameStateRepository.findOne({
+        where: { user_id: userId }
+      });
+
+      if (existingGameState) {
+        console.log(`Found existing game state for user ${userId}:`, existingGameState.game_data);
+        return {
+          success: true,
+          data: {
+            ...existingGameState.game_data,
+            userId: userId,
+            lastSaved: existingGameState.last_saved.getTime()
+          }
+        };
+      }
+
+      // No existing state, return fresh game state
+      console.log(`No existing game state for user ${userId}, returning fresh state`);
+      const freshGameState = {
         candy: 0,
         totalCandyEarned: 0,
-        clickPower: 4,
+        clickPower: 1,
         productionPerSecond: 0,
-        upgrades: {
-          'candy-wrapper-bot': 3,  // level count
-          'sugar-sprinkler': 0,
-          'lollipop-cyclotron': 0
-        },
-        unlockedUpgrades: ['candy-wrapper-bot'],  // array of unlocked upgrade IDs
+        upgrades: {},
+        unlockedUpgrades: [],
         sessionId: 'server-session-' + userId,
         lastSaved: Date.now(),
         startTime: Date.now(),
@@ -82,30 +99,61 @@ export class AppService {
         prestigePoints: 0,
         prestigeMultiplier: 1.0,
         totalPrestigePoints: 0,
-        achievements: {},  // object not array
-        unlockedAchievements: ['sweet-beginning'],
+        achievements: {},
+        unlockedAchievements: [],
         collectedCandies: {},
         discoveredCandies: [],
         totalClicks: 0,
         totalFlyingCandiesCaught: 0,
         totalPlayTime: 0,
         userId: userId
-      }
-    };
+      };
+
+      return {
+        success: true,
+        data: freshGameState
+      };
+    } catch (error) {
+      console.error(`Error loading game state for user ${userId}:`, error);
+      return {
+        success: false,
+        error: 'Failed to load game state',
+        data: null
+      };
+    }
   }
 
   async saveGameState(userId: string, gameState: any) {
-    // For now, just return success - in production would save to database
-    // TODO: Implement proper database storage with GameState entity
     console.log(`Saving game state for user ${userId}:`, gameState);
-    return {
-      success: true,
-      message: 'Game state saved successfully',
-      data: {
-        userId: userId,
-        savedAt: new Date().toISOString()
-      }
-    };
+    
+    try {
+      // Remove userId from gameState data to avoid duplication
+      const { userId: _, ...gameData } = gameState;
+      
+      // Use upsert to either update existing or create new record
+      await this.gameStateRepository.upsert({
+        user_id: userId,
+        game_data: gameData,
+        last_saved: new Date()
+      }, ['user_id']); // Use user_id as conflict column
+
+      console.log(`Successfully saved game state for user ${userId}`);
+      return {
+        success: true,
+        message: 'Game state saved successfully',
+        data: {
+          userId: userId,
+          savedAt: new Date().toISOString()
+        }
+      };
+    } catch (error) {
+      console.error(`Error saving game state for user ${userId}:`, error);
+      return {
+        success: false,
+        error: 'Failed to save game state',
+        message: error.message
+      };
+    }
   }
 
   async getUserAchievements(userId: string) {
