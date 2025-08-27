@@ -24,6 +24,11 @@ export class GameState {
     prestigeMultiplier: number;
     totalPrestigePoints: number;
     
+    // Session Validation System (for cross-browser sync)
+    sessionStartTime?: number;
+    sessionStartCandyAmount?: number;
+    lastUserInteraction?: number;
+    
     // Achievement & Collection System
     achievements: { [achievementId: string]: {
       achievementId: string;

@@ -50,13 +50,8 @@ export class GameService {
       return null;
     }
 
-    // Ensure backward compatibility for lastUserInteraction field
-    const gameDataAny = gameState.game_data as any;
-    if (gameDataAny.lastUserInteraction === undefined || gameDataAny.lastUserInteraction === null || gameDataAny.lastUserInteraction === 0) {
-      console.log(`[GameService] Setting missing lastUserInteraction for user ${userId} to last_saved: ${gameState.last_saved.getTime()}`);
-      gameDataAny.lastUserInteraction = gameState.last_saved.getTime();
-    }
-    console.log(`[GameService] Returning game state for user ${userId} with lastUserInteraction: ${gameDataAny.lastUserInteraction}`);
+    // Log for debugging
+    console.log(`[GameService] Returning game state for user ${userId} with lastUserInteraction: ${gameState.game_data.lastUserInteraction}`);
 
     return gameState.game_data;
   }
@@ -74,11 +69,7 @@ export class GameService {
       where: { user_id: userId },
     });
 
-    // Ensure lastUserInteraction is set if missing (for backward compatibility)
-    if (gameData.lastUserInteraction === undefined || gameData.lastUserInteraction === null || gameData.lastUserInteraction === 0) {
-      console.log(`[GameService] Incoming gameData missing lastUserInteraction for user ${userId}, setting to current time`);
-      gameData.lastUserInteraction = Date.now();
-    }
+    // Log for debugging
     console.log(`[GameService] Saving game state for user ${userId} with lastUserInteraction: ${gameData.lastUserInteraction}`);
 
     // If no server state exists, create new one
@@ -91,12 +82,6 @@ export class GameService {
       
       const saved = await this.gameStateRepository.save(newGameState);
       return { success: true, gameState: saved };
-    }
-
-    // Ensure server data has lastUserInteraction field (for backward compatibility)
-    const serverDataAny = serverState.game_data as any;
-    if (serverDataAny.lastUserInteraction === undefined || serverDataAny.lastUserInteraction === null || serverDataAny.lastUserInteraction === 0) {
-      serverDataAny.lastUserInteraction = serverState.last_saved.getTime();
     }
 
     // Session validation conflict detection (as per SYNC_ANALYSIS.md)
