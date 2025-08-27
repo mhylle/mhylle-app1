@@ -22,7 +22,8 @@ import { AuthService } from './auth.service';
 export class CandyFactoryService {
   private readonly SAVE_KEY = 'cosmic-candy-factory-save';
   private readonly PRODUCTION_INTERVAL = 100; // Update every 100ms for smooth production
-  private readonly AUTOSAVE_INTERVAL = 1000; // Autosave every second
+  private readonly AUTOSAVE_INTERVAL = 1000; // Autosave to localStorage every second
+  private readonly SERVER_SAVE_INTERVAL = 30000; // Save to server every 30 seconds
   private readonly SERVER_SYNC_INTERVAL = 30000; // Sync with server every 30 seconds
   
   // Synchronization locks to prevent race conditions
@@ -38,6 +39,7 @@ export class CandyFactoryService {
   private gameStateSubject = new BehaviorSubject<GameState>(this.getInitialGameState());
   private productionSubscription?: Subscription;
   private autosaveSubscription?: Subscription;
+  private serverSaveSubscription?: Subscription;
   private serverSyncSubscription?: Subscription;
   private flyingCandySubscription?: Subscription;
   private flyingCandyAnimationSubscription?: Subscription;
@@ -65,6 +67,7 @@ export class CandyFactoryService {
     this.gameStateSubject.next(this.gameState);
     this.startProductionLoop();
     this.startAutosave();
+    this.startServerSave();
     this.startServerSync();
     this.startFlyingCandySystem();
     this.updateUnlockedUpgrades();
@@ -271,21 +274,24 @@ export class CandyFactoryService {
     });
   }
 
-  // Auto-save functionality
+  // Auto-save functionality  
   private startAutosave(): void {
     this.autosaveSubscription = interval(this.AUTOSAVE_INTERVAL).subscribe(() => {
       this.saveGameState();
     });
   }
 
+  // Server save functionality (separate from local autosave)
+  private startServerSave(): void {
+    this.serverSaveSubscription = interval(this.SERVER_SAVE_INTERVAL).subscribe(() => {
+      this.saveToServer();
+    });
+  }
+
   private saveGameState(): void {
     this.gameState.lastSaved = Date.now();
     localStorage.setItem(this.SAVE_KEY, JSON.stringify(this.gameState));
-    
-    // Also save to server if user is authenticated (async, don't wait)
-    this.saveToServer().catch(error => {
-      console.error('Background server save failed:', error);
-    });
+    // Server saving now handled by separate interval
   }
 
   private loadGameState(): GameState | null {
@@ -775,6 +781,7 @@ export class CandyFactoryService {
   ngOnDestroy(): void {
     this.productionSubscription?.unsubscribe();
     this.autosaveSubscription?.unsubscribe();
+    this.serverSaveSubscription?.unsubscribe();
     this.serverSyncSubscription?.unsubscribe();
     this.flyingCandySubscription?.unsubscribe();
     this.flyingCandyAnimationSubscription?.unsubscribe();
