@@ -171,7 +171,7 @@ export class MigrationService {
     }
 
     try {
-      // Verify server has data
+      // Load server data
       const serverData = await this.gameApiService.loadGameState();
       if (!serverData) {
         return {
@@ -182,20 +182,26 @@ export class MigrationService {
         };
       }
 
-      // Mark migration as completed - this will cause the game to load server data
+      console.log('Using server data:', serverData);
+      
+      // Mark migration as completed
       localStorage.setItem(this.MIGRATION_COMPLETED_KEY, 'true');
+      
+      // Directly update the candy factory service with server data
+      // This ensures the game state is immediately updated with server data
+      (window as any).candyFactoryService?.updateGameStateFromServer(serverData);
       
       return {
         success: true,
-        message: 'Server save data will be used - local data preserved as backup',
+        message: 'Server save data loaded successfully - local data preserved as backup',
         migrated: true,
         hadLocalData: true
       };
     } catch (error) {
-      console.error('Failed to verify server data:', error);
+      console.error('Failed to load server data:', error);
       return {
         success: false,
-        message: `Failed to verify server data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to load server data: ${error instanceof Error ? error.message : 'Unknown error'}`,
         migrated: false,
         hadLocalData: true
       };

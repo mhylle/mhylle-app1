@@ -308,6 +308,9 @@ export class CandyFactoryComponent implements OnInit, OnDestroy {
     // Initialize observables
     this.currentUser$ = this.authService.currentUser$;
     
+    // Make candy factory service available globally for migration service
+    (window as any).candyFactoryService = this.candyFactoryService;
+    
     // Check if user needs migration
     this.checkMigrationNeeded();
     

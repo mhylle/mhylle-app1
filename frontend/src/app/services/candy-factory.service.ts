@@ -341,6 +341,19 @@ export class CandyFactoryService {
     }
   }
 
+  /**
+   * Update game state with server data - used by migration service
+   */
+  public updateGameStateFromServer(serverData: GameState): void {
+    console.log('Updating game state from server data via migration:', serverData);
+    this.gameState = serverData;
+    this.recalculateStatsForLoadedState(this.gameState);
+    this.gameStateSubject.next(this.gameState);
+    this.updateUnlockedUpgrades();
+    this.achievementService.updateAchievements(this.gameState);
+    this.saveGameState(); // Save to localStorage to maintain consistency
+  }
+
   private startServerSync(): void {
     this.serverSyncSubscription = interval(this.SERVER_SYNC_INTERVAL).subscribe(() => {
       this.syncWithServer();
