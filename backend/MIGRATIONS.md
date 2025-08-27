@@ -61,4 +61,18 @@ This application uses a custom migration system that runs automatically on start
 
 ## Current Migrations
 
-- `001_initial_tables` - Creates game_states, user_achievements, messages tables with indexes
+### Migration 001: Initial Tables (`001_initial_tables`)
+- Creates `game_states` table with UNIQUE constraint on user_id
+- Creates `user_achievements` table with composite unique constraint
+- Creates `messages` table for app functionality
+- Creates necessary indexes
+
+### Migration 002: Fix Game States Unique Constraint (`002_fix_game_states_unique_constraint`)
+**Purpose**: Addresses databases that were created before the unique constraint was properly implemented.
+
+**Actions**:
+- Safely drops old `idx_game_states_user_id` index if it exists
+- Adds `uk_game_states_user_id` unique constraint if missing
+- Idempotent and safe to run on both new and existing databases
+
+**Background**: This migration fixes the TypeORM upsert operation that requires a unique constraint to function properly. Without this constraint, game state saves were failing silently.

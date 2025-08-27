@@ -80,7 +80,8 @@ export class CandyFactoryService {
       this.startAutosave();
       this.startServerSave();
       this.startServerSync();
-      this.startServerStateCheck();
+      // Disabled automatic server state checking - only check on initial load and manual sync
+      // this.startServerStateCheck();
       this.startFlyingCandySystem();
       this.setupBrowserFocusListeners();
       this.updateUnlockedUpgrades();
@@ -124,13 +125,23 @@ export class CandyFactoryService {
    * This fixes the core sync issue where Browser B shows 0 candy instead of Browser A's progress
    */
   private async initializeGame(): Promise<void> {
+    // First, check if we have local data
+    const localData = this.loadGameStateFromLocalStorage();
+    
     // 🚨 ALWAYS load from server first - this fixes the core problem
     if (this.authService.isAuthenticated()) {
       try {
         const serverData = await this.gameApiService.loadGameState();
         
         if (serverData) {
-          // Use server data as authoritative starting point
+          // Check if we should show conflict dialog on initial load
+          if (localData && this.shouldShowInitialLoadConflict(localData, serverData)) {
+            console.log('🔄 Initial load conflict detected - showing dialog');
+            this.showDataUpdateDialog(serverData);
+            return; // Dialog will handle loading the chosen data
+          }
+          
+          // Use server data as authoritative starting point (no conflict or minor difference)
           this.gameState = {
             ...serverData,
             // Add session validation fields
@@ -156,7 +167,6 @@ export class CandyFactoryService {
     }
     
     // Fallback: localStorage or fresh state (only if server unavailable)
-    const localData = this.loadGameStateFromLocalStorage();
     if (localData) {
       this.gameState = {
         ...localData,
@@ -198,16 +208,70 @@ export class CandyFactoryService {
   }
 
   /**
+   * Determine if we should show conflict dialog on initial load
+   * Only shows dialog if there's a meaningful difference between local and server data
+   */
+  private shouldShowInitialLoadConflict(localData: GameState, serverData: GameState): boolean {
+    // Calculate the difference in candy
+    const candyDifference = Math.abs(localData.candy - serverData.candy);
+    
+    // Calculate the difference in total candy earned (more reliable than current candy)
+    const totalCandyDifference = Math.abs(
+      (localData.totalCandyEarned || 0) - (serverData.totalCandyEarned || 0)
+    );
+    
+    // Check if upgrade counts are significantly different
+    const localUpgradeCount = Object.values(localData.upgrades || {}).reduce((sum, count) => sum + count, 0);
+    const serverUpgradeCount = Object.values(serverData.upgrades || {}).reduce((sum, count) => sum + count, 0);
+    const upgradeDifference = Math.abs(localUpgradeCount - serverUpgradeCount);
+    
+    // Check prestige level differences
+    const prestigeDifference = Math.abs(
+      (localData.prestigeLevel || 0) - (serverData.prestigeLevel || 0)
+    );
+    
+    // Use meaningful thresholds to avoid false positives from timing differences
+    const CANDY_THRESHOLD = 100; // At least 100 candy difference
+    const TOTAL_CANDY_THRESHOLD = 1000; // Or 1000 total candy earned difference
+    const UPGRADE_THRESHOLD = 2; // Or 2+ upgrade difference
+    const PRESTIGE_THRESHOLD = 1; // Or any prestige level difference
+    
+    // Only show dialog if there's a significant difference
+    const hasSignificantDifference = 
+      candyDifference > CANDY_THRESHOLD ||
+      totalCandyDifference > TOTAL_CANDY_THRESHOLD ||
+      upgradeDifference >= UPGRADE_THRESHOLD ||
+      prestigeDifference >= PRESTIGE_THRESHOLD;
+    
+    if (hasSignificantDifference) {
+      console.log('Initial load conflict detection:', {
+        candyDifference,
+        totalCandyDifference,
+        upgradeDifference,
+        prestigeDifference,
+        thresholds: {
+          candy: CANDY_THRESHOLD,
+          totalCandy: TOTAL_CANDY_THRESHOLD,
+          upgrades: UPGRADE_THRESHOLD,
+          prestige: PRESTIGE_THRESHOLD
+        }
+      });
+    }
+    
+    return hasSignificantDifference;
+  }
+
+  /**
    * Setup browser focus/blur listeners to detect when user switches between browsers
    */
   private setupBrowserFocusListeners(): void {
     // Listen for window focus/blur events
     window.addEventListener('focus', () => {
       this.isBrowserFocused = true;
-      console.log('Browser gained focus - checking for server updates');
+      console.log('Browser gained focus');
       
-      // When browser regains focus, immediately check server state
-      this.checkForServerStateChanges();
+      // Disabled automatic sync on focus - only sync on initial load and manual sync
+      // this.checkForServerStateChanges();
     });
 
     window.addEventListener('blur', () => {
@@ -219,8 +283,9 @@ export class CandyFactoryService {
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         this.isBrowserFocused = true;
-        console.log('Browser tab became visible - checking for server updates');
-        this.checkForServerStateChanges();
+        console.log('Browser tab became visible');
+        // Disabled automatic sync on visibility change - only sync on initial load and manual sync
+        // this.checkForServerStateChanges();
       } else {
         this.isBrowserFocused = false;
         console.log('Browser tab became hidden');
@@ -539,9 +604,17 @@ export class CandyFactoryService {
 
   /**
    * Check if server state has changed since last check (indicates another browser made progress)
+   * FIXED: Much smarter conflict detection to avoid false positives during active gameplay
    */
   private async checkForServerStateChanges(): Promise<void> {
     if (!this.authService.isAuthenticated() || this.isServerSyncInProgress || this.isLoadingFromServer) {
+      return;
+    }
+
+    // FIXED: Skip checks if user has been active recently (actively playing)
+    // This prevents dialog from interrupting active gameplay
+    const timeSinceLastInteraction = Date.now() - (this.gameState.lastUserInteraction || 0);
+    if (timeSinceLastInteraction < 60000) { // Skip if active in last 60 seconds
       return;
     }
 
@@ -551,21 +624,41 @@ export class CandyFactoryService {
         return;
       }
 
-      // Check if server has more recent changes than our session start
-      const serverLastSaved = serverData.lastSaved || 0;
+      // FIXED: Use same smart logic as manualSync() method
+      const serverLastInteraction = serverData.lastUserInteraction || 0;
+      const localLastInteraction = this.gameState.lastUserInteraction || 0;
       const ourSessionStart = this.gameState.sessionStartTime || 0;
+      const candyDifference = Math.abs(serverData.candy - this.gameState.candy);
+
+      // Handle invalid/missing timestamps (same as manualSync does)
+      if (serverLastInteraction === 0 || serverLastInteraction < 946684800000) { // Before year 2000
+        // Server has invalid/missing timestamp - no conflict detection needed
+        return;
+      }
+
+      if (localLastInteraction === 0 || localLastInteraction < 946684800000) { 
+        // Local has invalid timestamp - no conflict detection needed  
+        return;
+      }
+
+      // FIXED: Calculate intelligent threshold based on production rate, not arbitrary "1 candy"
+      const productionThreshold = Math.max(10, this.gameState.productionPerSecond * 30); // 30 seconds worth of production
       
-      // If server data is newer than our session AND has different candy amount
-      if (serverLastSaved > ourSessionStart && serverData.candy !== this.gameState.candy) {
-        const localProgress = this.gameState.candy - (this.gameState.sessionStartCandyAmount || 0);
-        const serverProgress = serverData.candy - (this.gameState.sessionStartCandyAmount || 0);
+      // FIXED: Only show dialog for GENUINE conflicts:
+      // 1. Server has recent activity AFTER our session started (another browser was used)
+      // 2. Server activity is significantly newer than our last activity (30+ second gap) 
+      // 3. The candy difference is substantial (not just sync timing differences)
+      if (serverLastInteraction > ourSessionStart && 
+          serverLastInteraction > localLastInteraction + 30000 && 
+          candyDifference > productionThreshold) {
         
-        // If both local and server have made progress, we have a conflict
-        if (localProgress > 0 && Math.abs(serverData.candy - this.gameState.candy) > 1) {
-          console.warn('🔄 Server state changed detected! Local:', this.gameState.candy, 'Server:', serverData.candy);
-          this.showDataUpdateDialog(serverData);
-          return;
-        }
+        console.warn('🔄 GENUINE server conflict detected! Local:', this.gameState.candy, 'Server:', serverData.candy);
+        console.warn('  Server interaction:', new Date(serverLastInteraction).toISOString());
+        console.warn('  Local interaction:', new Date(localLastInteraction).toISOString()); 
+        console.warn('  Difference threshold:', productionThreshold, 'actual:', candyDifference);
+        
+        this.showDataUpdateDialog(serverData);
+        return;
       }
       
       this.lastServerStateCheck = Date.now();
