@@ -25,6 +25,7 @@ export class CandyFactoryService {
   private readonly AUTOSAVE_INTERVAL = 1000; // Autosave to localStorage every second
   private readonly SERVER_SAVE_INTERVAL = 30000; // Save to server every 30 seconds
   private readonly SERVER_SYNC_INTERVAL = 30000; // Sync with server every 30 seconds
+  private readonly SERVER_CHECK_INTERVAL = 15000; // Check for server changes every 15 seconds
   
   // Synchronization locks to prevent race conditions
   private isServerSyncInProgress = false;
@@ -41,8 +42,13 @@ export class CandyFactoryService {
   private autosaveSubscription?: Subscription;
   private serverSaveSubscription?: Subscription;
   private serverSyncSubscription?: Subscription;
+  private serverCheckSubscription?: Subscription;
   private flyingCandySubscription?: Subscription;
   private flyingCandyAnimationSubscription?: Subscription;
+  
+  // Browser focus/activity tracking
+  private isBrowserFocused = true;
+  private lastServerStateCheck = Date.now();
 
   // Observables for UI
   public gameState$ = this.gameStateSubject.asObservable();
@@ -74,7 +80,9 @@ export class CandyFactoryService {
       this.startAutosave();
       this.startServerSave();
       this.startServerSync();
+      this.startServerStateCheck();
       this.startFlyingCandySystem();
+      this.setupBrowserFocusListeners();
       this.updateUnlockedUpgrades();
       this.achievementService.updateAchievements(this.gameState);
     });
@@ -182,6 +190,37 @@ export class CandyFactoryService {
       console.error('Failed to load game state from localStorage:', error);
     }
     return null;
+  }
+
+  /**
+   * Setup browser focus/blur listeners to detect when user switches between browsers
+   */
+  private setupBrowserFocusListeners(): void {
+    // Listen for window focus/blur events
+    window.addEventListener('focus', () => {
+      this.isBrowserFocused = true;
+      console.log('Browser gained focus - checking for server updates');
+      
+      // When browser regains focus, immediately check server state
+      this.checkForServerStateChanges();
+    });
+
+    window.addEventListener('blur', () => {
+      this.isBrowserFocused = false;
+      console.log('Browser lost focus');
+    });
+
+    // Also listen for visibility change (tab switching)
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        this.isBrowserFocused = true;
+        console.log('Browser tab became visible - checking for server updates');
+        this.checkForServerStateChanges();
+      } else {
+        this.isBrowserFocused = false;
+        console.log('Browser tab became hidden');
+      }
+    });
   }
 
   // Core clicking functionality
@@ -481,6 +520,55 @@ export class CandyFactoryService {
     });
   }
 
+  /**
+   * Start periodic server state checking to detect changes from other browsers
+   */
+  private startServerStateCheck(): void {
+    this.serverCheckSubscription = interval(this.SERVER_CHECK_INTERVAL).subscribe(() => {
+      // Only check when browser is focused and user has been active
+      if (this.isBrowserFocused) {
+        this.checkForServerStateChanges();
+      }
+    });
+  }
+
+  /**
+   * Check if server state has changed since last check (indicates another browser made progress)
+   */
+  private async checkForServerStateChanges(): Promise<void> {
+    if (!this.authService.isAuthenticated() || this.isServerSyncInProgress || this.isLoadingFromServer) {
+      return;
+    }
+
+    try {
+      const serverData = await this.gameApiService.loadGameState();
+      if (!serverData) {
+        return;
+      }
+
+      // Check if server has more recent changes than our session start
+      const serverLastSaved = serverData.lastSaved || 0;
+      const ourSessionStart = this.gameState.sessionStartTime || 0;
+      
+      // If server data is newer than our session AND has different candy amount
+      if (serverLastSaved > ourSessionStart && serverData.candy !== this.gameState.candy) {
+        const localProgress = this.gameState.candy - (this.gameState.sessionStartCandyAmount || 0);
+        const serverProgress = serverData.candy - (this.gameState.sessionStartCandyAmount || 0);
+        
+        // If both local and server have made progress, we have a conflict
+        if (localProgress > 0 && Math.abs(serverData.candy - this.gameState.candy) > 1) {
+          console.warn('🔄 Server state changed detected! Local:', this.gameState.candy, 'Server:', serverData.candy);
+          this.showDataUpdateDialog(serverData);
+          return;
+        }
+      }
+      
+      this.lastServerStateCheck = Date.now();
+    } catch (error) {
+      console.error('Failed to check server state:', error);
+    }
+  }
+
   private async syncWithServer(): Promise<void> {
     if (!this.authService.isAuthenticated()) {
       return;
@@ -510,21 +598,60 @@ export class CandyFactoryService {
       return;
     }
 
-    // CRITICAL: Only save if user has interacted recently
-    // This prevents idle browsers from overwriting active browser data
-    const IDLE_THRESHOLD = 60000; // 1 minute of inactivity
-    const timeSinceInteraction = Date.now() - (this.gameState.lastUserInteraction || 0);
-    
-    if (timeSinceInteraction > IDLE_THRESHOLD) {
-      console.log('Skipping server save - browser is idle (no interaction for', Math.floor(timeSinceInteraction / 1000), 'seconds)');
-      return;
-    }
-
     // Use server operation queue to prevent race conditions
     await this.executeServerOperation(async () => {
-      console.log('Saving game state to server (user active)');
-      await this.gameApiService.saveGameState(this.gameState);
+      console.log('Saving game state to server');
+      const saveResponse = await this.gameApiService.saveGameState(this.gameState);
+      
+      // Check if server detected a conflict
+      if (!saveResponse) {
+        // Handle conflict - another browser has made progress
+        console.warn('Server save conflict detected - another browser may be active');
+        // We'll handle this with the periodic server check
+      }
     });
+  }
+
+  /**
+   * Show dialog when server data has changed (user switched browsers and made progress)
+   */
+  private showDataUpdateDialog(serverData: GameState): void {
+    // For now, just show a confirmation dialog
+    // TODO: Replace with proper Angular dialog component
+    const localCandy = this.gameState.candy;
+    const serverCandy = serverData.candy;
+    
+    const message = `Data Updated!\n\nAnother browser session has made progress:\n\nYour current progress: ${this.formatNumber(localCandy)} candy\nServer progress: ${this.formatNumber(serverCandy)} candy\n\nWhich would you like to keep?`;
+    
+    const choice = confirm(message + '\n\nClick OK to load server data, or Cancel to keep your local progress.');
+    
+    if (choice) {
+      // Load server data
+      this.loadServerData(serverData);
+    } else {
+      // Keep local data and save it to server
+      this.saveToServer();
+    }
+  }
+
+  /**
+   * Load server data and update local state
+   */
+  private loadServerData(serverData: GameState): void {
+    console.log('Loading server data:', serverData.candy, 'candy');
+    
+    this.gameState = {
+      ...serverData,
+      // Update session validation fields for the newly loaded data
+      sessionStartTime: Date.now(),
+      sessionStartCandyAmount: serverData.candy,
+      lastUserInteraction: Date.now()
+    };
+    
+    this.recalculateStatsForLoadedState(this.gameState);
+    this.gameStateSubject.next(this.gameState);
+    this.updateUnlockedUpgrades();
+    this.achievementService.updateAchievements(this.gameState);
   }
 
   // Public method to manually sync with server
@@ -870,6 +997,7 @@ export class CandyFactoryService {
     this.autosaveSubscription?.unsubscribe();
     this.serverSaveSubscription?.unsubscribe();
     this.serverSyncSubscription?.unsubscribe();
+    this.serverCheckSubscription?.unsubscribe();
     this.flyingCandySubscription?.unsubscribe();
     this.flyingCandyAnimationSubscription?.unsubscribe();
     this.saveGameState();
