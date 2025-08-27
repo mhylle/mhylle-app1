@@ -15,7 +15,7 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
       password: this.configService.get('DB_PASSWORD', 'password'),
       database: this.configService.get('DB_NAME', 'app1_db'),
       entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-      synchronize: this.configService.get('NODE_ENV') !== 'production',
+      synchronize: true, // Enable for game data - acceptable data loss risk
       logging: this.configService.get('NODE_ENV') === 'development',
       retryAttempts: 3,
       retryDelay: 3000,
