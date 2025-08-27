@@ -82,7 +82,16 @@ export class AppController {
     // Forward cookie from auth service to client
     const cookies = authResponse.headers.get('set-cookie');
     if (cookies) {
-      response.setHeader('Set-Cookie', cookies);
+      // Ensure the cookie domain is set correctly for our single domain architecture
+      const cookieArray = Array.isArray(cookies) ? cookies : [cookies];
+      const updatedCookies = cookieArray.map(cookie => {
+        // Make sure domain is set to mhylle.com for proper persistence
+        if (!cookie.includes('Domain=')) {
+          return `${cookie}; Domain=mhylle.com`;
+        }
+        return cookie;
+      });
+      response.setHeader('Set-Cookie', updatedCookies);
     }
 
     return result;
@@ -103,7 +112,16 @@ export class AppController {
     // Forward cookie clearing from auth service
     const cookies = authResponse.headers.get('set-cookie');
     if (cookies) {
-      response.setHeader('Set-Cookie', cookies);
+      // Ensure the cookie domain is set correctly for proper clearing
+      const cookieArray = Array.isArray(cookies) ? cookies : [cookies];
+      const updatedCookies = cookieArray.map(cookie => {
+        // Make sure domain is set to mhylle.com for proper cookie clearing
+        if (!cookie.includes('Domain=')) {
+          return `${cookie}; Domain=mhylle.com`;
+        }
+        return cookie;
+      });
+      response.setHeader('Set-Cookie', updatedCookies);
     }
 
     const result = await authResponse.json();
