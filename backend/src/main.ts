@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { webcrypto } from 'crypto';
+import { DatabaseMigrationsService } from './database-migrations.service';
 
 // Make crypto available globally for TypeORM in Node.js 18+
 if (!globalThis.crypto) {
@@ -9,6 +10,10 @@ if (!globalThis.crypto) {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Run database migrations on startup
+  const migrationsService = app.get(DatabaseMigrationsService);
+  await migrationsService.runMigrations();
 
   // Enable CORS for development and production
   app.enableCors({

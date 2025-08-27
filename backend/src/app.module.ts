@@ -9,6 +9,7 @@ import { UserAchievement } from './user-achievement.entity';
 import { DatabaseConfig } from './config/database.config';
 import { AuthModule } from './auth/auth.module';
 import { GameModule } from './game/game.module';
+import { DatabaseMigrationsService } from './database-migrations.service';
 
 @Module({
   imports: [
@@ -24,6 +25,6 @@ import { GameModule } from './game/game.module';
     GameModule,
   ],
   controllers: [AppController],
-  providers: [AppService, DatabaseConfig],
+  providers: [AppService, DatabaseConfig, DatabaseMigrationsService],
 })
 export class AppModule {}
