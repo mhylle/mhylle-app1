@@ -50,6 +50,11 @@ export class GameService {
       return null;
     }
 
+    // Ensure backward compatibility for lastUserInteraction field
+    if (!gameState.game_data.lastUserInteraction) {
+      gameState.game_data.lastUserInteraction = gameState.last_saved.getTime();
+    }
+
     return gameState.game_data;
   }
 
@@ -66,6 +71,11 @@ export class GameService {
       where: { user_id: userId },
     });
 
+    // Ensure lastUserInteraction is set if missing (for backward compatibility)
+    if (!gameData.lastUserInteraction) {
+      gameData.lastUserInteraction = Date.now();
+    }
+
     // If no server state exists, create new one
     if (!serverState) {
       const newGameState = this.gameStateRepository.create({
@@ -76,6 +86,11 @@ export class GameService {
       
       const saved = await this.gameStateRepository.save(newGameState);
       return { success: true, gameState: saved };
+    }
+
+    // Ensure server data has lastUserInteraction field (for backward compatibility)
+    if (!serverState.game_data.lastUserInteraction) {
+      serverState.game_data.lastUserInteraction = serverState.last_saved.getTime();
     }
 
     // Session validation conflict detection (as per SYNC_ANALYSIS.md)

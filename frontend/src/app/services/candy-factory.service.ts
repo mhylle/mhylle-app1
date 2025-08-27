@@ -720,7 +720,16 @@ export class CandyFactoryService {
         // SMART LOGIC: Use user interaction time to determine what to do
         const INTERACTION_THRESHOLD = 30000; // 30 seconds
         
-        if (interactionTimeDiff < INTERACTION_THRESHOLD) {
+        // Handle edge case where server timestamp is 0 (1970) - means old/missing data
+        if (serverLastInteraction === 0 || serverLastInteraction < 946684800000) { // Before year 2000
+          console.log('🔧 Manual sync: Server timestamp invalid/missing - uploading local data');
+          console.log('  Server timestamp:', new Date(serverLastInteraction).toISOString());
+          await this.gameApiService.saveGameState(this.gameState);
+        } else if (localLastInteraction === 0 || localLastInteraction < 946684800000) { // Before year 2000
+          console.log('🔧 Manual sync: Local timestamp invalid/missing - loading server data');
+          console.log('  Local timestamp:', new Date(localLastInteraction).toISOString());
+          this.loadServerData(serverData);
+        } else if (interactionTimeDiff < INTERACTION_THRESHOLD) {
           // Both browsers were used recently - show conflict dialog
           console.log('⚠️ Manual sync: RECENT ACTIVITY ON BOTH BROWSERS!');
           console.log('  Both browsers used within 30 seconds - user must choose');
