@@ -17,6 +17,12 @@ export interface GameStateData {
   prestigePoints: number;
   prestigeMultiplier: number;
   totalPrestigePoints: number;
+  
+  // Session Validation System
+  sessionStartTime?: number;
+  sessionStartCandyAmount?: number;
+  lastUserInteraction?: number;
+  
   achievements: { [achievementId: string]: any };
   unlockedAchievements: string[];
   collectedCandies: { [candyId: string]: any };
@@ -47,25 +53,58 @@ export class GameService {
     return gameState.game_data;
   }
 
-  async saveGameState(userId: string, gameData: GameStateData): Promise<GameState> {
-    let gameState = await this.gameStateRepository.findOne({
+  async saveGameState(userId: string, gameData: GameStateData): Promise<{
+    success: boolean;
+    gameState?: GameState;
+    conflict?: {
+      serverData: GameStateData;
+      clientData: GameStateData;
+      message: string;
+    };
+  }> {
+    const serverState = await this.gameStateRepository.findOne({
       where: { user_id: userId },
     });
 
-    if (gameState) {
-      // Update existing game state
-      gameState.game_data = gameData;
-      gameState.last_saved = new Date();
-    } else {
-      // Create new game state
-      gameState = this.gameStateRepository.create({
+    // If no server state exists, create new one
+    if (!serverState) {
+      const newGameState = this.gameStateRepository.create({
         user_id: userId,
         game_data: gameData,
         last_saved: new Date(),
       });
+      
+      const saved = await this.gameStateRepository.save(newGameState);
+      return { success: true, gameState: saved };
     }
 
-    return await this.gameStateRepository.save(gameState);
+    // Session validation conflict detection (as per SYNC_ANALYSIS.md)
+    const hasSessionData = gameData.sessionStartTime && gameData.sessionStartCandyAmount !== undefined;
+    
+    if (hasSessionData && serverState.last_saved.getTime() > gameData.sessionStartTime!) {
+      // Server has been updated since client session started
+      const serverProgress = serverState.game_data.candy - gameData.sessionStartCandyAmount!;
+      const clientProgress = gameData.candy - gameData.sessionStartCandyAmount!;
+      
+      if (serverProgress > 0 && clientProgress > 0) {
+        // Both made progress - conflict detected
+        return {
+          success: false,
+          conflict: {
+            serverData: serverState.game_data,
+            clientData: gameData,
+            message: `Server: ${serverState.game_data.candy} candy, Your progress: ${gameData.candy} candy`
+          }
+        };
+      }
+    }
+
+    // No conflict, save client data
+    serverState.game_data = gameData;
+    serverState.last_saved = new Date();
+    const saved = await this.gameStateRepository.save(serverState);
+    
+    return { success: true, gameState: saved };
   }
 
   async getUserAchievements(userId: string): Promise<UserAchievement[]> {
@@ -107,6 +146,7 @@ export class GameService {
     gameData: GameStateData;
     serverTimestamp: number;
     conflictResolved: boolean;
+    message: string;
   }> {
     const serverGameState = await this.gameStateRepository.findOne({
       where: { user_id: userId },
@@ -114,44 +154,27 @@ export class GameService {
 
     if (!serverGameState) {
       // No server data, save client data
-      const saved = await this.saveGameState(userId, clientGameData);
-      return {
-        gameData: saved.game_data,
-        serverTimestamp: saved.last_saved.getTime(),
-        conflictResolved: false,
-      };
+      const saveResult = await this.saveGameState(userId, clientGameData);
+      if (saveResult.success && saveResult.gameState) {
+        return {
+          gameData: saveResult.gameState.game_data,
+          serverTimestamp: saveResult.gameState.last_saved.getTime(),
+          conflictResolved: false,
+          message: 'Initial save to server completed'
+        };
+      }
+      
+      // If save failed, return error (though this shouldn't happen)
+      throw new Error('Failed to save initial game state');
     }
 
-    const serverTimestamp = serverGameState.last_saved.getTime();
-    const clientTimestamp = clientGameData.startTime || 0;
-
-    // Simple conflict resolution: choose the data with higher total candy earned
-    let resolvedData = serverGameState.game_data;
-    let conflictResolved = false;
-
-    if (clientGameData.totalCandyEarned > serverGameState.game_data.totalCandyEarned) {
-      resolvedData = clientGameData;
-      conflictResolved = true;
-    } else if (serverTimestamp < clientTimestamp) {
-      // Server data is older, prefer client
-      resolvedData = clientGameData;
-      conflictResolved = true;
-    }
-
-    // Save the resolved data if there was a conflict
-    if (conflictResolved) {
-      const saved = await this.saveGameState(userId, resolvedData);
-      return {
-        gameData: saved.game_data,
-        serverTimestamp: saved.last_saved.getTime(),
-        conflictResolved: true,
-      };
-    }
-
+    // Phase 1 approach: Manual sync just loads latest server data
+    // This replaces the old "conflict resolution" behavior
     return {
       gameData: serverGameState.game_data,
-      serverTimestamp,
+      serverTimestamp: serverGameState.last_saved.getTime(),
       conflictResolved: false,
+      message: 'Loaded latest data from server'
     };
   }
 }

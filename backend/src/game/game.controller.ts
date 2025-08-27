@@ -60,14 +60,29 @@ export class GameController {
   ) {
     try {
       const user = await this.validateUserFromRequest(req);
-      const savedState = await this.gameService.saveGameState(user.id, gameData);
+      const saveResult = await this.gameService.saveGameState(user.id, gameData);
       
-      return {
-        success: true,
-        data: savedState.game_data,
-        lastSaved: savedState.last_saved.toISOString(),
-        message: 'Game state saved successfully'
-      };
+      if (!saveResult.success && saveResult.conflict) {
+        // Conflict detected - return conflict information
+        return {
+          success: false,
+          conflict: true,
+          serverData: saveResult.conflict.serverData,
+          clientData: saveResult.conflict.clientData,
+          message: saveResult.conflict.message
+        };
+      }
+      
+      if (saveResult.success && saveResult.gameState) {
+        return {
+          success: true,
+          data: saveResult.gameState.game_data,
+          lastSaved: saveResult.gameState.last_saved.toISOString(),
+          message: 'Game state saved successfully'
+        };
+      }
+      
+      throw new Error('Unexpected save result');
     } catch (error) {
       console.error('Error saving game state:', error);
       throw new HttpException(
@@ -91,9 +106,7 @@ export class GameController {
         data: result.gameData,
         serverTimestamp: result.serverTimestamp,
         conflictResolved: result.conflictResolved,
-        message: result.conflictResolved 
-          ? 'Game state synchronized with conflict resolution' 
-          : 'Game state synchronized'
+        message: result.message
       };
     } catch (error) {
       console.error('Error syncing game state:', error);

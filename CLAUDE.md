@@ -391,3 +391,6 @@ When a build fails:
 3. Fix the root cause immediately
 4. Never assume it's an infrastructure/platform issue
 5. The application is DOWN until the build succeeds
+- Never use mock data in any settings. The only plase mock data can be used is in a unit test, and here the mock data must come from a test database
+- Never use mock services. Always implement services fully
+- Use delegation when needed if a service needs to have something done that is not directly it's responsibility then it must user another service for this

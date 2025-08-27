@@ -63,18 +63,21 @@ export class CandyFactoryService {
     private gameApiService: GameApiService,
     private authService: AuthService
   ) {
-    this.gameState = this.loadGameState() || this.getInitialGameState();
+    // Start with initial state, will be replaced by initialization
+    this.gameState = this.getInitialGameState();
     this.gameStateSubject.next(this.gameState);
-    this.startProductionLoop();
-    this.startAutosave();
-    this.startServerSave();
-    this.startServerSync();
-    this.startFlyingCandySystem();
-    this.updateUnlockedUpgrades();
-    this.achievementService.updateAchievements(this.gameState);
     
-    // Try to load game state from server if user is authenticated
-    this.loadFromServerIfAuthenticated();
+    // Critical: Initialize game with server-first approach
+    this.initializeGame().then(() => {
+      // Start all systems AFTER game initialization is complete
+      this.startProductionLoop();
+      this.startAutosave();
+      this.startServerSave();
+      this.startServerSync();
+      this.startFlyingCandySystem();
+      this.updateUnlockedUpgrades();
+      this.achievementService.updateAchievements(this.gameState);
+    });
   }
 
   private getInitialGameState(): GameState {
@@ -108,8 +111,84 @@ export class CandyFactoryService {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   }
 
+  /**
+   * Critical: Initialize game with server-first approach
+   * This fixes the core sync issue where Browser B shows 0 candy instead of Browser A's progress
+   */
+  private async initializeGame(): Promise<void> {
+    // 🚨 ALWAYS load from server first - this fixes the core problem
+    if (this.authService.isAuthenticated()) {
+      try {
+        const serverData = await this.gameApiService.loadGameState();
+        
+        if (serverData) {
+          // Use server data as authoritative starting point
+          this.gameState = {
+            ...serverData,
+            // Add session validation fields
+            sessionStartTime: Date.now(),
+            sessionStartCandyAmount: serverData.candy,
+            lastUserInteraction: Date.now()
+          };
+          
+          this.recalculateStatsForLoadedState(this.gameState);
+          this.gameStateSubject.next(this.gameState);
+          
+          console.log('✅ Loaded latest data from server:', serverData.candy, 'candy');
+          return; // Server data loaded successfully
+        }
+      } catch (error) {
+        console.warn('Failed to load from server, using local fallback:', error);
+      }
+    }
+    
+    // Fallback: localStorage or fresh state (only if server unavailable)
+    const localData = this.loadGameStateFromLocalStorage();
+    if (localData) {
+      this.gameState = {
+        ...localData,
+        // Add session validation fields for local data too
+        sessionStartTime: Date.now(),
+        sessionStartCandyAmount: localData.candy,
+        lastUserInteraction: Date.now()
+      };
+      this.recalculateStatsForLoadedState(this.gameState);
+      console.log('Using local data as fallback:', localData.candy, 'candy');
+    } else {
+      // Fresh game state with session fields
+      this.gameState = {
+        ...this.getInitialGameState(),
+        sessionStartTime: Date.now(),
+        sessionStartCandyAmount: 0,
+        lastUserInteraction: Date.now()
+      };
+      console.log('Starting fresh game state');
+    }
+    
+    this.gameStateSubject.next(this.gameState);
+  }
+
+  /**
+   * Separate localStorage loading method for clarity
+   */
+  private loadGameStateFromLocalStorage(): GameState | null {
+    try {
+      const saved = localStorage.getItem(this.SAVE_KEY);
+      if (saved) {
+        const state = JSON.parse(saved) as GameState;
+        return state;
+      }
+    } catch (error) {
+      console.error('Failed to load game state from localStorage:', error);
+    }
+    return null;
+  }
+
   // Core clicking functionality
   clickPlanet(event: { clientX: number, clientY: number }): void {
+    // Track user interaction for session validation
+    this.gameState.lastUserInteraction = Date.now();
+    
     // Apply achievement bonuses
     const bonuses = this.achievementService.calculatePassiveBonuses(this.gameState);
     const baseCandyEarned = this.gameState.clickPower;
@@ -150,6 +229,9 @@ export class CandyFactoryService {
 
   // Upgrade system
   purchaseUpgrade(upgradeId: string): UpgradePurchaseResult {
+    // Track user interaction for session validation
+    this.gameState.lastUserInteraction = Date.now();
+    
     const upgrade = CANDY_UPGRADES.find(u => u.id === upgradeId);
     if (!upgrade) {
       return { success: false, errorMessage: 'Upgrade not found' };
@@ -294,19 +376,6 @@ export class CandyFactoryService {
     // Server saving now handled by separate interval
   }
 
-  private loadGameState(): GameState | null {
-    try {
-      const saved = localStorage.getItem(this.SAVE_KEY);
-      if (saved) {
-        const state = JSON.parse(saved) as GameState;
-        this.recalculateStatsForLoadedState(state);
-        return state;
-      }
-    } catch (error) {
-      console.error('Failed to load game state:', error);
-    }
-    return null;
-  }
 
   private recalculateStatsForLoadedState(state: GameState): void {
     // Ensure prestige fields exist (for backward compatibility)
@@ -324,6 +393,11 @@ export class CandyFactoryService {
     if (typeof state.totalFlyingCandiesCaught === 'undefined') state.totalFlyingCandiesCaught = 0;
     if (typeof state.totalPlayTime === 'undefined') state.totalPlayTime = 0;
     
+    // Ensure session validation fields exist (for backward compatibility)
+    if (typeof state.sessionStartTime === 'undefined') state.sessionStartTime = Date.now();
+    if (typeof state.sessionStartCandyAmount === 'undefined') state.sessionStartCandyAmount = state.candy;
+    if (typeof state.lastUserInteraction === 'undefined') state.lastUserInteraction = Date.now();
+    
     // Recalculate derived stats after loading
     const tempState = this.gameState;
     this.gameState = state;
@@ -334,31 +408,6 @@ export class CandyFactoryService {
   }
 
   // Server synchronization methods
-  private async loadFromServerIfAuthenticated(): Promise<void> {
-    if (!this.authService.isAuthenticated()) {
-      return;
-    }
-
-    // Use server operation queue to prevent race conditions
-    await this.executeServerOperation(async () => {
-      console.log('Loading game state from server (authenticated)');
-      this.isLoadingFromServer = true;
-      
-      try {
-        const serverGameState = await this.gameApiService.loadGameState();
-        if (serverGameState) {
-          console.log('Loaded game state from server');
-          this.gameState = serverGameState;
-          this.recalculateStatsForLoadedState(this.gameState);
-          this.gameStateSubject.next(this.gameState);
-          this.updateUnlockedUpgrades();
-          this.achievementService.updateAchievements(this.gameState);
-        }
-      } finally {
-        this.isLoadingFromServer = false;
-      }
-    });
-  }
 
   /**
    * Update game state with server data - used by migration service
@@ -485,7 +534,29 @@ export class CandyFactoryService {
     this.lastManualSyncTime = now;
 
     try {
-      await this.syncWithServer();
+      // Phase 1 approach: Manual sync just loads latest server data
+      // This replaces the old sync logic with simple "get latest data"
+      await this.executeServerOperation(async () => {
+        console.log('Manual sync: Loading latest data from server');
+        const serverData = await this.gameApiService.loadGameState();
+        
+        if (serverData) {
+          console.log('Manual sync: Loaded server data with', serverData.candy, 'candy');
+          this.gameState = {
+            ...serverData,
+            // Update session validation fields for the newly loaded data
+            sessionStartTime: Date.now(),
+            sessionStartCandyAmount: serverData.candy,
+            lastUserInteraction: Date.now()
+          };
+          
+          this.recalculateStatsForLoadedState(this.gameState);
+          this.gameStateSubject.next(this.gameState);
+          this.updateUnlockedUpgrades();
+          this.achievementService.updateAchievements(this.gameState);
+        }
+      });
+      
       return true;
     } catch (error) {
       console.error('Manual sync failed:', error);
