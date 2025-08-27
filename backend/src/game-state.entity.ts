@@ -1,12 +1,11 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('game_states')
 export class GameState {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'uuid' })
-  @Index('idx_game_states_user_id')
+  @Column({ type: 'uuid', unique: true })
   user_id: string; // References users.id from auth service
 
   @Column({ type: 'jsonb' })
