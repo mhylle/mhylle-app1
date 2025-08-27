@@ -510,9 +510,19 @@ export class CandyFactoryService {
       return;
     }
 
+    // CRITICAL: Only save if user has interacted recently
+    // This prevents idle browsers from overwriting active browser data
+    const IDLE_THRESHOLD = 60000; // 1 minute of inactivity
+    const timeSinceInteraction = Date.now() - (this.gameState.lastUserInteraction || 0);
+    
+    if (timeSinceInteraction > IDLE_THRESHOLD) {
+      console.log('Skipping server save - browser is idle (no interaction for', Math.floor(timeSinceInteraction / 1000), 'seconds)');
+      return;
+    }
+
     // Use server operation queue to prevent race conditions
     await this.executeServerOperation(async () => {
-      console.log('Saving game state to server');
+      console.log('Saving game state to server (user active)');
       await this.gameApiService.saveGameState(this.gameState);
     });
   }
@@ -680,6 +690,9 @@ export class CandyFactoryService {
   }
 
   clickFlyingCandy(candyId: string): void {
+    // Track user interaction for session validation
+    this.gameState.lastUserInteraction = Date.now();
+    
     const current = this.flyingCandiesSubject.value;
     const candy = current.find(c => c.id === candyId);
     
@@ -791,6 +804,9 @@ export class CandyFactoryService {
   }
 
   performPrestige(): boolean {
+    // Track user interaction for session validation
+    this.gameState.lastUserInteraction = Date.now();
+    
     const prestigeData = this.getPrestigeData();
     
     if (!prestigeData.canPrestige) {
