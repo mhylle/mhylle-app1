@@ -45,11 +45,11 @@ export class DatabaseMigrationsService {
       );
     `);
 
-    // Game states table
+    // Game states table - matches existing UUID schema
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS game_states (
-        id SERIAL PRIMARY KEY,
-        user_id VARCHAR(255) NOT NULL,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id UUID NOT NULL,
         game_data JSONB NOT NULL DEFAULT '{}',
         last_saved TIMESTAMP NOT NULL DEFAULT NOW(),
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -58,11 +58,11 @@ export class DatabaseMigrationsService {
       );
     `);
 
-    // User achievements table
+    // User achievements table - matches expected UUID schema  
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS user_achievements (
-        id SERIAL PRIMARY KEY,
-        user_id VARCHAR(255) NOT NULL,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id UUID NOT NULL,
         achievement_id VARCHAR(255) NOT NULL,
         unlocked_at TIMESTAMP NOT NULL DEFAULT NOW(),
         metadata JSONB DEFAULT '{}',
