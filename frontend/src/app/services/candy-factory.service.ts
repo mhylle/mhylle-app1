@@ -143,6 +143,11 @@ export class CandyFactoryService {
           this.gameStateSubject.next(this.gameState);
           
           console.log('✅ Loaded latest data from server:', serverData.candy, 'candy');
+          console.log('🎯 Session validation set:', {
+            sessionStartTime: new Date(this.gameState.sessionStartTime!).toISOString(),
+            sessionStartCandyAmount: this.gameState.sessionStartCandyAmount,
+            lastUserInteraction: new Date(this.gameState.lastUserInteraction!).toISOString()
+          });
           return; // Server data loaded successfully
         }
       } catch (error) {
@@ -620,12 +625,16 @@ export class CandyFactoryService {
     // TODO: Replace with proper Angular dialog component
     const localCandy = this.gameState.candy;
     const serverCandy = serverData.candy;
-    const localProgress = localCandy - (this.gameState.sessionStartCandyAmount || 0);
-    const serverProgress = serverCandy - (this.gameState.sessionStartCandyAmount || 0);
     
-    const message = `⚠️ SYNC CONFLICT DETECTED!\n\nBoth browser sessions have made progress:\n\n🖥️ This browser: ${this.formatNumber(localCandy)} candy (+${this.formatNumber(localProgress)} progress)\n🌐 Other browser: ${this.formatNumber(serverCandy)} candy (+${this.formatNumber(serverProgress)} progress)\n\nWhich progress would you like to keep?`;
+    const localLastInteraction = this.gameState.lastUserInteraction || 0;
+    const serverLastInteraction = serverData.lastUserInteraction || 0;
     
-    const choice = confirm(message + '\n\n✅ Click OK to keep OTHER BROWSER progress\n❌ Click Cancel to keep THIS BROWSER progress');
+    const localTimeStr = new Date(localLastInteraction).toLocaleTimeString();
+    const serverTimeStr = new Date(serverLastInteraction).toLocaleTimeString();
+    
+    const message = `⚠️ SYNC CONFLICT!\n\nBoth browsers were used recently:\n\n🖥️ This browser: ${this.formatNumber(localCandy)} candy\n   Last used: ${localTimeStr}\n\n🌐 Other browser: ${this.formatNumber(serverCandy)} candy\n   Last used: ${serverTimeStr}\n\nWhich data would you like to keep?`;
+    
+    const choice = confirm(message + '\n\n✅ OK = Keep OTHER BROWSER data\n❌ Cancel = Keep THIS BROWSER data');
     
     if (choice) {
       // Load server data
@@ -690,27 +699,42 @@ export class CandyFactoryService {
         const serverCandy = serverData.candy;
         const difference = Math.abs(localCandy - serverCandy);
         
+        // Get user interaction timestamps
+        const localLastInteraction = this.gameState.lastUserInteraction || 0;
+        const serverLastInteraction = serverData.lastUserInteraction || 0;
+        const interactionTimeDiff = Math.abs(localLastInteraction - serverLastInteraction);
+        
+        console.log('🔍 Manual sync DEBUG:');
+        console.log('  Local candy:', localCandy);
+        console.log('  Server candy:', serverCandy);
+        console.log('  Candy difference:', difference);
+        console.log('  Local last interaction:', new Date(localLastInteraction).toISOString());
+        console.log('  Server last interaction:', new Date(serverLastInteraction).toISOString());
+        console.log('  Interaction time difference:', Math.floor(interactionTimeDiff / 1000), 'seconds');
+        
         if (difference < 1) {
-          console.log('Manual sync: Data already in sync');
+          console.log('✅ Manual sync: Data already in sync');
           return;
         }
 
-        // Check if both local and server have made progress since session start
-        const localProgress = localCandy - (this.gameState.sessionStartCandyAmount || 0);
-        const serverProgress = serverCandy - (this.gameState.sessionStartCandyAmount || 0);
+        // SMART LOGIC: Use user interaction time to determine what to do
+        const INTERACTION_THRESHOLD = 30000; // 30 seconds
         
-        if (localProgress > 0 && serverProgress > 0 && difference > 1) {
-          // Both have progress - show conflict dialog
-          console.log('Manual sync: Conflict detected - Local:', localCandy, 'Server:', serverCandy);
+        if (interactionTimeDiff < INTERACTION_THRESHOLD) {
+          // Both browsers were used recently - show conflict dialog
+          console.log('⚠️ Manual sync: RECENT ACTIVITY ON BOTH BROWSERS!');
+          console.log('  Both browsers used within 30 seconds - user must choose');
           this.showDataUpdateDialog(serverData);
-        } else if (serverCandy > localCandy) {
-          // Server has more progress, load it
-          console.log('Manual sync: Loading newer server data');
-          this.loadServerData(serverData);
-        } else {
-          // Local has more progress, save it to server
-          console.log('Manual sync: Uploading local progress to server');
+        } else if (localLastInteraction > serverLastInteraction) {
+          // This browser was used more recently - upload local data
+          console.log('⬆️ Manual sync: This browser more recent - uploading local data');
+          console.log('  Local is', Math.floor((localLastInteraction - serverLastInteraction) / 1000), 'seconds newer');
           await this.gameApiService.saveGameState(this.gameState);
+        } else {
+          // Server (other browser) was used more recently - load server data  
+          console.log('⬇️ Manual sync: Server more recent - loading server data');
+          console.log('  Server is', Math.floor((serverLastInteraction - localLastInteraction) / 1000), 'seconds newer');
+          this.loadServerData(serverData);
         }
       });
       
