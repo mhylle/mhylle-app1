@@ -24,6 +24,13 @@ export class CandyFactoryService {
   private readonly PRODUCTION_INTERVAL = 100; // Update every 100ms for smooth production
   private readonly AUTOSAVE_INTERVAL = 1000; // Autosave every second
   private readonly SERVER_SYNC_INTERVAL = 30000; // Sync with server every 30 seconds
+  
+  // Synchronization locks to prevent race conditions
+  private isServerSyncInProgress = false;
+  private isLoadingFromServer = false;
+  private serverOperationQueue: Array<() => Promise<void>> = [];
+  private lastManualSyncTime = 0;
+  private readonly MANUAL_SYNC_THROTTLE = 5000; // Throttle manual sync to every 5 seconds
   private readonly FLYING_CANDY_INTERVAL = 8000; // Spawn flying candy every 8 seconds
   private readonly FLYING_CANDY_LIFETIME = 12000; // Flying candy lasts 12 seconds
 
@@ -326,32 +333,91 @@ export class CandyFactoryService {
       return;
     }
 
-    try {
-      const serverGameState = await this.gameApiService.loadGameState();
-      if (serverGameState) {
-        console.log('Loaded game state from server');
-        this.gameState = serverGameState;
-        this.recalculateStatsForLoadedState(this.gameState);
-        this.gameStateSubject.next(this.gameState);
-        this.updateUnlockedUpgrades();
-        this.achievementService.updateAchievements(this.gameState);
+    // Use server operation queue to prevent race conditions
+    await this.executeServerOperation(async () => {
+      console.log('Loading game state from server (authenticated)');
+      this.isLoadingFromServer = true;
+      
+      try {
+        const serverGameState = await this.gameApiService.loadGameState();
+        if (serverGameState) {
+          console.log('Loaded game state from server');
+          this.gameState = serverGameState;
+          this.recalculateStatsForLoadedState(this.gameState);
+          this.gameStateSubject.next(this.gameState);
+          this.updateUnlockedUpgrades();
+          this.achievementService.updateAchievements(this.gameState);
+        }
+      } finally {
+        this.isLoadingFromServer = false;
       }
-    } catch (error) {
-      console.error('Failed to load game state from server:', error);
-    }
+    });
   }
 
   /**
    * Update game state with server data - used by migration service
+   * Uses synchronization to prevent race conditions
    */
   public updateGameStateFromServer(serverData: GameState): void {
     console.log('Updating game state from server data via migration:', serverData);
-    this.gameState = serverData;
-    this.recalculateStatsForLoadedState(this.gameState);
-    this.gameStateSubject.next(this.gameState);
-    this.updateUnlockedUpgrades();
-    this.achievementService.updateAchievements(this.gameState);
-    this.saveGameState(); // Save to localStorage to maintain consistency
+    
+    // Cancel any pending server operations to avoid conflicts
+    this.serverOperationQueue = [];
+    this.isServerSyncInProgress = false;
+    this.isLoadingFromServer = true;
+    
+    try {
+      this.gameState = serverData;
+      this.recalculateStatsForLoadedState(this.gameState);
+      this.gameStateSubject.next(this.gameState);
+      this.updateUnlockedUpgrades();
+      this.achievementService.updateAchievements(this.gameState);
+      this.saveGameState(); // Save to localStorage to maintain consistency
+      
+      console.log('Successfully updated game state from server via migration');
+    } finally {
+      this.isLoadingFromServer = false;
+    }
+  }
+
+  /**
+   * Execute server operations sequentially to prevent race conditions
+   */
+  private async executeServerOperation<T>(operation: () => Promise<T>): Promise<T | null> {
+    return new Promise((resolve) => {
+      const wrappedOperation = async () => {
+        try {
+          const result = await operation();
+          resolve(result);
+        } catch (error) {
+          console.error('Server operation failed:', error);
+          resolve(null);
+        }
+      };
+      
+      this.serverOperationQueue.push(wrappedOperation);
+      this.processServerOperationQueue();
+    });
+  }
+
+  /**
+   * Process queued server operations one at a time
+   */
+  private async processServerOperationQueue(): Promise<void> {
+    if (this.isServerSyncInProgress || this.isLoadingFromServer || this.serverOperationQueue.length === 0) {
+      return;
+    }
+
+    this.isServerSyncInProgress = true;
+    
+    while (this.serverOperationQueue.length > 0 && !this.isLoadingFromServer) {
+      const operation = this.serverOperationQueue.shift();
+      if (operation) {
+        await operation();
+      }
+    }
+    
+    this.isServerSyncInProgress = false;
   }
 
   private startServerSync(): void {
@@ -365,7 +431,9 @@ export class CandyFactoryService {
       return;
     }
 
-    try {
+    // Use server operation queue to prevent race conditions
+    await this.executeServerOperation(async () => {
+      console.log('Syncing game state with server');
       const syncResult = await this.gameApiService.syncGameState(this.gameState);
       if (syncResult) {
         if (syncResult.conflictResolved) {
@@ -375,11 +443,11 @@ export class CandyFactoryService {
           this.gameStateSubject.next(this.gameState);
           this.updateUnlockedUpgrades();
           this.achievementService.updateAchievements(this.gameState);
+        } else {
+          console.log('Game synchronized successfully');
         }
       }
-    } catch (error) {
-      console.error('Failed to sync with server:', error);
-    }
+    });
   }
 
   private async saveToServer(): Promise<void> {
@@ -387,11 +455,11 @@ export class CandyFactoryService {
       return;
     }
 
-    try {
+    // Use server operation queue to prevent race conditions
+    await this.executeServerOperation(async () => {
+      console.log('Saving game state to server');
       await this.gameApiService.saveGameState(this.gameState);
-    } catch (error) {
-      console.error('Failed to save game state to server:', error);
-    }
+    });
   }
 
   // Public method to manually sync with server
@@ -400,6 +468,15 @@ export class CandyFactoryService {
       console.warn('Cannot sync: user not authenticated');
       return false;
     }
+
+    // Throttle manual sync to prevent spam
+    const now = Date.now();
+    if (now - this.lastManualSyncTime < this.MANUAL_SYNC_THROTTLE) {
+      console.warn('Manual sync throttled - please wait');
+      return false;
+    }
+
+    this.lastManualSyncTime = now;
 
     try {
       await this.syncWithServer();
