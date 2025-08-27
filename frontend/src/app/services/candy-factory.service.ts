@@ -620,16 +620,20 @@ export class CandyFactoryService {
     // TODO: Replace with proper Angular dialog component
     const localCandy = this.gameState.candy;
     const serverCandy = serverData.candy;
+    const localProgress = localCandy - (this.gameState.sessionStartCandyAmount || 0);
+    const serverProgress = serverCandy - (this.gameState.sessionStartCandyAmount || 0);
     
-    const message = `Data Updated!\n\nAnother browser session has made progress:\n\nYour current progress: ${this.formatNumber(localCandy)} candy\nServer progress: ${this.formatNumber(serverCandy)} candy\n\nWhich would you like to keep?`;
+    const message = `⚠️ SYNC CONFLICT DETECTED!\n\nBoth browser sessions have made progress:\n\n🖥️ This browser: ${this.formatNumber(localCandy)} candy (+${this.formatNumber(localProgress)} progress)\n🌐 Other browser: ${this.formatNumber(serverCandy)} candy (+${this.formatNumber(serverProgress)} progress)\n\nWhich progress would you like to keep?`;
     
-    const choice = confirm(message + '\n\nClick OK to load server data, or Cancel to keep your local progress.');
+    const choice = confirm(message + '\n\n✅ Click OK to keep OTHER BROWSER progress\n❌ Click Cancel to keep THIS BROWSER progress');
     
     if (choice) {
       // Load server data
+      console.log('User chose server data');
       this.loadServerData(serverData);
     } else {
       // Keep local data and save it to server
+      console.log('User chose local data');
       this.saveToServer();
     }
   }
@@ -671,26 +675,42 @@ export class CandyFactoryService {
     this.lastManualSyncTime = now;
 
     try {
-      // Phase 1 approach: Manual sync just loads latest server data
-      // This replaces the old sync logic with simple "get latest data"
+      // FIXED: Manual sync now uses same conflict detection as auto-sync
       await this.executeServerOperation(async () => {
-        console.log('Manual sync: Loading latest data from server');
+        console.log('Manual sync: Checking for conflicts with server');
         const serverData = await this.gameApiService.loadGameState();
         
-        if (serverData) {
-          console.log('Manual sync: Loaded server data with', serverData.candy, 'candy');
-          this.gameState = {
-            ...serverData,
-            // Update session validation fields for the newly loaded data
-            sessionStartTime: Date.now(),
-            sessionStartCandyAmount: serverData.candy,
-            lastUserInteraction: Date.now()
-          };
-          
-          this.recalculateStatsForLoadedState(this.gameState);
-          this.gameStateSubject.next(this.gameState);
-          this.updateUnlockedUpgrades();
-          this.achievementService.updateAchievements(this.gameState);
+        if (!serverData) {
+          console.log('No server data found');
+          return;
+        }
+
+        // Check if there are meaningful differences between local and server data
+        const localCandy = this.gameState.candy;
+        const serverCandy = serverData.candy;
+        const difference = Math.abs(localCandy - serverCandy);
+        
+        if (difference < 1) {
+          console.log('Manual sync: Data already in sync');
+          return;
+        }
+
+        // Check if both local and server have made progress since session start
+        const localProgress = localCandy - (this.gameState.sessionStartCandyAmount || 0);
+        const serverProgress = serverCandy - (this.gameState.sessionStartCandyAmount || 0);
+        
+        if (localProgress > 0 && serverProgress > 0 && difference > 1) {
+          // Both have progress - show conflict dialog
+          console.log('Manual sync: Conflict detected - Local:', localCandy, 'Server:', serverCandy);
+          this.showDataUpdateDialog(serverData);
+        } else if (serverCandy > localCandy) {
+          // Server has more progress, load it
+          console.log('Manual sync: Loading newer server data');
+          this.loadServerData(serverData);
+        } else {
+          // Local has more progress, save it to server
+          console.log('Manual sync: Uploading local progress to server');
+          await this.gameApiService.saveGameState(this.gameState);
         }
       });
       
