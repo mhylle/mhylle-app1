@@ -51,8 +51,8 @@ export class GameService {
     }
 
     // Ensure backward compatibility for lastUserInteraction field
-    if (!gameState.game_data.lastUserInteraction) {
-      gameState.game_data.lastUserInteraction = gameState.last_saved.getTime();
+    if (!(gameState.game_data as any).lastUserInteraction) {
+      (gameState.game_data as any).lastUserInteraction = gameState.last_saved.getTime();
     }
 
     return gameState.game_data;
@@ -89,8 +89,8 @@ export class GameService {
     }
 
     // Ensure server data has lastUserInteraction field (for backward compatibility)
-    if (!serverState.game_data.lastUserInteraction) {
-      serverState.game_data.lastUserInteraction = serverState.last_saved.getTime();
+    if (!(serverState.game_data as any).lastUserInteraction) {
+      (serverState.game_data as any).lastUserInteraction = serverState.last_saved.getTime();
     }
 
     // Session validation conflict detection (as per SYNC_ANALYSIS.md)
