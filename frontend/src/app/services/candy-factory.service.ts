@@ -632,9 +632,43 @@ export class CandyFactoryService {
     const localTimeStr = new Date(localLastInteraction).toLocaleTimeString();
     const serverTimeStr = new Date(serverLastInteraction).toLocaleTimeString();
     
-    const message = `⚠️ SYNC CONFLICT!\n\nBoth browsers were used recently:\n\n🖥️ This browser: ${this.formatNumber(localCandy)} candy\n   Last used: ${localTimeStr}\n\n🌐 Other browser: ${this.formatNumber(serverCandy)} candy\n   Last used: ${serverTimeStr}\n\nWhich data would you like to keep?`;
+    // Helper function to get upgrade summary
+    const getUpgradeSummary = (gameState: GameState): string => {
+      const upgrades = gameState.upgrades || {};
+      const upgradeEntries = Object.entries(upgrades).filter(([_, count]) => count > 0);
+      if (upgradeEntries.length === 0) return "No upgrades";
+      
+      const topUpgrades = upgradeEntries
+        .sort((a, b) => b[1] - a[1]) // Sort by count desc
+        .slice(0, 3) // Top 3 upgrades
+        .map(([id, count]) => `${id}: ${count}`)
+        .join(", ");
+      
+      const totalUpgrades = upgradeEntries.length;
+      return totalUpgrades > 3 ? `${topUpgrades} (+${totalUpgrades - 3} more)` : topUpgrades;
+    };
     
-    const choice = confirm(message + '\n\n✅ OK = Keep OTHER BROWSER data\n❌ Cancel = Keep THIS BROWSER data');
+    // Helper function to get prestige info
+    const getPrestigeInfo = (gameState: GameState): string => {
+      const level = gameState.prestigeLevel || 0;
+      const points = gameState.prestigePoints || 0;
+      const multiplier = gameState.prestigeMultiplier || 1;
+      
+      if (level === 0) return "No prestige";
+      return `Level ${level}, ${this.formatNumber(points)} points (${multiplier.toFixed(1)}x mult)`;
+    };
+    
+    const localUpgrades = getUpgradeSummary(this.gameState);
+    const serverUpgrades = getUpgradeSummary(serverData);
+    const localPrestige = getPrestigeInfo(this.gameState);
+    const serverPrestige = getPrestigeInfo(serverData);
+    
+    const localProduction = this.formatNumber(this.gameState.productionPerSecond || 0);
+    const serverProduction = this.formatNumber(serverData.productionPerSecond || 0);
+    
+    const message = `⚠️ SYNC CONFLICT DETECTED!\n\nBoth browsers have been used recently and have different progress.\nHere's a comparison to help you choose:\n\n🖥️ THIS BROWSER (Last used: ${localTimeStr}):\n• Candy: ${this.formatNumber(localCandy)}\n• Production: ${localProduction}/sec\n• Upgrades: ${localUpgrades}\n• Prestige: ${localPrestige}\n\n🌐 OTHER BROWSER (Last used: ${serverTimeStr}):\n• Candy: ${this.formatNumber(serverCandy)}\n• Production: ${serverProduction}/sec\n• Upgrades: ${serverUpgrades}\n• Prestige: ${serverPrestige}\n\nWhich progress would you like to keep?`;
+    
+    const choice = confirm(message + '\n\n✅ OK = Keep OTHER BROWSER progress\n❌ Cancel = Keep THIS BROWSER progress');
     
     if (choice) {
       // Load server data
