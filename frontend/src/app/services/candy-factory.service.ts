@@ -125,23 +125,13 @@ export class CandyFactoryService {
    * This fixes the core sync issue where Browser B shows 0 candy instead of Browser A's progress
    */
   private async initializeGame(): Promise<void> {
-    // First, check if we have local data
-    const localData = this.loadGameStateFromLocalStorage();
-    
-    // 🚨 ALWAYS load from server first - this fixes the core problem
+    // 🚨 ALWAYS load from server first - server is the source of truth
     if (this.authService.isAuthenticated()) {
       try {
         const serverData = await this.gameApiService.loadGameState();
         
         if (serverData) {
-          // Check if we should show conflict dialog on initial load
-          if (localData && this.shouldShowInitialLoadConflict(localData, serverData)) {
-            console.log('🔄 Initial load conflict detected - showing dialog');
-            this.showDataUpdateDialog(serverData);
-            return; // Dialog will handle loading the chosen data
-          }
-          
-          // Use server data as authoritative starting point (no conflict or minor difference)
+          // Always use server data as authoritative starting point - no dialog on initial load
           this.gameState = {
             ...serverData,
             // Add session validation fields
@@ -167,6 +157,7 @@ export class CandyFactoryService {
     }
     
     // Fallback: localStorage or fresh state (only if server unavailable)
+    const localData = this.loadGameStateFromLocalStorage();
     if (localData) {
       this.gameState = {
         ...localData,
@@ -205,60 +196,6 @@ export class CandyFactoryService {
       console.error('Failed to load game state from localStorage:', error);
     }
     return null;
-  }
-
-  /**
-   * Determine if we should show conflict dialog on initial load
-   * Only shows dialog if there's a meaningful difference between local and server data
-   */
-  private shouldShowInitialLoadConflict(localData: GameState, serverData: GameState): boolean {
-    // Calculate the difference in candy
-    const candyDifference = Math.abs(localData.candy - serverData.candy);
-    
-    // Calculate the difference in total candy earned (more reliable than current candy)
-    const totalCandyDifference = Math.abs(
-      (localData.totalCandyEarned || 0) - (serverData.totalCandyEarned || 0)
-    );
-    
-    // Check if upgrade counts are significantly different
-    const localUpgradeCount = Object.values(localData.upgrades || {}).reduce((sum, count) => sum + count, 0);
-    const serverUpgradeCount = Object.values(serverData.upgrades || {}).reduce((sum, count) => sum + count, 0);
-    const upgradeDifference = Math.abs(localUpgradeCount - serverUpgradeCount);
-    
-    // Check prestige level differences
-    const prestigeDifference = Math.abs(
-      (localData.prestigeLevel || 0) - (serverData.prestigeLevel || 0)
-    );
-    
-    // Use meaningful thresholds to avoid false positives from timing differences
-    const CANDY_THRESHOLD = 100; // At least 100 candy difference
-    const TOTAL_CANDY_THRESHOLD = 1000; // Or 1000 total candy earned difference
-    const UPGRADE_THRESHOLD = 2; // Or 2+ upgrade difference
-    const PRESTIGE_THRESHOLD = 1; // Or any prestige level difference
-    
-    // Only show dialog if there's a significant difference
-    const hasSignificantDifference = 
-      candyDifference > CANDY_THRESHOLD ||
-      totalCandyDifference > TOTAL_CANDY_THRESHOLD ||
-      upgradeDifference >= UPGRADE_THRESHOLD ||
-      prestigeDifference >= PRESTIGE_THRESHOLD;
-    
-    if (hasSignificantDifference) {
-      console.log('Initial load conflict detection:', {
-        candyDifference,
-        totalCandyDifference,
-        upgradeDifference,
-        prestigeDifference,
-        thresholds: {
-          candy: CANDY_THRESHOLD,
-          totalCandy: TOTAL_CANDY_THRESHOLD,
-          upgrades: UPGRADE_THRESHOLD,
-          prestige: PRESTIGE_THRESHOLD
-        }
-      });
-    }
-    
-    return hasSignificantDifference;
   }
 
   /**
