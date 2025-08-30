@@ -1,3 +1,6 @@
+// Import multi-planet interfaces for compatibility
+import { EnhancedGameState } from './planet-system.interface';
+
 export interface CandyUpgrade {
   id: string;
   name: string;
@@ -14,6 +17,13 @@ export interface CandyUpgrade {
   icon: string;
 }
 
+/**
+ * Original single-planet GameState interface
+ * Maintained for backward compatibility during multi-planet transition
+ * 
+ * @deprecated Use EnhancedGameState for new implementations
+ * This interface will be migrated to represent Sweet Planet state
+ */
 export interface GameState {
   candy: number;
   totalCandyEarned: number;
@@ -42,6 +52,10 @@ export interface GameState {
   totalClicks: number;
   totalFlyingCandiesCaught: number;
   totalPlayTime: number; // in milliseconds
+  
+  // Multi-planet compatibility fields (optional for migration)
+  isMultiPlanet?: boolean; // Flag to detect enhanced game state
+  gameVersion?: string; // Version tracking for data migration
 }
 
 export interface ClickEvent {
@@ -173,4 +187,51 @@ export interface CollectionStats {
     mythic: number;
   };
   completionPercentage: number;
+}
+
+/**
+ * Type guards and utility functions for GameState migration
+ */
+
+/**
+ * Type guard to check if a GameState is the enhanced multi-planet version
+ */
+export function isEnhancedGameState(state: GameState | EnhancedGameState): state is EnhancedGameState {
+  return 'planets' in state && 'currentPlanet' in state;
+}
+
+/**
+ * Type guard to check if a GameState has been flagged for multi-planet migration
+ */
+export function isMultiPlanetReady(state: GameState): boolean {
+  return state.isMultiPlanet === true;
+}
+
+/**
+ * Compatibility layer for accessing game state data regardless of version
+ */
+export interface GameStateAccessor {
+  // Core candy data (works for both single and multi-planet)
+  getTotalCandy(state: GameState | EnhancedGameState): number;
+  getClickPower(state: GameState | EnhancedGameState): number;
+  getProductionPerSecond(state: GameState | EnhancedGameState): number;
+  
+  // Achievement access (unified interface)
+  getAchievements(state: GameState | EnhancedGameState): { [achievementId: string]: AchievementProgress };
+  
+  // Version detection
+  getGameVersion(state: GameState | EnhancedGameState): string;
+  requiresMigration(state: GameState | EnhancedGameState): boolean;
+}
+
+/**
+ * Migration progress tracking
+ */
+export interface MigrationStatus {
+  inProgress: boolean;
+  currentStep: 'backup' | 'transform' | 'validate' | 'complete' | 'failed';
+  progress: number; // 0-100
+  errorMessage?: string;
+  backupCreated: boolean;
+  canRollback: boolean;
 }

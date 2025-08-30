@@ -24,7 +24,7 @@ export class ApiService {
       });
       return response.ok;
     } catch (error) {
-      console.error('Failed to validate authentication:', error);
+      // Silent authentication check failure for guest users - no error logging
       return false;
     }
   }

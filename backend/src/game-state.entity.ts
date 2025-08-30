@@ -10,6 +10,7 @@ export class GameState {
 
   @Column({ type: 'jsonb' })
   game_data: {
+    // Legacy single-planet fields (backward compatibility)
     candy: number;
     totalCandyEarned: number;
     clickPower: number;
@@ -56,6 +57,17 @@ export class GameState {
     totalClicks: number;
     totalFlyingCandiesCaught: number;
     totalPlayTime: number;
+    
+    // Multi-planet system fields (new - optional for backward compatibility)
+    planets?: { [planetId: string]: any }; // Planet-specific game states
+    currentPlanet?: string; // Currently active planet
+    solarSystemLevel?: number; // Player progression level
+    crossPlanetRecipes?: Array<any>; // Cross-planet recipe unlocks
+    tradeRoutes?: Array<any>; // Inter-planet trading routes
+    networkSynergy?: number; // Multi-planet bonus multiplier
+    planetUnlockProgress?: { [planetId: string]: any }; // Planet unlock tracking
+    gameVersion?: string; // Version for migration tracking
+    isMultiPlanet?: boolean; // Flag for enhanced game state detection
   };
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

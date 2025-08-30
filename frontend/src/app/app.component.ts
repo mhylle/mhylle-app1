@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterModule, Router, NavigationEnd } from '@angular/router';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { AuthService, UserInfo } from './services/auth.service';
+import { CandyFactoryService } from './services/candy-factory.service';
 import { LoginComponent } from './components/login/login.component';
 import { environment } from '../environments/environment';
 
@@ -40,9 +41,25 @@ interface HealthStatus {
         </div>
       </header>
 
-      <nav class="app-nav" *ngIf="!isFullscreenRoute">
-        <a routerLink="/candy-factory" routerLinkActive="active">🍭 Play Game</a>
-        <a routerLink="/health" routerLinkActive="active">System Health</a>
+      <!-- Progressive Navigation: Only show when multiple planets are unlocked -->
+      <nav class="app-nav" *ngIf="showNavigation">
+        <!-- Solar System hub only useful when multiple planets exist -->
+        <a routerLink="/solar-system" 
+           routerLinkActive="active" 
+           *ngIf="unlockedPlanets.length >= 3">🌌 Solar System</a>
+        
+        <!-- Progressive planet navigation -->
+        <div class="planet-nav">
+          <span class="nav-section" *ngIf="unlockedPlanets.length >= 2">Planets:</span>
+          <a *ngFor="let planet of cachedPlanetNavItems" 
+             [routerLink]="planet.route" 
+             routerLinkActive="active">
+            {{planet.icon}} {{planet.name}}
+          </a>
+        </div>
+        
+        <!-- Utility links always available -->
+        <a routerLink="/health" routerLinkActive="active">⚕️ Health</a>
       </nav>
 
       <main class="app-main" [class.fullscreen-main]="isFullscreenRoute">
@@ -142,7 +159,11 @@ interface HealthStatus {
       padding: 0 2rem;
       border-bottom: 1px solid #dee2e6;
       display: flex;
+      align-items: center;
       gap: 2rem;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1000;
     }
 
     .app-nav a {
@@ -152,6 +173,7 @@ interface HealthStatus {
       font-weight: 500;
       border-bottom: 3px solid transparent;
       transition: all 0.3s ease;
+      white-space: nowrap;
     }
 
     .app-nav a:hover {
@@ -164,10 +186,48 @@ interface HealthStatus {
       border-bottom-color: #667eea;
     }
 
+    .planet-nav {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .nav-section {
+      color: #6c757d;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-right: 0.5rem;
+    }
+
+    .planet-nav a {
+      padding: 0.5rem 0.75rem;
+      margin: 0;
+      border-radius: 0.5rem;
+      border-bottom: none;
+      background: rgba(102, 126, 234, 0.1);
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+
+    .planet-nav a:hover {
+      background: rgba(102, 126, 234, 0.2);
+      transform: translateY(-1px);
+      border-bottom: none;
+    }
+
+    .planet-nav a.active {
+      background: #667eea;
+      color: white;
+      border-bottom: none;
+    }
+
     .app-main {
       flex: 1;
       width: 100%;
       box-sizing: border-box;
+      position: relative;
+      z-index: 1;
     }
 
     .fullscreen-game {
@@ -245,12 +305,21 @@ export class AppComponent implements OnInit {
 
   isFullscreenRoute = false;
   currentUser: UserInfo | null = null;
+  unlockedPlanets: string[] = ['sweet']; // Start with only Sweet Planet unlocked
+  showNavigation = false; // Cache navigation display state
+  cachedPlanetNavItems: Array<{id: string, icon: string, name: string, route: string}> = [];
 
   constructor(
     private http: HttpClient, 
     private router: Router,
-    private authService: AuthService
-  ) {}
+    private authService: AuthService,
+    private candyFactoryService: CandyFactoryService,
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef
+  ) {
+    // Subscribe to game state changes for planet unlocking
+    this.subscribeToGameStateForPlanetUnlocks();
+  }
 
   ngOnInit(): void {
     // Load app configuration from environment or API
@@ -261,15 +330,21 @@ export class AppComponent implements OnInit {
       this.currentUser = user;
     });
     
-    // Listen for route changes to determine if we should show fullscreen
+    // Listen for route changes to determine fullscreen state
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: NavigationEnd) => {
-        this.isFullscreenRoute = event.url === '/candy-factory' || event.url === '/';
+        this.updateFullscreenState(event.url);
       });
       
-    // Check initial route
-    this.isFullscreenRoute = this.router.url === '/candy-factory' || this.router.url === '/';
+    // Set initial fullscreen state
+    this.updateFullscreenState(this.router.url);
+    
+    // Initialize planet navigation cache
+    this.updatePlanetNavCache();
+    
+    // TODO: Load actual planet unlock progress from game state
+    // Planets unlock based on game progression, not time
   }
 
   async logout(): Promise<void> {
@@ -281,6 +356,42 @@ export class AppComponent implements OnInit {
     console.log('Login successful for Cosmic Candy Factory!');
   }
 
+  private isGameRoute(url: string): boolean {
+    // Determine if route should be fullscreen based on URL only
+    const gameRoutes = [
+      '/',
+      '/planet/sweet',
+      '/planet/sour',
+      '/planet/cold',
+      '/planet/spicy',
+      '/planet/bitter',
+      '/planet/fizzy',
+      '/candy-factory' // Legacy route
+    ];
+    
+    const isGameRoute = gameRoutes.some(route => url === route || url.startsWith(route + '?') || url.startsWith(route + '#'));
+    
+    // Solar System is always fullscreen when accessed
+    if (url.includes('/solar-system')) {
+      return true;
+    }
+    
+    return isGameRoute;
+  }
+  
+  private updatePlanetNavCache(): void {
+    const allPlanets = [
+      { id: 'sweet', icon: '🍭', name: 'Sweet', route: '/planet/sweet' },
+      { id: 'sour', icon: '🍋', name: 'Sour', route: '/planet/sour' },
+      { id: 'cold', icon: '🧊', name: 'Cold', route: '/planet/cold' },
+      { id: 'spicy', icon: '🌶️', name: 'Spicy', route: '/planet/spicy' },
+      { id: 'bitter', icon: '☕', name: 'Bitter', route: '/planet/bitter' },
+      { id: 'fizzy', icon: '🥤', name: 'Fizzy', route: '/planet/fizzy' }
+    ];
+    
+    this.cachedPlanetNavItems = allPlanets.filter(planet => this.unlockedPlanets.includes(planet.id));
+  }
+
   private loadAppInfo(): void {
     // Load from environment configuration
     this.appInfo = {
@@ -289,4 +400,37 @@ export class AppComponent implements OnInit {
       apiUrl: environment.apiUrl
     };
   }
+
+  private updateFullscreenState(url: string): void {
+    // Only show fullscreen for game routes when navigation is hidden (single planet)
+    this.isFullscreenRoute = this.isGameRoute(url) && !this.showNavigation;
+  }
+  
+  private subscribeToGameStateForPlanetUnlocks(): void {
+    // Subscribe to game state changes to monitor planet unlock thresholds
+    this.candyFactoryService.gameState$.subscribe(gameState => {
+      const currentUnlockedCount = this.unlockedPlanets.length;
+      
+      // Check unlock thresholds based on totalCandyEarned
+      if (gameState.totalCandyEarned >= 10000 && !this.unlockedPlanets.includes('sour')) {
+        // Unlock Sour Planet at 10,000 total candy
+        this.unlockedPlanets.push('sour');
+        this.updatePlanetNavCache();
+        
+        // Show navigation when we have multiple planets
+        if (this.unlockedPlanets.length >= 2) {
+          this.showNavigation = true;
+          this.updateFullscreenState(this.router.url);
+        }
+        
+        console.log('🍋 Sour Planet unlocked! Navigate between planets using the menu above.');
+      }
+      
+      // Future unlock thresholds can be added here
+      // Cold Planet: 50,000 candy
+      // Spicy Planet: 250,000 candy
+      // etc.
+    });
+  }
+
 }

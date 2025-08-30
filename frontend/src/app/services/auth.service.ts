@@ -56,10 +56,8 @@ export class AuthService {
         return null;
       }
     } catch (error) {
-      // Only log actual network/unexpected errors, not authentication failures
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        console.error('Session validation network error:', error);
-      }
+      // Silent failure for guest users - network errors are expected when auth service unavailable
+      // This is normal behavior for guest users and should not generate error logs
     }
     
     this.currentUserSubject.next(null);

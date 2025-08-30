@@ -1,0 +1,929 @@
+/**
+ * Cold Planet Component Styles
+ * Ice/Snow theme with temperature management UI
+ */
+
+/* Container and layout */
+.cold-planet {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #001f3f 0%, #4a90e2 30%, #87ceeb 60%, #f0f8ff 100%);
+  color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.cold-planet::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, white, transparent),
+    radial-gradient(1px 1px at 40px 70px, white, transparent),
+    radial-gradient(1px 1px at 90px 40px, white, transparent),
+    radial-gradient(2px 2px at 130px 80px, white, transparent);
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  opacity: 0.3;
+  animation: snow-drift 20s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes snow-drift {
+  0% { transform: translateY(-200px); }
+  100% { transform: translateY(calc(100vh + 200px)); }
+}
+
+/* Loading and Error States */
+.cold-planet.loading {
+  opacity: 0.9;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.loading-spinner {
+  font-size: 4rem;
+  animation: freeze-spin 3s ease-in-out infinite;
+}
+
+@keyframes freeze-spin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.2); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  gap: 2rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 4rem;
+  animation: warning-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes warning-pulse {
+  0% { opacity: 0.8; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.1); }
+}
+
+.error-message {
+  font-size: 1.2rem;
+  color: #ffb3ba;
+  max-width: 600px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.retry-button {
+  padding: 12px 24px;
+  background: linear-gradient(45deg, #4a90e2 0%, #87ceeb 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px 0 rgba(74, 144, 226, 0.3);
+}
+
+.retry-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px 0 rgba(74, 144, 226, 0.4);
+  background: linear-gradient(45deg, #87ceeb 0%, #4a90e2 100%);
+}
+
+/* Header */
+.planet-header {
+  padding: 1rem 2rem;
+  background: rgba(0, 31, 63, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 2px solid rgba(135, 206, 235, 0.3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  position: relative;
+  z-index: 2;
+}
+
+.back-button {
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 2px solid rgba(135, 206, 235, 0.3);
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.back-button:hover {
+  background: rgba(135, 206, 235, 0.2);
+  border-color: rgba(135, 206, 235, 0.6);
+  transform: translateX(-5px);
+}
+
+.planet-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  text-align: center;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 31, 63, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.planet-subtitle {
+  font-size: 1rem;
+  font-weight: normal;
+  color: rgba(135, 206, 235, 0.9);
+  margin-top: 0.25rem;
+}
+
+/* Main Game Interface */
+.planet-game {
+  padding: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Stats Panel */
+.stats-panel {
+  background: rgba(0, 31, 63, 0.4);
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(135, 206, 235, 0.2);
+}
+
+.stat-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(135, 206, 235, 0.2);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #87ceeb;
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  text-align: center;
+}
+
+/* Temperature Section */
+.temperature-section {
+  background: rgba(0, 31, 63, 0.4);
+  border-radius: 15px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(135, 206, 235, 0.2);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.title-icon {
+  font-size: 1.8rem;
+  margin-right: 0.5rem;
+}
+
+.temp-value {
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  border: 2px solid;
+}
+
+.temp-value.extreme-cold {
+  color: #b8e6ff;
+  border-color: #b8e6ff;
+  background: rgba(184, 230, 255, 0.1);
+}
+
+.temp-value.very-cold {
+  color: #87ceeb;
+  border-color: #87ceeb;
+  background: rgba(135, 206, 235, 0.1);
+}
+
+.temp-value.cold {
+  color: #4a90e2;
+  border-color: #4a90e2;
+  background: rgba(74, 144, 226, 0.1);
+}
+
+.temp-value.cool {
+  color: #6cb4ee;
+  border-color: #6cb4ee;
+  background: rgba(108, 180, 238, 0.1);
+}
+
+.temp-value.normal {
+  color: #ffffff;
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Temperature Gauge */
+.temperature-gauge {
+  margin-bottom: 2rem;
+}
+
+.gauge-track {
+  position: relative;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.gauge-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #b8e6ff 0%, #87ceeb 50%, #4a90e2 100%);
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.optimal-range {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(135, 206, 235, 0.3);
+  border: 2px solid #87ceeb;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.range-label {
+  font-size: 0.7rem;
+  color: white;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.gauge-indicator {
+  position: absolute;
+  top: -5px;
+  height: 30px;
+  width: 2px;
+  transform: translateX(-1px);
+}
+
+.indicator-dot {
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 50%;
+  border: 2px solid #4a90e2;
+  margin-left: -5px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  animation: indicator-pulse 2s ease-in-out infinite;
+}
+
+@keyframes indicator-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 255, 255, 0.8); }
+  50% { box-shadow: 0 0 20px rgba(255, 255, 255, 1), 0 0 30px rgba(135, 206, 235, 0.5); }
+}
+
+.gauge-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+/* Temperature Controls */
+.temperature-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.temp-button {
+  padding: 1rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+}
+
+.temp-button.cooling {
+  background: linear-gradient(45deg, #87ceeb 0%, #b8e6ff 100%);
+  color: #001f3f;
+}
+
+.temp-button.heating {
+  background: linear-gradient(45deg, #ff6b6b 0%, #ffa500 100%);
+  color: white;
+}
+
+.temp-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.temp-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.temperature-status {
+  flex: 1;
+  min-width: 250px;
+  text-align: center;
+}
+
+.status-text {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.modifiers {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Crystallization Section */
+.crystallization-section {
+  background: rgba(0, 31, 63, 0.4);
+  border-radius: 15px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(135, 206, 235, 0.2);
+}
+
+.crystallization-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.crystal-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.crystal-stat .label {
+  font-weight: bold;
+}
+
+.crystal-stat .value {
+  color: #87ceeb;
+  font-weight: bold;
+}
+
+.crystal-stat .value.highlight {
+  color: #b8e6ff;
+  text-shadow: 0 0 10px rgba(184, 230, 255, 0.5);
+}
+
+.multiplier {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.crystallization-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+}
+
+.crystal-button {
+  padding: 1rem 2rem;
+  background: linear-gradient(45deg, #b8e6ff 0%, #87ceeb 100%);
+  color: #001f3f;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.crystal-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(184, 230, 255, 0.3);
+}
+
+.crystal-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.auto-crystallization {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(184, 230, 255, 0.1);
+  border-radius: 10px;
+  border: 1px solid rgba(184, 230, 255, 0.3);
+  min-width: 250px;
+}
+
+.auto-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #b8e6ff;
+}
+
+.auto-icon {
+  animation: auto-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes auto-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+.crystal-progress {
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.crystal-progress .progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #b8e6ff 0%, #87ceeb 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Main Click Area */
+.click-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 2rem 0;
+  position: relative;
+}
+
+.planet-display {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.planet-core {
+  font-size: 8rem;
+  animation: planet-float 4s ease-in-out infinite, planet-rotate 10s linear infinite;
+  filter: drop-shadow(0 0 30px rgba(135, 206, 235, 0.5));
+  transition: all 0.3s ease;
+}
+
+.planet-core.crystallizing {
+  animation: planet-float 4s ease-in-out infinite, planet-rotate 10s linear infinite, crystallize-glow 2s ease-in-out infinite;
+}
+
+@keyframes planet-float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(5deg); }
+}
+
+@keyframes planet-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes crystallize-glow {
+  0%, 100% { filter: drop-shadow(0 0 30px rgba(135, 206, 235, 0.5)); }
+  50% { filter: drop-shadow(0 0 60px rgba(184, 230, 255, 0.8)); }
+}
+
+.planet-display:hover .planet-core {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 40px rgba(135, 206, 235, 0.8));
+}
+
+.ice-effects {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.ice-crystal {
+  position: absolute;
+  font-size: 2rem;
+  opacity: 0.7;
+  animation: ice-drift 3s linear infinite;
+}
+
+.ice-crystal:nth-child(1) {
+  top: 20%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.ice-crystal:nth-child(2) {
+  top: 60%;
+  right: 15%;
+  animation-delay: 1s;
+}
+
+.ice-crystal:nth-child(3) {
+  bottom: 30%;
+  left: 60%;
+  animation-delay: 2s;
+}
+
+@keyframes ice-drift {
+  0% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
+  50% { transform: translateY(-10px) rotate(180deg); opacity: 1; }
+  100% { transform: translateY(0px) rotate(360deg); opacity: 0.7; }
+}
+
+.aurora-effect {
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  right: -20px;
+  bottom: -20px;
+  pointer-events: none;
+}
+
+.aurora-light {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  animation: aurora-dance 4s ease-in-out infinite;
+}
+
+.aurora-light.northern {
+  background: radial-gradient(ellipse at center, rgba(0, 255, 127, 0.3) 0%, transparent 70%);
+  animation-delay: 0s;
+}
+
+.aurora-light.southern {
+  background: radial-gradient(ellipse at center, rgba(135, 206, 235, 0.3) 0%, transparent 70%);
+  animation-delay: 2s;
+}
+
+@keyframes aurora-dance {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.2); }
+}
+
+/* Events Section */
+.events-section {
+  margin: 2rem 0;
+}
+
+.event-panel {
+  background: rgba(0, 31, 63, 0.6);
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  backdrop-filter: blur(10px);
+  border-left: 4px solid;
+}
+
+.event-panel.ice-age {
+  border-left-color: #87ceeb;
+  background: rgba(135, 206, 235, 0.1);
+}
+
+.event-panel.aurora {
+  border-left-color: #00ff7f;
+  background: rgba(0, 255, 127, 0.1);
+}
+
+.event-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.event-icon {
+  font-size: 2rem;
+}
+
+.event-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.event-phase, .event-intensity {
+  padding: 0.25rem 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.event-description {
+  margin: 0 0 1rem 0;
+  line-height: 1.5;
+}
+
+.event-bonus {
+  padding: 0.5rem 1rem;
+  background: rgba(0, 255, 127, 0.2);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 127, 0.3);
+}
+
+.bonus-text {
+  font-weight: bold;
+  color: #00ff7f;
+}
+
+/* Crystal Caverns Section */
+.caverns-section {
+  background: rgba(0, 31, 63, 0.4);
+  border-radius: 15px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(135, 206, 235, 0.2);
+}
+
+.depth-indicator {
+  font-size: 1rem;
+  color: #87ceeb;
+  font-weight: bold;
+}
+
+.excavation-progress {
+  margin-bottom: 1.5rem;
+}
+
+.progress-label {
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+}
+
+.progress-bar-container .progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4a90e2 0%, #87ceeb 100%);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  text-align: right;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.excavate-button {
+  padding: 1rem 2rem;
+  background: linear-gradient(45deg, #8b4513 0%, #d2691e 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.excavate-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(139, 69, 19, 0.3);
+}
+
+.excavate-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.unique-crystals h3 {
+  margin-bottom: 1rem;
+  color: #87ceeb;
+}
+
+.crystals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.crystal-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 10px;
+  border: 2px solid;
+  text-align: center;
+}
+
+.crystal-item.crystal-common {
+  border-color: #87ceeb;
+  background: rgba(135, 206, 235, 0.1);
+}
+
+.crystal-item.crystal-rare {
+  border-color: #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.crystal-item.crystal-legendary {
+  border-color: #ff6347;
+  background: rgba(255, 99, 71, 0.1);
+  box-shadow: 0 0 20px rgba(255, 99, 71, 0.3);
+}
+
+.crystal-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.crystal-type {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.crystal-rarity {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+
+.crystal-value {
+  font-weight: bold;
+  color: #ffd700;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .planet-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .planet-title {
+    font-size: 2rem;
+  }
+  
+  .planet-game {
+    padding: 1rem;
+  }
+  
+  .temperature-controls {
+    flex-direction: column;
+  }
+  
+  .temperature-status {
+    min-width: auto;
+  }
+  
+  .modifiers {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .planet-core {
+    font-size: 6rem;
+  }
+  
+  .crystallization-controls {
+    align-items: stretch;
+  }
+  
+  .auto-crystallization {
+    min-width: auto;
+  }
+  
+  .event-header {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .planet-title {
+    font-size: 1.5rem;
+  }
+  
+  .stat-group {
+    grid-template-columns: 1fr;
+  }
+  
+  .crystallization-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .crystals-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .planet-core {
+    font-size: 5rem;
+  }
+  
+  .gauge-labels {
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+  }
+}
