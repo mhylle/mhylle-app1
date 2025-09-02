@@ -1,0 +1,278 @@
+/* Sour Planet Main Component - Complete Layout Styles */
+
+/* Import shared variables and layout */
+@import './sour-planet-variables';
+@import './sour-planet-layout';
+
+/* Main Layout Container - PRESERVE REFERENCE MATCH */
+.sour-planet-layout {
+  height: 100%;
+  max-height: 100%;
+  background: var(--primary-bg) url('/sour_candy_background.png') center/cover no-repeat;
+  color: var(--text-light);
+  font-family: var(--font-primary);
+  position: relative;
+  overflow: hidden;
+  line-height: var(--leading-relaxed);
+  letter-spacing: 0.02em;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Unified Planet Header Integration */
+app-planet-header {
+  /* Ensure proper z-index and positioning */
+  position: relative;
+  z-index: 10;
+  display: block;
+  
+  /* Override any conflicting styles */
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Main Game Layout - REFERENCE MATCH CLEAN LAYOUT */
+.planet-game {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: calc(100vh - 200px); /* 74% viewport optimization */
+  max-height: calc(100vh - 200px);
+  width: 100%;
+  position: relative;
+}
+
+/* Game Area - Side-by-Side Layout (624px main + 400px upgrades) */
+.game-area {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Main Content Area - CENTER FOCUSED LAYOUT */
+.main-content {
+  flex: 1;
+  min-width: 0;
+  max-width: calc(100% - 400px); /* 624px main content at 1024px width */
+  padding: 30px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-items: center;
+  justify-content: flex-start;
+  box-sizing: border-box;
+}
+
+/* Planet Container - CLEAN CENTERED VERTICAL LAYOUT */
+.planet-container {
+  flex: 1;
+  padding: 0;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Clean spacing between components */
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  position: relative;
+  align-items: center;
+  width: 100%;
+  max-width: 700px; /* Slightly wider for pH side layout */
+}
+
+/* Component Layout Order - CLEAN VERTICAL STACK */
+app-lemon-clicker {
+  order: 1; /* Large lemon at top - reference match */
+  flex-shrink: 0;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+app-ph-balance-system {
+  order: 2; /* pH system with sides below lemon */
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 700px; /* Accommodate side indicators */
+  margin: 0 auto;
+}
+
+app-fermentation-panel {
+  order: 3; /* Hidden for clean layout */
+  flex-shrink: 0;
+  display: none; /* Hide for reference match */
+}
+
+/* Upgrades Panel - RIGHT SIDEBAR */
+app-upgrades-panel {
+  width: 400px; /* Fixed width for consistent layout */
+  max-width: 40vw; /* Never exceed 40% of viewport */
+  min-width: 300px; /* Minimum width for usability */
+  flex-shrink: 0; /* Don't shrink this panel */
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* Quick Actions - Hidden for clean reference layout */
+.quick-actions {
+  display: none !important;
+}
+
+/* Loading and Error States */
+.loading-state,
+.error-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--spacing-2xl);
+  min-height: 50vh;
+  gap: 20px;
+}
+
+.loading-spinner {
+  font-size: 3rem;
+  animation: spin 2s linear infinite;
+}
+
+.error-icon {
+  font-size: 4rem;
+  color: var(--ph-danger);
+}
+
+.error-message {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+.retry-button {
+  padding: 12px 24px;
+  background: var(--sour-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.retry-button:hover {
+  background: var(--sour-secondary);
+  transform: translateY(-2px);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes scan {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Tablet Landscape Optimization (1024x768) */
+@media (min-width: 1000px) and (max-width: 1100px) and (max-height: 800px) {
+  .sour-planet-layout {
+    /* Ensure full viewport usage */
+    height: 100vh;
+    max-height: 100vh;
+  }
+
+  .planet-game {
+    /* Optimize for reduced header height */
+    height: calc(100vh - 140px); /* Reduced from 200px due to smaller header */
+    max-height: calc(100vh - 140px);
+  }
+
+  .main-content {
+    padding: 20px; /* Reduced from 30px */
+  }
+
+  .planet-container {
+    gap: 16px; /* Reduced from 20px */
+    max-width: 650px; /* Slightly smaller for tablet */
+  }
+
+  /* Component spacing optimization */
+  app-lemon-clicker {
+    margin-bottom: 16px; /* Reduced from 20px */
+  }
+
+  /* Upgrades panel optimization */
+  app-upgrades-panel {
+    width: 350px; /* Reduced from 400px */
+    min-width: 280px; /* Reduced from 300px */
+  }
+  
+  /* Hide less critical elements for space */
+  .quick-actions {
+    display: none !important;
+  }
+}
+
+/* Responsive Design - Portrait Tablet and Smaller */
+@media (max-width: 900px) {
+  
+  .game-area {
+    flex-direction: column;
+    height: auto;
+    max-height: none;
+  }
+  
+  .main-content {
+    max-width: none;
+    width: 100%;
+  }
+  
+  .planet-container {
+    flex: 0 0 auto;
+    min-height: 50vh;
+    max-height: 70vh;
+    width: 100%;
+  }
+  
+  app-upgrades-panel {
+    width: 100%;
+    min-width: auto;
+    max-width: none;
+    max-height: 50vh;
+    flex-shrink: 1;
+  }
+}
+
+/* Mobile Portrait - Smaller Screens */
+@media (max-width: 480px) {
+  
+  .planet-container {
+    min-height: 45vh;
+    max-height: 60vh;
+  }
+  
+  app-upgrades-panel {
+    max-height: 40vh;
+  }
+}

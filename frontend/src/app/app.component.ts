@@ -29,7 +29,8 @@ interface HealthStatus {
   imports: [CommonModule, RouterOutlet, RouterModule, HttpClientModule, LoginComponent],
   template: `
     <div class="app-container" [class.fullscreen-game]="isFullscreenRoute">
-      <header class="app-header" *ngIf="!isFullscreenRoute">
+      <!-- Hide both headers on planet routes - planet components have their own unified headers -->
+      <header class="app-header" *ngIf="!isPlanetRoute">
         <h1>{{ appInfo.name }}</h1>
         <div class="app-info">
           <span class="version">v{{ appInfo.version }}</span>
@@ -41,40 +42,47 @@ interface HealthStatus {
         </div>
       </header>
 
-      <!-- Progressive Navigation: Only show when multiple planets are unlocked -->
-      <nav class="app-nav" *ngIf="showNavigation">
-        <!-- Solar System hub only useful when multiple planets exist -->
-        <a routerLink="/solar-system" 
-           routerLinkActive="active" 
-           *ngIf="unlockedPlanets.length >= 3">🌌 Solar System</a>
-        
-        <!-- Progressive planet navigation -->
-        <div class="planet-nav">
-          <span class="nav-section" *ngIf="unlockedPlanets.length >= 2">Planets:</span>
-          <a *ngFor="let planet of cachedPlanetNavItems" 
-             [routerLink]="planet.route" 
-             routerLinkActive="active">
-            {{planet.icon}} {{planet.name}}
-          </a>
+      <!-- Hide navigation on planet routes - planet components have their own unified navigation -->
+      <nav class="app-nav compact-nav" *ngIf="showNavigation && !isPlanetRoute">
+        <!-- Planet Navigation Section -->
+        <div class="nav-section">
+          <!-- Solar System hub only useful when multiple planets exist -->
+          <a routerLink="/solar-system" 
+             routerLinkActive="active" 
+             *ngIf="unlockedPlanets.length >= 3">🌌</a>
+          
+          <!-- Progressive planet navigation -->
+          <div class="planet-nav">
+            <a *ngFor="let planet of cachedPlanetNavItems" 
+               [routerLink]="planet.route" 
+               routerLinkActive="active">
+              {{planet.icon}}
+            </a>
+          </div>
         </div>
         
-        <!-- Utility links always available -->
-        <a routerLink="/health" routerLinkActive="active">⚕️ Health</a>
+        <!-- Integrated Currency Display -->
+        <div class="nav-currency" *ngIf="gameState">
+          <div class="currency-item">
+            <span class="currency-icon">🍬</span>
+            <span class="currency-value">{{ formatNumber(gameState.candy || 0) }}</span>
+          </div>
+          <div class="currency-item">
+            <span class="currency-icon">💎</span>
+            <span class="currency-value">{{ formatNumber(gameState.crystals || 0) }}</span>
+          </div>
+        </div>
+        
+        <!-- Utility links -->
+        <div class="nav-utilities">
+          <a routerLink="/health" routerLinkActive="active">⚕️</a>
+        </div>
       </nav>
 
       <main class="app-main" [class.fullscreen-main]="isFullscreenRoute">
         <router-outlet></router-outlet>
       </main>
 
-      <footer class="app-footer" *ngIf="!isFullscreenRoute">
-        <div class="footer-content">
-          <p>&copy; 2025 Cosmic Candy Factory - An idle clicker game</p>
-          <div class="footer-links">
-            <a href="https://github.com/mhylle" target="_blank">GitHub</a>
-            <a href="/api/app1/health" target="_blank">API Health</a>
-          </div>
-        </div>
-      </footer>
       
       <app-login (loginSuccess)="onLoginSuccess()"></app-login>
     </div>
@@ -164,6 +172,51 @@ interface HealthStatus {
       flex-wrap: wrap;
       position: relative;
       z-index: 1000;
+      min-height: 48px; /* Reduced from default */
+    }
+    
+    .compact-nav {
+      padding: 0.25rem 2rem;
+      min-height: 40px;
+      justify-content: space-between;
+    }
+    
+    .nav-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .nav-currency {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    
+    .currency-item {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      background: rgba(102, 126, 234, 0.1);
+      border-radius: 0.25rem;
+    }
+    
+    .currency-icon {
+      font-size: 1rem;
+    }
+    
+    .currency-value {
+      color: #495057;
+      font-weight: 600;
+    }
+    
+    .nav-utilities {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
     }
 
     .app-nav a {
@@ -189,8 +242,19 @@ interface HealthStatus {
     .planet-nav {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 0.5rem;
       flex-wrap: wrap;
+    }
+    
+    .compact-nav .planet-nav a {
+      padding: 0.375rem 0.75rem;
+      margin: 0;
+      border-radius: 0.375rem;
+      border-bottom: none;
+      background: rgba(102, 126, 234, 0.1);
+      font-size: 1.1rem;
+      transition: all 0.2s ease;
+      min-width: auto;
     }
 
     .nav-section {
@@ -241,35 +305,6 @@ interface HealthStatus {
       position: relative;
     }
 
-    .app-footer {
-      background: #343a40;
-      color: white;
-      padding: 2rem;
-      margin-top: auto;
-    }
-
-    .footer-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .footer-links {
-      display: flex;
-      gap: 1rem;
-    }
-
-    .footer-links a {
-      color: #adb5bd;
-      text-decoration: none;
-      transition: color 0.3s ease;
-    }
-
-    .footer-links a:hover {
-      color: white;
-    }
 
     @media (max-width: 768px) {
       .app-header {
@@ -287,11 +322,6 @@ interface HealthStatus {
         padding: 1rem;
       }
 
-      .footer-content {
-        flex-direction: column;
-        gap: 1rem;
-        text-align: center;
-      }
     }
   `]
 })
@@ -304,10 +334,12 @@ export class AppComponent implements OnInit {
   };
 
   isFullscreenRoute = false;
+  isPlanetRoute = false; // Track if current route is a planet route
   currentUser: UserInfo | null = null;
   unlockedPlanets: string[] = ['sweet']; // Start with only Sweet Planet unlocked
   showNavigation = false; // Cache navigation display state
   cachedPlanetNavItems: Array<{id: string, icon: string, name: string, route: string}> = [];
+  gameState: any = null; // Current game state for currency display
 
   constructor(
     private http: HttpClient, 
@@ -330,15 +362,22 @@ export class AppComponent implements OnInit {
       this.currentUser = user;
     });
     
-    // Listen for route changes to determine fullscreen state
+    // Subscribe to game state changes for currency display
+    this.candyFactoryService.gameState$.subscribe(state => {
+      this.gameState = state;
+    });
+    
+    // Listen for route changes to determine fullscreen state and planet route state
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: NavigationEnd) => {
         this.updateFullscreenState(event.url);
+        this.updatePlanetRouteState(event.url);
       });
       
-    // Set initial fullscreen state
+    // Set initial fullscreen state and planet route state
     this.updateFullscreenState(this.router.url);
+    this.updatePlanetRouteState(this.router.url);
     
     // Initialize planet navigation cache
     this.updatePlanetNavCache();
@@ -349,6 +388,16 @@ export class AppComponent implements OnInit {
 
   async logout(): Promise<void> {
     await this.authService.logout();
+  }
+
+  formatNumber(value: number): string {
+    if (value >= 1000000) {
+      return (value / 1000000).toFixed(1) + 'M';
+    } else if (value >= 1000) {
+      return (value / 1000).toFixed(1) + 'K';
+    } else {
+      return value.toString();
+    }
   }
 
   onLoginSuccess(): void {
@@ -404,6 +453,11 @@ export class AppComponent implements OnInit {
   private updateFullscreenState(url: string): void {
     // Only show fullscreen for game routes when navigation is hidden (single planet)
     this.isFullscreenRoute = this.isGameRoute(url) && !this.showNavigation;
+  }
+  
+  private updatePlanetRouteState(url: string): void {
+    // Check if current route is a planet route (starts with /planet/)
+    this.isPlanetRoute = url.startsWith('/planet/');
   }
   
   private subscribeToGameStateForPlanetUnlocks(): void {

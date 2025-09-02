@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { CandyFactoryService } from '../../services/candy-factory.service';
 import { AchievementService } from '../../services/achievement.service';
 import { MigrationService, MigrationResult } from '../../services/migration.service';
@@ -11,69 +12,62 @@ import { MigrationDialogComponent } from '../../components/migration-dialog/migr
 import { Observable } from 'rxjs';
 import { Achievement } from '../../models/candy-factory.interface';
 
+// Import unified planet header
+import { PlanetHeaderComponent, PlanetTheme, ResourceData, PlanetNavItem } from '../../components/shared/planet-header/planet-header.component';
+
 @Component({
   selector: 'app-candy-factory',
   standalone: true,
-  imports: [CommonModule, AchievementGalleryComponent, MigrationDialogComponent],
+  imports: [CommonModule, PlanetHeaderComponent, AchievementGalleryComponent, MigrationDialogComponent],
   template: `
     <div class="candy-factory" [style.background]="'url(data:image/svg+xml;base64,' + starfieldBackground + ') repeat'">
-      <!-- Game Header -->
-      <div class="game-header">
-        <div class="candy-counter">
-          <h1>🍭 Cosmic Candy Factory</h1>
-          <div class="stats">
-            <div class="stat">
-              <span class="label">Candy:</span>
-              <span class="value">{{candyFactoryService.formatNumber((gameState$ | async)?.candy || 0)}}</span>
-            </div>
-            <div class="stat">
-              <span class="label">Per Click:</span>
-              <span class="value">{{candyFactoryService.formatNumber((gameState$ | async)?.clickPower || 1)}}</span>
-            </div>
-            <div class="stat">
-              <span class="label">Per Second:</span>
-              <span class="value">{{candyFactoryService.formatNumber((gameState$ | async)?.productionPerSecond || 0)}}</span>
-            </div>
-            <div class="stat" *ngIf="(gameState$ | async)?.prestigeLevel! > 0">
-              <span class="label">Prestige:</span>
-              <span class="value">Level {{(gameState$ | async)?.prestigeLevel}} ({{candyFactoryService.formatNumber((gameState$ | async)?.prestigeMultiplier || 1)}}x)</span>
-            </div>
-          </div>
+      <!-- Unified Planet Header with Navigation -->
+      <app-planet-header
+        [theme]="sweetTheme"
+        [resources]="resourceData"
+        [planets]="availablePlanets"
+        [currentPlanetId]="'sweet'"
+        [isLoading]="false"
+        [showBreadcrumb]="false"
+        [showPrimaryActions]="true"
+        [showQuickActions]="true"
+        (backClicked)="navigateToSolarSystem()">
+        
+        <!-- Primary Actions Slot -->
+        <div slot="primary-actions" class="sweet-planet-actions">
+          <button class="prestige-btn" 
+                  (click)="showPrestigeModal = true"
+                  *ngIf="getPrestigeData().canPrestige || (gameState$ | async)?.prestigeLevel! > 0">
+            ⭐ Prestige
+          </button>
         </div>
-        <div class="game-controls">
-          <div class="user-controls">
-            <div *ngIf="currentUser$ | async as user" class="user-status">
-              <span class="welcome">👋 {{ user.firstName }}</span>
-              <button class="sync-btn" (click)="manualSync()" [disabled]="isSyncing">
-                <span *ngIf="!isSyncing">🔄 Sync</span>
-                <span *ngIf="isSyncing">⏳ Syncing...</span>
-              </button>
-              <button class="logout-btn" (click)="logout()">Logout</button>
-            </div>
-            <div *ngIf="!(currentUser$ | async)" class="offline-status">
-              <span class="offline-mode">Playing offline - progress saved locally</span>
-            </div>
+        
+        <!-- Quick Actions Slot -->
+        <div slot="quick-actions" class="sweet-planet-quick-actions">
+          <div class="user-controls" *ngIf="currentUser$ | async as user">
+            <button class="sync-btn" (click)="manualSync()" [disabled]="isSyncing" title="Sync progress">
+              <span *ngIf="!isSyncing">🔄</span>
+              <span *ngIf="isSyncing">⏳</span>
+            </button>
+          </div>
+          <div class="offline-status" *ngIf="!(currentUser$ | async)">
+            <span class="offline-mode">Playing offline</span>
           </div>
           
-          <div class="game-actions">
-            <button class="login-btn" (click)="showLogin()" *ngIf="!(currentUser$ | async)">
-              🔑 Login
-            </button>
-            <button class="register-btn" (click)="showRegister()" *ngIf="!(currentUser$ | async)">
-              ✨ Register
-            </button>
-            <button class="achievement-btn" (click)="showAchievementGallery = true">
-              🏆 Achievements
-            </button>
-            <button class="prestige-btn" 
-                    (click)="showPrestigeModal = true"
-                    *ngIf="getPrestigeData().canPrestige || (gameState$ | async)?.prestigeLevel! > 0">
-              ⭐ Prestige
-            </button>
-            <button class="reset-btn" (click)="resetGame()">🔄 Reset Game</button>
-          </div>
+          <button class="login-btn" (click)="showLogin()" *ngIf="!(currentUser$ | async)" title="Login">
+            🔑
+          </button>
+          <button class="register-btn" (click)="showRegister()" *ngIf="!(currentUser$ | async)" title="Register">
+            ✨
+          </button>
+          <button class="achievement-btn" (click)="showAchievementGallery = true" title="Achievements">
+            🏆
+          </button>
+          <button class="reset-btn" (click)="resetGame()" title="Reset Game">
+            🔄
+          </button>
         </div>
-      </div>
+      </app-planet-header>
 
       <!-- Main Game Area -->
       <div class="game-area">
@@ -290,11 +284,44 @@ export class CandyFactoryComponent implements OnInit, OnDestroy {
   isSyncing = false;
   currentUser$!: Observable<any>;
 
+  // Unified Header Configuration
+  sweetTheme: PlanetTheme = PlanetHeaderComponent.createTheme('sweet', {
+    name: 'Sweet Planet',
+    subtitle: 'Sugar Crystal Formation Laboratory',
+    backgroundIcon: '/crystals.png',
+    labEquipment: ['🍯', '🧊']
+  });
+
+  // Available planets for navigation
+  availablePlanets: PlanetNavItem[] = [
+    { id: 'sweet', name: 'Sweet Planet', icon: '🍭', route: '/planet/sweet', unlocked: true },
+    { id: 'sour', name: 'Sour Planet', icon: '🍋', route: '/planet/sour', unlocked: true },
+    { id: 'cold', name: 'Cold Planet', icon: '❄️', route: '/planet/cold', unlocked: false },
+    { id: 'spicy', name: 'Spicy Planet', icon: '🌶️', route: '/planet/spicy', unlocked: false }
+  ];
+
+  // Resource data for header display
+  get resourceData(): ResourceData | null {
+    const currentState = this.candyFactoryService.currentGameState;
+    if (!currentState) return null;
+    
+    return {
+      candy: currentState.candy || 0,
+      crystals: 0, // Sweet planet doesn't use crystals yet
+      productionPerSecond: currentState.productionPerSecond || 0,
+      specialResources: {
+        clickPower: currentState.clickPower || 1, // Click power for Sweet Planet
+        sweetness: Math.min(100, (currentState.candy || 0) / 1000) // Sweetness level based on candy
+      }
+    };
+  }
+
   constructor(
     public candyFactoryService: CandyFactoryService,
     public achievementService: AchievementService,
     private migrationService: MigrationService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {
     this.gameState$ = this.candyFactoryService.gameState$;
     this.floatingNumbers$ = this.candyFactoryService.floatingNumbers$;
@@ -354,6 +381,13 @@ export class CandyFactoryComponent implements OnInit, OnDestroy {
 
   async logout(): Promise<void> {
     await this.authService.logout();
+  }
+
+  /**
+   * Navigate back to solar system
+   */
+  async navigateToSolarSystem(): Promise<void> {
+    await this.router.navigate(['/solar-system']);
   }
 
   async manualSync(): Promise<void> {

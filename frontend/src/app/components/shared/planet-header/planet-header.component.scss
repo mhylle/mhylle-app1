@@ -1,0 +1,776 @@
+/* Planet Header - Unified Component Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap');
+
+/* Base Component Layout */
+.planet-header {
+  background: linear-gradient(135deg, rgba(30, 30, 45, 0.98) 0%, rgba(20, 20, 35, 0.95) 100%);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(50, 205, 50, 0.2);
+  padding: 20px 24px;
+  margin: 16px;
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+  color: #ffffff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* Ensure proper z-index stacking */
+  z-index: 10;
+}
+
+/* Background Pattern and Animation */
+.header-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+  
+  .lab-pattern {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 60px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0.1;
+  }
+  
+  .animated-scan {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--theme-primary, #32CD32), transparent);
+    animation: scan 3s ease-in-out infinite;
+  }
+}
+
+/* Header Content Layout */
+.header-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 16px;
+  gap: 20px;
+  flex-wrap: nowrap;
+}
+
+.logo-section {
+  flex-shrink: 0;
+  
+  .game-logo {
+    height: 70px;
+    width: auto;
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
+  }
+}
+
+/* Navigation Section */
+.navigation-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  
+  .planet-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 8px;
+    
+    a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid transparent;
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 1.2rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      
+      &:hover:not(.locked) {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: var(--theme-accent, #FFD700);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+      
+      &.active {
+        background: var(--theme-primary, #32CD32);
+        border-color: var(--theme-accent, #FFD700);
+        box-shadow: 0 0 15px rgba(50, 205, 50, 0.4);
+        
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: -2px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 8px;
+          height: 8px;
+          background: var(--theme-accent, #FFD700);
+          border-radius: 50%;
+          box-shadow: 0 0 8px var(--theme-accent, #FFD700);
+        }
+      }
+      
+      &.locked {
+        opacity: 0.4;
+        cursor: not-allowed;
+        filter: grayscale(1);
+        
+        &:hover {
+          transform: none;
+          box-shadow: none;
+        }
+      }
+      
+      &:focus {
+        outline: 3px solid var(--theme-accent, #FFD700);
+        outline-offset: 2px;
+      }
+    }
+  }
+  
+  .back-button {
+    background: linear-gradient(135deg, var(--theme-primary, #32CD32), var(--theme-secondary, #9ACD32));
+    color: #ffffff;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: inherit;
+    font-weight: 500;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none; /* For RouterLink functionality */
+    
+    .lab-icon {
+      font-size: 1rem;
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
+    }
+    
+    &.solar-system-btn {
+      background: linear-gradient(135deg, #4A5568, #2D3748);
+      
+      .lab-icon {
+        font-size: 1.1rem;
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+      }
+      
+      &:hover {
+        background: linear-gradient(135deg, #2D3748, #1A202C);
+        border-color: var(--theme-accent, #FFD700);
+        box-shadow: 0 0 20px rgba(74, 85, 104, 0.4);
+      }
+    }
+    
+    &:hover {
+      background: linear-gradient(135deg, var(--theme-secondary, #9ACD32), var(--theme-primary, #32CD32));
+      border-color: var(--theme-accent, #FFD700);
+      box-shadow: 0 0 20px rgba(50, 205, 50, 0.3);
+      transform: translateY(-2px);
+    }
+    
+    &:active {
+      transform: translateY(0);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    &:focus {
+      outline: 3px solid var(--theme-accent, #FFD700);
+      outline-offset: 2px;
+    }
+  }
+  
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    
+    .breadcrumb-item {
+      color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .breadcrumb-separator {
+      color: var(--theme-primary, #32CD32);
+      font-weight: 600;
+    }
+    
+    .breadcrumb-current {
+      color: #ffffff;
+      font-weight: 500;
+    }
+  }
+}
+
+/* Planet Branding */
+.planet-branding {
+  flex: 1;
+  text-align: center;
+  min-width: 200px;
+  
+  .game-title {
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    .game-title-text {
+      height: 28px;
+      width: auto;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+    
+    .title-text {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #e8e8f0;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      opacity: 0.9;
+      letter-spacing: 0.5px;
+    }
+  }
+  
+  .planet-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: #ffffff;
+    margin: 0 0 4px 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    
+    .planet-emoji {
+      filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.6));
+      font-size: 1.6rem;
+    }
+    
+    .planet-name {
+      color: var(--theme-primary, #32CD32);
+      background: linear-gradient(135deg, var(--theme-primary, #32CD32), var(--theme-accent, #FFD700));
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  }
+  
+  .planet-subtitle {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    
+    .lab-equipment {
+      font-size: 1rem;
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
+    }
+    
+    .subtitle-text {
+      color: var(--theme-primary, #32CD32);
+    }
+  }
+}
+
+/* Primary Actions (optional) */
+.primary-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Resource Section */
+.resource-section {
+  position: relative;
+  z-index: 1;
+  background: rgba(40, 40, 60, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 12px;
+  
+  .currency-display {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    
+    .currency-item, .production-display {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      .currency-icon, .production-icon {
+        font-size: 1.2rem;
+        filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
+      }
+      
+      .currency-info, .production-info {
+        display: flex;
+        flex-direction: column;
+        
+        .currency-amount, .production-rate {
+          font-weight: 600;
+          font-size: 1rem;
+          color: #ffffff;
+        }
+        
+        .currency-label, .production-label {
+          font-size: 0.7rem;
+          color: rgba(255, 255, 255, 0.6);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+      }
+    }
+    
+    .main-currency {
+      .currency-amount {
+        color: var(--theme-primary, #32CD32);
+        font-size: 1.1rem;
+      }
+    }
+    
+    .production-display {
+      .production-rate {
+        color: var(--theme-accent, #FFD700);
+      }
+      
+      .production-icon {
+        animation: pulse-energy 2s ease-in-out infinite;
+      }
+    }
+    
+    .secondary-currency {
+      .currency-amount {
+        color: #87CEEB;
+      }
+    }
+    
+    .special-resources {
+      display: flex;
+      gap: 12px;
+      
+      .special-resource {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.8rem;
+        
+        .resource-icon {
+          font-size: 1rem;
+        }
+        
+        .resource-amount {
+          color: rgba(255, 255, 255, 0.8);
+          font-weight: 500;
+        }
+      }
+    }
+  }
+  
+  .lab-equipment-bg {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    z-index: 0;
+    
+    .equipment-icon {
+      font-size: 1.5rem;
+      opacity: 0.2;
+      &.molecular {
+        animation: rotate 20s linear infinite;
+      }
+    }
+  }
+}
+
+/* Quick Actions Bar (optional) */
+.quick-actions-bar {
+  position: relative;
+  z-index: 1;
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Theme-specific Styling */
+.planet-header[data-theme="sour"] {
+  --theme-primary: #32CD32;
+  --theme-secondary: #9ACD32;
+  --theme-accent: #FFD700;
+  border-color: rgba(50, 205, 50, 0.3);
+}
+
+.planet-header[data-theme="sweet"] {
+  --theme-primary: #FF69B4;
+  --theme-secondary: #FFB6C1;
+  --theme-accent: #FFC0CB;
+  border-color: rgba(255, 105, 180, 0.3);
+  
+  .animated-scan {
+    background: linear-gradient(90deg, transparent, var(--theme-primary), transparent);
+  }
+}
+
+.planet-header[data-theme="cold"] {
+  --theme-primary: #00BFFF;
+  --theme-secondary: #87CEEB;
+  --theme-accent: #B0E0E6;
+  border-color: rgba(0, 191, 255, 0.3);
+  
+  .animated-scan {
+    background: linear-gradient(90deg, transparent, var(--theme-primary), transparent);
+  }
+}
+
+.planet-header[data-theme="spicy"] {
+  --theme-primary: #FF4500;
+  --theme-secondary: #FF6347;
+  --theme-accent: #FFD700;
+  border-color: rgba(255, 69, 0, 0.3);
+  
+  .animated-scan {
+    background: linear-gradient(90deg, transparent, var(--theme-primary), transparent);
+  }
+}
+
+/* Animations */
+@keyframes scan {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse-energy {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes rotate {
+  0% {
+    transform: translateY(-50%) rotate(0deg);
+  }
+  100% {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+/* Tablet Landscape Optimization (1024x768) */
+@media (min-width: 1000px) and (max-width: 1100px) and (max-height: 800px) {
+  .planet-header {
+    margin: 8px 12px;
+    padding: 12px 16px;
+    
+    .header-content {
+      gap: 12px;
+      margin-bottom: 8px;
+      
+      .navigation-section {
+        .planet-nav a {
+          width: 32px;
+          height: 32px;
+          font-size: 1.1rem;
+        }
+        
+        .back-button {
+          padding: 6px 12px;
+          font-size: 0.8rem;
+          
+          .button-text {
+            display: none; /* Hide text to save space */
+          }
+        }
+      }
+      
+      .planet-branding {
+        .planet-title {
+          font-size: 1.3rem;
+          margin-bottom: 2px;
+          
+          .planet-emoji {
+            font-size: 1.4rem;
+          }
+        }
+        
+        .planet-subtitle {
+          font-size: 0.8rem;
+          
+          .lab-equipment {
+            font-size: 0.9rem;
+          }
+        }
+      }
+    }
+    
+    .resource-section {
+      padding: 8px 12px;
+      margin-top: 8px;
+      
+      .currency-display {
+        gap: 16px;
+        
+        .currency-item, .production-display {
+          .currency-info, .production-info {
+            .currency-amount, .production-rate {
+              font-size: 0.9rem;
+            }
+            
+            .currency-label, .production-label {
+              font-size: 0.65rem;
+            }
+          }
+        }
+      }
+      
+      .lab-equipment-bg .equipment-icon {
+        font-size: 1.3rem;
+      }
+    }
+    
+    .quick-actions-bar {
+      margin-top: 6px;
+      padding: 6px;
+    }
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+  .planet-header {
+    margin: 12px 8px;
+    padding: 16px 20px;
+  }
+  
+  .logo-section {
+    .game-logo {
+      height: 50px;
+    }
+  }
+  
+  .header-content {
+    gap: 12px;
+    margin-bottom: 12px;
+    
+    .navigation-section {
+      align-self: center;
+      
+      .back-button {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+        
+        .button-text {
+          display: none;
+        }
+      }
+      
+      .breadcrumb {
+        display: none;
+      }
+    }
+    
+    .planet-branding {
+      .game-title {
+        margin-bottom: 6px;
+        justify-content: center;
+        
+        .game-logo {
+          height: 32px;
+        }
+        
+        .game-title-text {
+          height: 26px;
+        }
+        
+        .title-text {
+          font-size: 1rem;
+        }
+      }
+      
+      .planet-title {
+        font-size: 1.25rem;
+        flex-direction: column;
+        gap: 4px;
+      }
+      
+      .planet-subtitle {
+        font-size: 0.75rem;
+        
+        .lab-equipment {
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+  
+  .resource-section {
+    .currency-display {
+      gap: 16px;
+      justify-content: center;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .planet-header {
+    margin: 8px 4px;
+    padding: 12px 16px;
+  }
+  
+  .logo-section {
+    .game-logo {
+      height: 40px;
+    }
+  }
+  
+  .header-content {
+    .navigation-section .back-button {
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      
+      .lab-icon {
+        font-size: 0.9rem;
+      }
+    }
+    
+    .planet-branding {
+      .game-title {
+        margin-bottom: 4px;
+        justify-content: center;
+        
+        .game-logo {
+          height: 28px;
+        }
+        
+        .game-title-text {
+          height: 22px;
+        }
+        
+        .title-text {
+          font-size: 0.9rem;
+          letter-spacing: 0.3px;
+        }
+      }
+      
+      .planet-title {
+        font-size: 1.125rem;
+        
+        .planet-emoji {
+          font-size: 1.3rem;
+        }
+      }
+      
+      .planet-subtitle {
+        font-size: 0.7rem;
+        letter-spacing: 0.5px;
+        
+        .lab-equipment {
+          font-size: 0.8rem;
+        }
+      }
+    }
+  }
+  
+  .resource-section {
+    padding: 10px 12px;
+    
+    .currency-display {
+      gap: 12px;
+      
+      .currency-item, .production-display {
+        .currency-info, .production-info {
+          .currency-amount, .production-rate {
+            font-size: 0.9rem;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* Loading State */
+.planet-header.loading {
+  .header-content,
+  .resource-section {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  
+  .animated-scan {
+    animation-duration: 1s;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .animated-scan,
+  .equipment-icon.molecular {
+    animation: none;
+  }
+  
+  .production-display .production-icon {
+    animation: none;
+  }
+}
+
+/* Focus management for keyboard navigation */
+.planet-header {
+  &:focus-within {
+    outline: 2px solid var(--theme-accent, #FFD700);
+    outline-offset: 2px;
+  }
+}
