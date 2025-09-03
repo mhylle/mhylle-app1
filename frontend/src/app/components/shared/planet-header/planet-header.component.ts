@@ -57,7 +57,7 @@ export interface PlanetNavItem {
       <div class="header-content">
         <!-- Logo on the left -->
         <div class="logo-section">
-          <img src="/logo.png" alt="Cosmic Candy Factory Logo" class="game-logo">
+          <img src="logo.png" alt="Cosmic Candy Factory Logo" class="game-logo">
         </div>
 
         <!-- Navigation Section with Planet Switcher -->
@@ -108,7 +108,7 @@ export interface PlanetNavItem {
         <div class="planet-branding">
           <!-- Game Title -->
           <div class="game-title">
-            <img src="/logo-text.png" alt="Cosmic Candy Factory" class="game-title-text">
+            <img src="logo-text.png" alt="Cosmic Candy Factory" class="game-title-text">
           </div>
           
           <h1 class="planet-title">

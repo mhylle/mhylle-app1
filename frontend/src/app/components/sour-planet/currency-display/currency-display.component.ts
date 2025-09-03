@@ -21,13 +21,13 @@ import { CommonModule } from '@angular/common';
       <!-- Left Side: Currency Display -->
       <div class="currency-display">
         <div class="currency-item sour-candy">
-          <img src="/sour_candy.png" alt="Sour Candy" class="currency-icon">
+          <img src="sour_candy.png" alt="Sour Candy" class="currency-icon">
           <span class="currency-value">{{ formatNumber(candy) }}</span>
           <span class="currency-label">sour candy</span>
         </div>
         
         <div class="currency-item crystals">
-          <img src="/crystals.png" alt="Crystals" class="currency-icon">
+          <img src="crystals.png" alt="Crystals" class="currency-icon">
           <span class="currency-value">{{ formatNumber(crystals) }}</span>
           <span class="currency-label">Crystals</span>
         </div>
@@ -37,7 +37,7 @@ import { CommonModule } from '@angular/common';
       
       <!-- Right Side: Production Rate -->
       <div class="production-rate">
-        <img src="/gears.png" alt="Production Rate" class="production-icon">
+        <img src="gears.png" alt="Production Rate" class="production-icon">
         <span class="production-label">Production Rate</span>
         <span class="production-value">{{ formatNumber(productionPerSecond) }}/sec</span>
         <div class="menu-icon">☰</div>

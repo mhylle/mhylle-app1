@@ -65,7 +65,7 @@ interface SourUpgrade {
           </div>
         </div>
         <div class="currency">
-          <img src="/sour_candy.png" alt="Sour Candy" class="currency-icon">
+          <img src="sour_candy.png" alt="Sour Candy" class="currency-icon">
           <span class="amount">{{ formatNumber(planetState?.candy || 0) }}</span>
         </div>
       </div>

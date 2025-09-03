@@ -70,7 +70,7 @@ interface PHBalanceMechanics {
           (click)="onStartFermentation()" 
           [disabled]="!canStartFermentation"
           [attr.aria-label]="getStartButtonLabel()">
-          <img src="/beaker.png" alt="Beaker" class="btn-icon-img">
+          <img src="beaker.png" alt="Beaker" class="btn-icon-img">
           <span class="btn-text">Start Fermentation</span>
         </button>
         

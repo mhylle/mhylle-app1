@@ -55,7 +55,7 @@ interface FermentationState {
             <!-- Color segments for different pH ranges -->
             <div class="ph-segment acidic"></div>
             <div class="ph-segment optimal">
-              <img src="/ph_ok.png" 
+              <img src="ph_ok.png" 
                    alt="pH OK" 
                    class="ph-ok-indicator" 
                    *ngIf="isPhOptimal">
@@ -111,7 +111,7 @@ interface FermentationState {
           <!-- Fermentation Ready State -->
           <div *ngIf="!phBalance?.fermentationActive && isPhOptimal" class="fermentation-ready">
             <div class="fermentation-ready-indicator">
-              <img src="/beaker.png" alt="Ready to Ferment" class="fermentation-icon">
+              <img src="beaker.png" alt="Ready to Ferment" class="fermentation-icon">
               <span class="fermentation-ready-text">Fermentation Ready</span>
             </div>
             <button 
@@ -127,7 +127,7 @@ interface FermentationState {
           <div *ngIf="phBalance?.fermentationActive" class="fermentation-active">
             <div class="fermentation-header">
               <div class="fermentation-title">
-                <img src="/beaker.png" alt="Active Fermentation" class="fermentation-icon active">
+                <img src="beaker.png" alt="Active Fermentation" class="fermentation-icon active">
                 <span class="fermentation-title-text">Active Fermentation</span>
               </div>
               <div class="fermentation-percentage">{{ getFermentationPercentage() }}%</div>

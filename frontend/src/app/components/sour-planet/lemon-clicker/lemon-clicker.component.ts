@@ -36,7 +36,7 @@ interface ClickEvent {
     <div class="central-lemon-section">
       <div class="lemon-container">
         <img 
-          src="/lemon.png" 
+          src="lemon.png" 
           alt="Sour Lemon" 
           class="central-lemon-illustration"
           [class.optimal-glow]="isOptimalPh">
