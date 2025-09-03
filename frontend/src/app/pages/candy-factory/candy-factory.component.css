@@ -5,29 +5,14 @@
   color: white;
   font-family: 'Arial', sans-serif;
   overflow: hidden;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Game Header */
-.game-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  background: rgba(0, 0, 0, 0.9);
-  backdrop-filter: blur(10px);
-  border-bottom: 2px solid #333;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  height: 80px;
-  box-sizing: border-box;
-}
+/* Game Header - REMOVED as replaced by app-planet-header */
+/* The unified planet header handles all header functionality */
+/* Old game-header styles deprecated in favor of unified header */
 
 .candy-counter h1 {
   margin: 0 0 0.25rem 0;
@@ -127,12 +112,9 @@
 /* Main Game Area */
 .game-area {
   display: flex;
-  height: calc(100vh - 80px);
-  position: absolute;
-  top: 80px;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
 }
 
 /* Planet Container */
@@ -233,6 +215,7 @@
   border-left: 2px solid #333;
   height: 100%;
   box-sizing: border-box;
+  position: relative;
 }
 
 .upgrades-panel h2 {
@@ -795,18 +778,9 @@
     width: 100vw;
   }
   
-  .game-header {
-    flex-direction: column;
-    gap: 0.5rem;
-    height: auto;
-    padding: 0.5rem;
-    position: relative;
-  }
-  
   .game-area {
+    flex: 1;
     position: relative;
-    top: 0;
-    height: calc(100vh - 120px);
   }
   
   .candy-counter h1 {
@@ -843,7 +817,6 @@
 }
 
 @media (max-width: 480px) {
-  .game-header { height: auto; padding: 0.25rem; }
   .candy-counter h1 { font-size: 1rem; }
   .stats { font-size: 0.7rem; gap: 0.25rem; }
   .upgrades-panel { padding: 0.25rem; height: 65vh; }

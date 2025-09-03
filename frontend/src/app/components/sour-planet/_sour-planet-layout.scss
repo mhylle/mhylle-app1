@@ -1,0 +1,263 @@
+/* Sour Planet - Layout System */
+
+@import 'sour-planet-variables';
+
+/* Main Layout Container - PRESERVE REFERENCE MATCH */
+.sour-planet-layout {
+  height: 100%;
+  max-height: 100%;
+  background: var(--primary-bg) url('/sour_candy_background.png') center/cover no-repeat;
+  color: var(--text-light);
+  font-family: var(--font-primary);
+  position: relative;
+  overflow: hidden;
+  line-height: var(--leading-relaxed);
+  letter-spacing: 0.02em;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Layout */
+.planet-header {
+  flex-shrink: 0;
+  height: var(--header-height);
+  background: rgba(26, 26, 46, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--panel-border);
+  z-index: 100;
+}
+
+.header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-lg);
+  height: 100%;
+}
+
+.back-button {
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  color: var(--text-light);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: var(--font-primary);
+  font-weight: var(--weight-medium);
+  transition: all var(--animation-medium) var(--easing);
+}
+
+.back-button:hover {
+  background: var(--hover-bg);
+  border-color: var(--sour-primary);
+  transform: translateX(-2px);
+}
+
+.title-section {
+  text-align: center;
+  flex: 1;
+}
+
+.planet-title {
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  background: linear-gradient(135deg, var(--text-light), var(--lemon-yellow));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-family: var(--font-heading);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  margin: 0;
+}
+
+.planet-subtitle {
+  font-family: var(--font-primary);
+  font-weight: var(--weight-medium);
+  font-size: clamp(0.8rem, 2vw, 1rem);
+  opacity: 0.8;
+  letter-spacing: 0.03em;
+  display: block;
+  margin-top: var(--spacing-xs);
+}
+
+/* Main Game Layout - Side-by-Side (EXACT REFERENCE MATCH) */
+.planet-game {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.game-area {
+  flex: 1;
+  display: grid;
+  grid-template-columns: var(--main-content-width) var(--upgrades-panel-width);
+  gap: 0;
+  max-width: var(--total-width);
+  margin: 0 auto;
+  padding: var(--spacing-md);
+  overflow: hidden;
+}
+
+/* Main Content Area */
+.main-content {
+  background: rgba(30, 30, 45, 0.3);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--sour-primary) transparent;
+}
+
+.main-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background-color: var(--sour-primary);
+  border-radius: var(--radius-md);
+}
+
+/* Planet Container */
+.planet-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  align-items: center;
+  max-width: 100%;
+}
+
+/* Loading & Error States */
+.loading-state,
+.error-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--spacing-2xl);
+}
+
+.loading-spinner {
+  font-size: 3rem;
+  animation: spin 2s linear infinite;
+  margin-bottom: var(--spacing-lg);
+}
+
+.error-icon {
+  font-size: 3rem;
+  color: var(--ph-danger);
+  margin-bottom: var(--spacing-lg);
+}
+
+.error-message {
+  font-size: var(--text-lg);
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-lg);
+}
+
+.retry-button {
+  background: var(--sour-primary);
+  border: none;
+  color: white;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: var(--font-primary);
+  font-weight: var(--weight-semibold);
+  transition: all var(--animation-medium) var(--easing);
+}
+
+.retry-button:hover {
+  background: var(--sour-secondary);
+  transform: translateY(-1px);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .game-area {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .main-content {
+    order: 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-main {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .back-button {
+    align-self: flex-start;
+  }
+  
+  .planet-title {
+    font-size: 1.5rem;
+  }
+  
+  .game-area {
+    padding: var(--spacing-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .planet-title {
+    font-size: 1.25rem;
+  }
+  
+  .planet-subtitle {
+    font-size: 0.75rem;
+  }
+}
+
+/* Smooth Transitions for All Elements */
+*, *::before, *::after {
+  transition: all var(--animation-medium) var(--easing);
+}
+
+/* Focus States for Accessibility */
+button:focus,
+.focusable:focus {
+  outline: var(--focus-outline);
+  outline-offset: 2px;
+}
+
+/* Animation Performance Optimization */
+.animate-on-hover {
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  :root {
+    --text-muted: #ffffff;
+    --text-secondary: #ffffff;
+    --panel-border: rgba(255, 255, 255, 0.5);
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

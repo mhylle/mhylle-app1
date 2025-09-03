@@ -38,8 +38,6 @@ app-planet-header {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  height: calc(100vh - 200px); /* 74% viewport optimization */
-  max-height: calc(100vh - 200px);
   width: 100%;
   position: relative;
 }

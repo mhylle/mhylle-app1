@@ -1,4 +1,19 @@
 /* You can add global styles to this file, and also import other style files */
+
+:root {
+  /* Design Guide Color Scheme - Sour Planet Cosmic Chemistry Theme */
+  --primary-bg: #0F1D2B;        /* Main canvas background, deep space feel */
+  --secondary-bg: #1C2E3F;      /* Panel backgrounds */
+  --interactive-green: #4CAF50;  /* Primary interactive elements */
+  --alert-orange: #FF9800;       /* Warning indicators */
+  --alert-red: #F44336;         /* Danger indicators */
+  --optimal-green: #8BC34A;     /* Optimal pH indicators */
+  --text-light: #E0E0E0;        /* General text, inactive icons */
+  --accent-purple: #8040A0;     /* Crystals currency */
+  --accent-green: #66BB6A;      /* Sour candy currency */
+  --lemon-yellow: #FFEB3B;      /* Lemon illustration, pH indicator */
+}
+
 * {
   box-sizing: border-box;
 }
@@ -12,4 +27,22 @@ body {
 
 html, body {
   height: 100%;
+  max-height: 100vh;
+  overflow: hidden; /* Prevent page-level scrollbars */
+}
+
+/* Ensure the main app container fits within viewport */
+app-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+/* Make main content area flexible and scrollable if needed */
+main {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
 }

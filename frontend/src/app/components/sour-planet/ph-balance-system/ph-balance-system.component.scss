@@ -1,0 +1,1428 @@
+/* pH Balance System Component - Reference Match Layout */
+
+@import '../sour-planet-variables';
+
+/* Tablet Landscape Optimization (1024x768) */
+@media (min-width: 1000px) and (max-width: 1100px) and (max-height: 800px) {
+  .ph-balance-panel {
+    padding: 10px; /* Reduced from 15px */
+    gap: 6px; /* Reduced from 8px */
+  }
+
+  .ph-header {
+    margin-bottom: 6px; /* Reduced from 8px */
+    padding: 6px 12px; /* Reduced from 8px 16px */
+    
+    h2 {
+      font-size: 1.4rem; /* Reduced from 1.6rem */
+    }
+  }
+
+  .ph-system-container {
+    gap: 6px; /* Reduce spacing between system elements */
+  }
+
+  .ph-controls {
+    gap: 8px; /* Reduce button spacing */
+    
+    .ph-button {
+      padding: 6px 10px; /* Smaller buttons */
+      font-size: 0.85rem; /* Smaller font */
+    }
+  }
+
+  .fermentation-panel {
+    padding: 8px 12px; /* Reduce fermentation panel padding */
+    margin-top: 6px; /* Reduce top margin */
+  }
+}
+
+.ph-balance-panel {
+  margin: 0;
+  padding: 15px;
+  background: transparent;
+  border: none;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  width: 100%;
+}
+
+/* pH Header - Enhanced Readability and Contrast */
+.ph-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 8px;
+  
+  /* Add subtle background for better contrast */
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(3px);
+  border-radius: 12px;
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ph-header h2 {
+  margin: 0;
+  color: #FFFFFF; /* Pure white for maximum contrast */
+  font-size: 1.6rem; /* Slightly larger */
+  text-shadow: 
+    3px 3px 6px rgba(0, 0, 0, 0.9), /* Stronger shadow */
+    0 0 12px rgba(0, 0, 0, 0.7), /* Glow for contrast */
+    0 0 4px rgba(50, 205, 50, 0.3); /* Subtle green glow */
+  text-align: center;
+  font-family: var(--font-heading);
+  font-weight: var(--weight-bold);
+  letter-spacing: 1.2px; /* Better letter spacing */
+  
+  /* Add subtle background gradient behind text */
+  background: linear-gradient(135deg, 
+    rgba(56, 161, 105, 0.1), 
+    rgba(50, 205, 50, 0.05)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* Side Status Layout - INTEGRATED WITH PH BAR */
+.ph-system-with-sides {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Side Status Indicators - ENHANCED READABILITY AND CONTRAST */
+.ph-side-status {
+  flex: 0 0 auto;
+  text-align: center;
+  opacity: 0.5; /* Slightly more visible when inactive */
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  min-width: 100px; /* Slightly wider */
+  padding: 10px 8px; /* More padding for better readability */
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25); /* Darker background for contrast */
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  position: relative;
+  margin-top: 0;
+  backdrop-filter: blur(4px);
+  
+  /* Add subtle inner glow for depth */
+  box-shadow: 
+    inset 0 1px 2px rgba(255, 255, 255, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Active State - Enhanced visibility and contrast */
+.ph-side-status.active {
+  opacity: 1;
+  transform: translateY(-2px); /* More pronounced lift */
+  border-width: 2px;
+  background: rgba(0, 0, 0, 0.35); /* Darker background */
+  backdrop-filter: blur(6px);
+  
+  /* Enhanced shadow for active state */
+  box-shadow: 
+    inset 0 1px 3px rgba(255, 255, 255, 0.15),
+    0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Left Side Active - Enhanced Acidic State */
+.ph-side-status.left.active {
+  border-color: rgba(229, 62, 62, 0.8); /* Stronger border color */
+  background: linear-gradient(135deg, 
+    rgba(229, 62, 62, 0.15), 
+    rgba(229, 62, 62, 0.08)
+  );
+  box-shadow: 
+    inset 0 1px 3px rgba(255, 255, 255, 0.15),
+    0 4px 16px rgba(229, 62, 62, 0.25), /* Colored glow */
+    0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Right Side Active - Enhanced Alkaline State */
+.ph-side-status.right.active {
+  border-color: rgba(221, 107, 32, 0.8); /* Stronger border color */
+  background: linear-gradient(135deg, 
+    rgba(221, 107, 32, 0.15), 
+    rgba(221, 107, 32, 0.08)
+  );
+  box-shadow: 
+    inset 0 1px 3px rgba(255, 255, 255, 0.15),
+    0 4px 16px rgba(221, 107, 32, 0.25), /* Colored glow */
+    0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Status Text - Enhanced Typography and Contrast */
+.ph-side-status .status-text {
+  font-size: 0.9rem; /* Larger text */
+  font-weight: 700; /* Bolder for better readability */
+  color: rgba(255, 255, 255, 0.8); /* Brighter */
+  margin-bottom: 4px;
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.8), /* Stronger shadow */
+    0 0 8px rgba(0, 0, 0, 0.6); /* Glow for contrast */
+  transition: color 0.3s ease;
+  font-family: var(--font-primary);
+  letter-spacing: 0.5px; /* Better letter spacing */
+  line-height: 1.2;
+}
+
+/* Status Effect - Enhanced Secondary Text */
+.ph-side-status .status-effect {
+  font-size: 0.75rem; /* Slightly larger */
+  color: rgba(255, 255, 255, 0.65); /* Brighter */
+  font-weight: 500; /* Medium weight for better readability */
+  transition: color 0.3s ease;
+  font-family: var(--font-primary);
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+  text-shadow: 
+    1px 1px 3px rgba(0, 0, 0, 0.8),
+    0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+/* Active State Typography - Maximum Contrast */
+.ph-side-status.left.active .status-text {
+  color: #FFB3B3; /* Much brighter red */
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.9),
+    0 0 8px rgba(0, 0, 0, 0.7),
+    0 0 4px rgba(229, 62, 62, 0.4); /* Red glow */
+}
+
+.ph-side-status.left.active .status-effect {
+  color: #FFD1D1; /* Very bright red tint */
+  text-shadow: 
+    1px 1px 3px rgba(0, 0, 0, 0.9),
+    0 0 6px rgba(0, 0, 0, 0.6);
+}
+
+.ph-side-status.right.active .status-text {
+  color: #FFE0B3; /* Much brighter orange */
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.9),
+    0 0 8px rgba(0, 0, 0, 0.7),
+    0 0 4px rgba(221, 107, 32, 0.4); /* Orange glow */
+}
+
+.ph-side-status.right.active .status-effect {
+  color: #FFECD1; /* Very bright orange tint */
+  text-shadow: 
+    1px 1px 3px rgba(0, 0, 0, 0.9),
+    0 0 6px rgba(0, 0, 0, 0.6);
+}
+
+/* Center pH Meter - REFERENCE MATCH LAYOUT */
+.ph-meter-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  max-width: 400px;
+  position: relative;
+  z-index: 5;
+}
+
+/* Remove pH value display to match reference */
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* pH Scale - ENHANCED READABILITY WITH IMPROVED CONTRAST */
+.ph-scale {
+  position: relative;
+  width: 100%;
+  height: 36px; /* Slightly taller for better visibility */
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  box-shadow: 
+    0 6px 20px rgba(0, 0, 0, 0.5),
+    inset 0 1px 3px rgba(0, 0, 0, 0.2), /* Inner shadow for depth */
+    0 0 0 2px rgba(255, 255, 255, 0.8); /* Bright outer border for definition */
+  border: 3px solid rgba(255, 255, 255, 0.9); /* Even stronger border for maximum contrast */
+  background: linear-gradient(90deg, 
+    #DC143C 0%,           /* Even darker red (acidic left) - maximum contrast */
+    #FF4500 25%,          /* Bright orange-red transition */
+    #228B22 45%,          /* Forest green (optimal center) - maximum contrast */
+    #32CD32 55%,          /* Lime green continuation */
+    #DAA520 80%,          /* Goldenrod (alkaline) - better contrast */
+    #D2691E 100%          /* Saddle brown (alkaline right) - maximum contrast */
+  );
+  
+  /* Add subtle overlay pattern for texture and enhanced contrast */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.15) 0px,
+      rgba(255, 255, 255, 0.08) 2px,
+      transparent 4px,
+      transparent 8px
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  /* Add scale tick marks for better readability */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      linear-gradient(90deg, rgba(255, 255, 255, 0.6) 0%, transparent 1%), 
+      linear-gradient(90deg, transparent 13%, rgba(255, 255, 255, 0.4) 14%, transparent 15%),
+      linear-gradient(90deg, transparent 27%, rgba(255, 255, 255, 0.4) 28%, transparent 29%),
+      linear-gradient(90deg, transparent 41%, rgba(255, 255, 255, 0.4) 42%, transparent 43%),
+      linear-gradient(90deg, transparent 49%, rgba(255, 255, 255, 0.8) 50%, transparent 51%),
+      linear-gradient(90deg, transparent 55%, rgba(255, 255, 255, 0.4) 56%, transparent 57%),
+      linear-gradient(90deg, transparent 69%, rgba(255, 255, 255, 0.4) 70%, transparent 71%),
+      linear-gradient(90deg, transparent 83%, rgba(255, 255, 255, 0.4) 84%, transparent 85%),
+      linear-gradient(90deg, transparent 98%, rgba(255, 255, 255, 0.6) 99%);
+    pointer-events: none;
+    z-index: 2;
+  }
+}
+
+.ph-segment {
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--animation-medium) var(--easing);
+  background: transparent !important; /* Remove individual backgrounds */
+  border: none; /* Remove segment borders */
+}
+
+.ph-segment.acidic {
+  flex: 4;
+  position: relative;
+  transition: all 0.3s ease;
+  min-height: 100%;
+}
+
+.ph-segment.optimal {
+  flex: 2.5;
+  position: relative;
+  transition: all 0.3s ease;
+  min-height: 100%;
+}
+
+.ph-segment.alkaline {
+  flex: 7.5;
+  position: relative;
+  transition: all 0.3s ease;
+  min-height: 100%;
+}
+
+.ph-ok-indicator {
+  width: 24px; /* Larger for better visibility */
+  height: 24px;
+  object-fit: contain;
+  image-rendering: crisp-edges;
+  animation: gentle-pulse 2s ease-in-out infinite alternate;
+  
+  /* Enhanced visibility with glow and shadow */
+  filter: 
+    brightness(1.2) 
+    contrast(1.1) 
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6))
+    drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+  
+  /* Position relative for overlay effects */
+  position: relative;
+  z-index: 12; /* Above the pH bar texture */
+}
+
+@keyframes gentle-pulse {
+  0%, 100% {
+    opacity: 0.9; /* Higher minimum opacity */
+    transform: scale(1);
+    filter: 
+      brightness(1.2) 
+      contrast(1.1) 
+      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6))
+      drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15); /* Slightly more pronounced scale */
+    filter: 
+      brightness(1.3) 
+      contrast(1.2) 
+      drop-shadow(0 3px 6px rgba(0, 0, 0, 0.7))
+      drop-shadow(0 0 12px rgba(255, 255, 255, 0.6));
+  }
+}
+
+/* pH Indicator - ENHANCED VISIBILITY AND CONTRAST */
+.ph-indicator {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 60px; /* Larger for better visibility */
+  height: 60px;
+  transition: left 0.5s var(--easing);
+  z-index: 15; /* Higher z-index to ensure visibility over texture */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-left: -30px; /* Adjusted for new width */
+}
+
+.ph-indicator-dot {
+  width: 24px; /* Larger dot for better visibility */
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #FFFFFF 0%, #F0F0F0 100%); /* Subtle gradient for depth */
+  border: 5px solid var(--ph-acidic); /* Even thicker border for maximum contrast */
+  box-shadow: 
+    0 0 25px rgba(0, 0, 0, 0.9), /* Even stronger dark shadow */
+    0 0 12px rgba(255, 255, 255, 0.9), /* Brighter white glow */
+    0 3px 6px rgba(0, 0, 0, 0.6), /* Stronger drop shadow for depth */
+    inset 0 1px 2px rgba(255, 255, 255, 0.8); /* Inner highlight */
+  transition: all var(--animation-medium) var(--easing);
+  
+  /* Add inner highlight for enhanced 3D effect */
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    right: 1px;
+    bottom: 1px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at 25% 25%, rgba(255, 255, 255, 0.9), transparent 60%);
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  /* Add outer ring for extra definition */
+  &::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    pointer-events: none;
+    z-index: -1;
+  }
+}
+
+.ph-indicator.optimal .ph-indicator-dot {
+  border-color: var(--ph-optimal);
+  box-shadow: 
+    0 0 30px rgba(0, 0, 0, 0.8),
+    0 0 15px rgba(56, 161, 105, 0.9), /* Brighter green glow matching optimal color */
+    0 3px 6px rgba(0, 0, 0, 0.6),
+    inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  animation: optimal-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes optimal-pulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 30px rgba(0, 0, 0, 0.8),
+      0 0 15px rgba(56, 161, 105, 0.9),
+      0 3px 6px rgba(0, 0, 0, 0.6),
+      inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  }
+  50% {
+    box-shadow: 
+      0 0 35px rgba(0, 0, 0, 0.8),
+      0 0 20px rgba(56, 161, 105, 1.0),
+      0 3px 6px rgba(0, 0, 0, 0.6),
+      inset 0 1px 2px rgba(255, 255, 255, 0.9);
+  }
+}
+
+.ph-indicator.danger .ph-indicator-dot {
+  border-color: var(--ph-danger);
+  box-shadow: 
+    0 0 30px rgba(0, 0, 0, 0.9),
+    0 0 15px rgba(220, 20, 60, 0.9), /* Red glow for danger */
+    0 2px 4px rgba(0, 0, 0, 0.6);
+  animation: danger-pulse 1s ease-in-out infinite;
+}
+
+@keyframes danger-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 
+      0 0 30px rgba(0, 0, 0, 0.9),
+      0 0 15px rgba(220, 20, 60, 0.9),
+      0 2px 4px rgba(0, 0, 0, 0.6);
+  }
+  50% {
+    transform: scale(1.15); /* Slightly more dramatic pulse */
+    box-shadow: 
+      0 0 40px rgba(0, 0, 0, 0.9),
+      0 0 25px rgba(220, 20, 60, 1.0),
+      0 2px 4px rgba(0, 0, 0, 0.6);
+  }
+}
+
+.ph-indicator-value {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.98) 0%, rgba(20, 20, 20, 0.95) 100%); /* Rich gradient background */
+  color: #FFFFFF; /* Pure white text */
+  padding: 5px 10px; /* Even more padding for readability */
+  border-radius: 12px; /* More rounded for modern look */
+  font-size: 0.85rem; /* Larger text for better readability */
+  font-weight: var(--weight-bold);
+  margin-top: 10px; /* More space from dot */
+  min-width: 42px; /* Wider for better readability */
+  text-align: center;
+  box-shadow: 
+    0 5px 15px rgba(0, 0, 0, 0.7), /* Stronger shadow */
+    0 0 0 2px rgba(255, 255, 255, 0.3), /* Stronger subtle border */
+    inset 0 1px 2px rgba(255, 255, 255, 0.1); /* Inner highlight */
+  font-family: var(--font-mono);
+  letter-spacing: 0.8px; /* Better character spacing */
+  
+  /* Enhanced text shadow for maximum contrast */
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.9),
+    0 0 6px rgba(0, 0, 0, 0.6);
+  
+  /* Add subtle animation on change */
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  
+  /* Add subtle glow effect */
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
+    border-radius: 13px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+    z-index: -1;
+    opacity: 0.6;
+  }
+}
+
+/* pH Scale Numbers - MAXIMUM VISIBILITY */
+.ph-scale-numbers {
+  position: relative;
+  width: 100%;
+  height: 20px;
+  margin-top: 6px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+}
+
+.ph-number {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(3px);
+  padding: 2px 6px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.9),
+    0 0 6px rgba(0, 0, 0, 0.7);
+  box-shadow: 
+    0 2px 6px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  
+  /* Adjust edge positions */
+  &[style*="left: 0%"] {
+    transform: translateX(0%);
+    left: 2px !important;
+  }
+  
+  &[style*="left: 100%"] {
+    transform: translateX(-100%);
+    right: 2px !important;
+    left: auto !important;
+  }
+}
+
+.ph-number.optimal {
+  background: rgba(56, 161, 105, 0.9);
+  border-color: rgba(56, 161, 105, 0.6);
+  color: #FFFFFF;
+  font-weight: 800;
+  box-shadow: 
+    0 3px 8px rgba(56, 161, 105, 0.4),
+    0 0 12px rgba(56, 161, 105, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.8),
+    0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+/* pH Labels - ENHANCED READABILITY AND CONTRAST */
+.ph-labels-reference {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px; /* Less space since we have numbers above */
+  padding: 0 8px;
+  width: 100%;
+  position: relative;
+  min-height: 36px; /* Taller for better readability */
+}
+
+.ph-label {
+  font-size: 0.8rem; /* Slightly larger base text */
+  font-weight: 600; /* Bolder for better readability */
+  text-align: center;
+  color: var(--text-light);
+  font-family: var(--font-primary);
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.9), /* Stronger shadow */
+    0 0 8px rgba(0, 0, 0, 0.6); /* Glow shadow for contrast */
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  
+  /* Add semi-transparent background for better contrast */
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  border-radius: 6px;
+  padding: 4px 6px;
+  margin: 0 2px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Left acidic label - Enhanced contrast */
+.ph-label.acidic-left {
+  justify-content: flex-start;
+  color: #FF9999; /* Brighter for better contrast */
+  font-weight: 700; /* Extra bold */
+  background: rgba(229, 62, 62, 0.15); /* Color-matched background */
+  border-color: rgba(229, 62, 62, 0.3);
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 1.0),
+    0 0 8px rgba(0, 0, 0, 0.8);
+}
+
+/* Left-center acidic range - Better visibility */
+.ph-label.acidic-range {
+  justify-content: center;
+  color: #FFDDDD; /* Much brighter */
+  font-size: 0.75rem;
+  background: rgba(255, 107, 71, 0.12);
+  border-color: rgba(255, 107, 71, 0.25);
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.95),
+    0 0 6px rgba(0, 0, 0, 0.7);
+}
+
+/* Center optimal label - Special enhanced formatting */
+.ph-label.optimal-center {
+  flex: 1.2;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px; /* Slightly more space */
+  padding: 6px 8px; /* More padding */
+  background: rgba(56, 161, 105, 0.2); /* Green-tinted background */
+  border-color: rgba(56, 161, 105, 0.4);
+  border-width: 2px; /* Thicker border for emphasis */
+}
+
+.ph-label.optimal-center .optimal-main {
+  font-size: 0.85rem; /* Larger text */
+  font-weight: 700; /* Bolder */
+  color: #FFFFFF; /* Pure white for maximum contrast */
+  line-height: 1;
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 1.0),
+    0 0 8px rgba(0, 0, 0, 0.8),
+    0 0 4px rgba(56, 161, 105, 0.5); /* Green glow */
+}
+
+.ph-label.optimal-center .optimal-sub {
+  font-size: 0.7rem; /* Slightly larger */
+  font-weight: 500; /* Medium weight */
+  color: rgba(255, 255, 255, 0.9); /* Very bright */
+  line-height: 1;
+  margin-top: 1px;
+  text-shadow: 
+    1px 1px 3px rgba(0, 0, 0, 0.9),
+    0 0 4px rgba(0, 0, 0, 0.6);
+}
+
+/* Right-center alkaline range - Enhanced visibility */
+.ph-label.alkaline-range {
+  justify-content: center;
+  color: #FFEECC; /* Much brighter */
+  font-size: 0.75rem;
+  background: rgba(214, 158, 46, 0.12);
+  border-color: rgba(214, 158, 46, 0.25);
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.95),
+    0 0 6px rgba(0, 0, 0, 0.7);
+}
+
+/* Right alkaline label - Enhanced contrast */
+.ph-label.alkaline-right {
+  justify-content: flex-end;
+  color: #FFDD99; /* Much brighter */
+  font-weight: 700; /* Extra bold */
+  background: rgba(221, 107, 32, 0.15); /* Color-matched background */
+  border-color: rgba(221, 107, 32, 0.3);
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 1.0),
+    0 0 8px rgba(0, 0, 0, 0.8);
+}
+
+/* pH Controls - Clean Button Layout */
+.ph-controls {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.ph-adjust {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 50px; /* Very rounded, pill-shaped */
+  font-size: 1rem;
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  min-width: 160px;
+  height: 44px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-primary);
+  color: white;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.ph-adjust.acidify {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 50%, #3d8b40 100%);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3), 0 2px 6px rgba(76, 175, 80, 0.2);
+}
+
+.ph-adjust.acidify:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5CBF60 0%, #4CAF50 50%, #45a049 100%);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4), 0 4px 8px rgba(76, 175, 80, 0.3);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.ph-adjust.neutralize {
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 50%, #1565C0 100%);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3), 0 2px 6px rgba(33, 150, 243, 0.2);
+}
+
+.ph-adjust.neutralize:hover:not(:disabled) {
+  background: linear-gradient(135deg, #42A5F5 0%, #2196F3 50%, #1976D2 100%);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(33, 150, 243, 0.4), 0 4px 8px rgba(33, 150, 243, 0.3);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.ph-adjust:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  filter: grayscale(40%) brightness(0.8);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.ph-adjust:active:not(:disabled) {
+  transform: translateY(-1px) scale(0.98);
+  transition: all 0.1s ease;
+}
+
+/* Enhanced Responsive Design - Maintains Readability */
+@media (max-width: 768px) {
+  .ph-header {
+    padding: 6px 12px;
+    margin-bottom: 6px;
+  }
+  
+  .ph-header h2 {
+    font-size: 1.4rem;
+    letter-spacing: 1px;
+  }
+  
+  .ph-system-with-sides {
+    flex-direction: column;
+    gap: 14px; /* Slightly more space */
+  }
+  
+  .ph-side-status {
+    min-width: 90px; /* Maintain reasonable width */
+    padding: 8px 6px; /* Keep adequate padding */
+    border-radius: 6px;
+  }
+  
+  .ph-side-status .status-text {
+    font-size: 0.85rem; /* Larger mobile text */
+    margin-bottom: 3px;
+    letter-spacing: 0.3px;
+    /* Maintain strong shadows for readability */
+    text-shadow: 
+      2px 2px 4px rgba(0, 0, 0, 0.8),
+      0 0 6px rgba(0, 0, 0, 0.6);
+  }
+  
+  .ph-side-status .status-effect {
+    font-size: 0.7rem; /* Slightly larger mobile text */
+    letter-spacing: 0.2px;
+    /* Maintain text shadows */
+    text-shadow: 
+      1px 1px 3px rgba(0, 0, 0, 0.8),
+      0 0 4px rgba(0, 0, 0, 0.5);
+  }
+  
+  .ph-meter-center {
+    max-width: 320px; /* Slightly wider on mobile */
+  }
+  
+  .ph-scale {
+    height: 34px; /* Maintain good height on mobile */
+  }
+  
+  .ph-indicator {
+    width: 55px; /* Slightly smaller but still prominent */
+    height: 55px;
+    margin-left: -27.5px;
+  }
+  
+  .ph-indicator-dot {
+    width: 22px;
+    height: 22px;
+    border-width: 3px;
+  }
+  
+  .ph-indicator-value {
+    font-size: 0.75rem;
+    padding: 3px 7px;
+    min-width: 34px;
+  }
+  
+  .ph-scale-numbers {
+    height: 18px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
+  
+  .ph-number {
+    font-size: 0.75rem;
+    padding: 2px 5px;
+    border-radius: 6px;
+  }
+  
+  .ph-labels-reference {
+    padding: 0 6px;
+    margin-top: 8px;
+    min-height: 32px;
+  }
+  
+  .ph-label {
+    font-size: 0.75rem; /* Maintain readability */
+    padding: 3px 5px;
+    /* Keep strong text shadows */
+    text-shadow: 
+      2px 2px 4px rgba(0, 0, 0, 0.9),
+      0 0 6px rgba(0, 0, 0, 0.6);
+  }
+  
+  .ph-label.optimal-center .optimal-main {
+    font-size: 0.8rem; /* Don't make too small */
+  }
+  
+  .ph-label.optimal-center .optimal-sub {
+    font-size: 0.65rem; /* Maintain readability */
+  }
+  
+  .ph-controls {
+    gap: 14px;
+  }
+  
+  .ph-adjust {
+    min-width: 150px; /* Slightly wider for better touch targets */
+    padding: 11px 26px;
+    font-size: 0.95rem; /* Maintain readable text */
+    height: 42px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ph-balance-panel {
+    padding: 8px;
+    gap: 8px;
+  }
+  
+  .ph-header {
+    padding: 4px 10px;
+    margin-bottom: 4px;
+  }
+  
+  .ph-header h2 {
+    font-size: 1.3rem; /* Maintain readable size */
+    letter-spacing: 0.8px;
+  }
+  
+  .ph-scale {
+    height: 32px; /* Still prominent on small screens */
+  }
+  
+  .ph-indicator {
+    width: 50px;
+    height: 50px;
+    margin-left: -25px;
+  }
+  
+  .ph-indicator-dot {
+    width: 20px;
+    height: 20px;
+    border-width: 3px;
+  }
+  
+  .ph-indicator-value {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    min-width: 30px;
+  }
+  
+  .ph-scale-numbers {
+    height: 16px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+  }
+  
+  .ph-number {
+    font-size: 0.7rem;
+    padding: 1px 4px;
+    border-radius: 5px;
+  }
+  
+  .ph-labels-reference {
+    padding: 0 4px;
+    margin-top: 6px;
+    min-height: 28px; /* Don't make too small */
+  }
+  
+  .ph-label {
+    font-size: 0.7rem; /* Keep readable */
+    padding: 2px 4px;
+    /* Maintain strong shadows for small screens */
+    text-shadow: 
+      2px 2px 4px rgba(0, 0, 0, 0.9),
+      0 0 6px rgba(0, 0, 0, 0.6);
+  }
+  
+  .ph-label.optimal-center .optimal-main {
+    font-size: 0.75rem; /* Don't make too small */
+  }
+  
+  .ph-label.optimal-center .optimal-sub {
+    font-size: 0.6rem; /* Maintain readability */
+  }
+  
+  .ph-controls {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  
+  .ph-adjust {
+    min-width: 160px; /* Wider for better touch targets */
+    padding: 12px 22px;
+    height: 40px;
+    font-size: 0.9rem; /* Keep readable */
+  }
+}
+
+/* ===============================================
+   FERMENTATION SYSTEM INTEGRATION STYLES
+   =============================================== */
+
+/* Fermentation Integration Container */
+.fermentation-integration {
+  margin-top: 12px;
+  position: relative;
+  z-index: 10;
+}
+
+.fermentation-status-bar {
+  background: linear-gradient(135deg, 
+    rgba(56, 161, 105, 0.12), 
+    rgba(50, 205, 50, 0.08)
+  );
+  border: 2px solid rgba(56, 161, 105, 0.4);
+  border-radius: 12px;
+  padding: 12px 16px;
+  backdrop-filter: blur(6px);
+  box-shadow: 
+    0 6px 20px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  
+  /* Add subtle glow for optimal pH state */
+  animation: optimal-glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes optimal-glow {
+  0%, 100% {
+    box-shadow: 
+      0 6px 20px rgba(0, 0, 0, 0.3),
+      inset 0 1px 2px rgba(255, 255, 255, 0.15),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 8px 25px rgba(56, 161, 105, 0.2),
+      inset 0 1px 2px rgba(255, 255, 255, 0.2),
+      0 0 0 1px rgba(56, 161, 105, 0.3),
+      0 0 12px rgba(56, 161, 105, 0.15);
+  }
+}
+
+/* Fermentation Ready State */
+.fermentation-ready {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.fermentation-ready-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fermentation-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  image-rendering: crisp-edges;
+  filter: 
+    brightness(1.2) 
+    contrast(1.1) 
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  transition: all 0.3s ease;
+}
+
+.fermentation-icon.active {
+  animation: fermentation-bubble 2s ease-in-out infinite alternate;
+  filter: 
+    brightness(1.3) 
+    contrast(1.2) 
+    hue-rotate(15deg)
+    drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+}
+
+@keyframes fermentation-bubble {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    filter: 
+      brightness(1.3) 
+      contrast(1.2) 
+      hue-rotate(15deg)
+      drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+  }
+  50% {
+    transform: scale(1.05) rotate(2deg);
+    filter: 
+      brightness(1.4) 
+      contrast(1.3) 
+      hue-rotate(20deg)
+      drop-shadow(0 3px 8px rgba(0, 0, 0, 0.6));
+  }
+}
+
+.fermentation-ready-text {
+  color: #FFFFFF;
+  font-weight: var(--weight-semibold);
+  font-size: 1rem;
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.8),
+    0 0 8px rgba(0, 0, 0, 0.6);
+  font-family: var(--font-primary);
+}
+
+.fermentation-start-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, var(--ph-optimal) 0%, #4CAF50 100%);
+  border: none;
+  border-radius: 20px;
+  color: white;
+  font-family: var(--font-primary);
+  font-weight: var(--weight-semibold);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  min-width: 140px;
+}
+
+.fermentation-start-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4CAF50 0%, var(--ph-optimal) 100%);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.fermentation-start-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.fermentation-start-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  background: linear-gradient(135deg, #ccc, #999);
+  box-shadow: none;
+}
+
+.fermentation-start-btn .btn-icon {
+  font-size: 1.1em;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.fermentation-start-btn .btn-text {
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Active Fermentation Display */
+.fermentation-active {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fermentation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fermentation-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fermentation-title-text {
+  color: #FFFFFF;
+  font-weight: var(--weight-bold);
+  font-size: 1.1rem;
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.8),
+    0 0 8px rgba(0, 0, 0, 0.6);
+  font-family: var(--font-primary);
+}
+
+.fermentation-percentage {
+  color: var(--ph-optimal);
+  font-weight: var(--weight-bold);
+  font-size: 1.2rem;
+  font-family: var(--font-mono);
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.8),
+    0 0 8px rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(56, 161, 105, 0.4);
+}
+
+.fermentation-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fermentation-progress-bar {
+  position: relative;
+  height: 16px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.fermentation-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, 
+    var(--ph-optimal) 0%, 
+    #66BB6A 50%, 
+    #4CAF50 100%
+  );
+  border-radius: 8px;
+  transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.fermentation-progress-fill::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  animation: progress-shimmer 2s linear infinite;
+}
+
+@keyframes progress-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Fermentation Bubbles */
+.progress-bubbles {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.bubble {
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  opacity: 0.3;
+  transform: scale(0.8);
+  transition: all 0.3s ease;
+}
+
+.bubble.active {
+  opacity: 1;
+  transform: scale(1.2);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+  animation: bubble-float 2s ease-in-out infinite alternate;
+}
+
+@keyframes bubble-float {
+  0%, 100% {
+    transform: scale(1.2) translateY(0);
+  }
+  50% {
+    transform: scale(1.4) translateY(-2px);
+  }
+}
+
+/* Fermentation Stats */
+.fermentation-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  border: 1px solid rgba(56, 161, 105, 0.3);
+}
+
+.stat-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: var(--font-primary);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.stat-value {
+  font-size: 0.85rem;
+  color: #FFFFFF;
+  font-family: var(--font-mono);
+  font-weight: var(--weight-bold);
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.8),
+    0 0 6px rgba(0, 0, 0, 0.6);
+}
+
+.stat-value.bonus {
+  color: var(--ph-optimal);
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.8),
+    0 0 6px rgba(0, 0, 0, 0.6),
+    0 0 4px rgba(56, 161, 105, 0.4);
+}
+
+/* Responsive Design for Fermentation */
+@media (max-width: 768px) {
+  .fermentation-status-bar {
+    padding: 10px 12px;
+  }
+  
+  .fermentation-ready {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+  
+  .fermentation-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .fermentation-ready-text {
+    font-size: 0.9rem;
+  }
+  
+  .fermentation-start-btn {
+    width: 100%;
+    max-width: 200px;
+  }
+  
+  .fermentation-header {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+  
+  .fermentation-stats {
+    flex-direction: row;
+    justify-content: space-around;
+  }
+}
+
+@media (max-width: 480px) {
+  .fermentation-integration {
+    margin-top: 10px;
+  }
+  
+  .fermentation-status-bar {
+    padding: 8px 10px;
+  }
+  
+  .fermentation-title-text {
+    font-size: 1rem;
+  }
+  
+  .fermentation-percentage {
+    font-size: 1.1rem;
+    padding: 3px 6px;
+  }
+  
+  .fermentation-progress-bar {
+    height: 14px;
+  }
+  
+  .bubble {
+    width: 3px;
+    height: 3px;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .fermentation-status-bar {
+    border-width: 3px;
+  }
+  
+  .fermentation-progress-bar {
+    border: 2px solid rgba(255, 255, 255, 0.5);
+  }
+  
+  .fermentation-start-btn {
+    border: 2px solid #333;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .fermentation-status-bar {
+    animation: none;
+  }
+  
+  .fermentation-icon.active {
+    animation: none;
+  }
+  
+  .fermentation-progress-fill::before {
+    animation: none;
+  }
+  
+  .bubble.active {
+    animation: none;
+  }
+  
+  .fermentation-start-btn:hover:not(:disabled) {
+    transform: none;
+  }
+}

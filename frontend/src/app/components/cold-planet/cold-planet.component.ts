@@ -24,22 +24,25 @@ import {
 } from '../../models/planet-system.interface';
 import { ColdPlanetMechanics } from '../../models/planet-mechanics.interface';
 
+// Import unified planet header
+import { PlanetHeaderComponent, PlanetTheme, ResourceData } from '../shared/planet-header/planet-header.component';
+
 @Component({
   selector: 'app-cold-planet',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PlanetHeaderComponent],
   template: `
     <div class="cold-planet" [class.loading]="isLoading">
-      <!-- Navigation Header -->
-      <div class="planet-header">
-        <button class="back-button" (click)="navigateToSolarSystem()">
-          ← Back to Solar System
-        </button>
-        <h1 class="planet-title">
-          🧊 Cold Planet
-          <span class="planet-subtitle">Temperature & Crystallization</span>
-        </h1>
-      </div>
+      <!-- Unified Planet Header -->
+      <app-planet-header
+        [theme]="coldTheme"
+        [resources]="resourceData"
+        [isLoading]="isLoading"
+        [showBreadcrumb]="false"
+        [showPrimaryActions]="false"
+        [showQuickActions]="false"
+        (backClicked)="navigateToSolarSystem()">
+      </app-planet-header>
 
       <!-- Loading State -->
       <div *ngIf="isLoading" class="loading-state">
@@ -299,6 +302,28 @@ export class ColdPlanetComponent implements OnInit, OnDestroy {
   // UI state
   canAdjustTemperature = true;
   lastTemperatureAdjustment = 0;
+
+  // Unified Header Configuration
+  coldTheme: PlanetTheme = PlanetHeaderComponent.createTheme('cold', {
+    name: 'Cold Planet',
+    subtitle: 'Cryogenic Crystallization Laboratory',
+    backgroundIcon: '/molecular.png',
+    labEquipment: ['❄️', '🔬']
+  });
+
+  // Resource data for header display
+  get resourceData(): ResourceData | null {
+    if (!this.planetState || !this.temperatureMechanics) return null;
+    
+    return {
+      candy: this.planetState.candy || 0,
+      crystals: this.temperatureMechanics.crystallization?.crystallizedCandy || 0,
+      productionPerSecond: this.planetState.productionPerSecond || 0,
+      specialResources: {
+        temperature: this.temperatureMechanics.temperature || -10
+      }
+    };
+  }
   
   constructor(
     private planetSystemService: PlanetSystemService,
