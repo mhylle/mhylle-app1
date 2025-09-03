@@ -288,7 +288,7 @@ export class CandyFactoryComponent implements OnInit, OnDestroy {
   sweetTheme: PlanetTheme = PlanetHeaderComponent.createTheme('sweet', {
     name: 'Sweet Planet',
     subtitle: 'Sugar Crystal Formation Laboratory',
-    backgroundIcon: '/crystals.png',
+    backgroundIcon: 'crystals.png',
     labEquipment: ['🍯', '🧊']
   });
 

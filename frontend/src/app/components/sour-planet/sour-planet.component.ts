@@ -156,7 +156,7 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
   sourTheme: PlanetTheme = PlanetHeaderComponent.createTheme('sour', {
     name: 'Sour Planet',
     subtitle: 'pH Balance & Fermentation Laboratory',
-    backgroundIcon: '/beaker.png',
+    backgroundIcon: 'beaker.png',
     labEquipment: ['⚗️', '🧪']
   });
 
@@ -190,7 +190,7 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
       id: 'lemon_juicer',
       name: 'Lemon Juicer',
       description: 'Automated lemon juicing increases candy production',
-      icon: '/gears.png',
+      icon: 'gears.png',
       baseCost: 10,
       costMultiplier: 1.15,
       productionBonus: 0.5,
@@ -199,7 +199,7 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
       id: 'citric_mixer',
       name: 'Citric Acid Mixer',
       description: 'Advanced mixing creates more sour candy per second',
-      icon: '/fluid_lind.png',
+      icon: 'fluid_lind.png',
       baseCost: 50,
       costMultiplier: 1.2,
       productionBonus: 1.5,
@@ -208,7 +208,7 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
       id: 'fermentation_vat',
       name: 'Fermentation Vat',
       description: 'Large-scale fermentation boosts production significantly',
-      icon: '/nebula_mise.png',
+      icon: 'nebula_mise.png',
       baseCost: 200,
       costMultiplier: 1.25,
       productionBonus: 4.0,
@@ -217,7 +217,7 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
       id: 'ph_stabilizer',
       name: 'pH Auto-Stabilizer',
       description: 'Automatically maintains optimal pH for maximum efficiency',
-      icon: '/molecular.png',
+      icon: 'molecular.png',
       baseCost: 500,
       costMultiplier: 1.3,
       productionBonus: 2.0,
@@ -227,7 +227,7 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
       id: 'sour_synthesizer',
       name: 'Molecular Sour Synthesizer',
       description: 'Quantum-level sourness enhancement technology',
-      icon: '/molecular.png',
+      icon: 'molecular.png',
       baseCost: 2000,
       costMultiplier: 1.4,
       productionBonus: 10.0,
