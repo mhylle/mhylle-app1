@@ -261,7 +261,7 @@ export class PlanetHeaderComponent {
         primaryColor: '#32CD32',
         secondaryColor: '#9ACD32',
         accentColor: '#FFD700',
-        backgroundIcon: '/beaker.png',
+        backgroundIcon: 'beaker.png',
         labEquipment: ['⚗️', '🧪']
       },
       sweet: {
@@ -272,7 +272,7 @@ export class PlanetHeaderComponent {
         primaryColor: '#FF69B4',
         secondaryColor: '#FFB6C1',
         accentColor: '#FFC0CB',
-        backgroundIcon: '/crystals.png',
+        backgroundIcon: 'crystals.png',
         labEquipment: ['🍯', '🧊']
       },
       cold: {
@@ -283,7 +283,7 @@ export class PlanetHeaderComponent {
         primaryColor: '#00BFFF',
         secondaryColor: '#87CEEB',
         accentColor: '#B0E0E6',
-        backgroundIcon: '/molecular.png',
+        backgroundIcon: 'molecular.png',
         labEquipment: ['🧊', '🌡️']
       },
       spicy: {
@@ -294,7 +294,7 @@ export class PlanetHeaderComponent {
         primaryColor: '#FF4500',
         secondaryColor: '#FF6347',
         accentColor: '#FFD700',
-        backgroundIcon: '/gears.png',
+        backgroundIcon: 'gears.png',
         labEquipment: ['🔥', '🌡️']
       }
     };
@@ -315,7 +315,7 @@ export class PlanetHeaderComponent {
         primaryColor: '#32CD32',
         secondaryColor: '#9ACD32',
         accentColor: '#FFD700',
-        backgroundIcon: '/beaker.png',
+        backgroundIcon: 'beaker.png',
         labEquipment: ['⚗️', '🧪']
       },
       sweet: {
@@ -326,7 +326,7 @@ export class PlanetHeaderComponent {
         primaryColor: '#FF69B4',
         secondaryColor: '#FFB6C1',
         accentColor: '#FFC0CB',
-        backgroundIcon: '/crystals.png',
+        backgroundIcon: 'crystals.png',
         labEquipment: ['🍯', '🧊']
       },
       cold: {
@@ -337,7 +337,7 @@ export class PlanetHeaderComponent {
         primaryColor: '#00BFFF',
         secondaryColor: '#87CEEB',
         accentColor: '#B0E0E6',
-        backgroundIcon: '/molecular.png',
+        backgroundIcon: 'molecular.png',
         labEquipment: ['🧊', '🌡️']
       },
       spicy: {
@@ -348,7 +348,7 @@ export class PlanetHeaderComponent {
         primaryColor: '#FF4500',
         secondaryColor: '#FF6347',
         accentColor: '#FFD700',
-        backgroundIcon: '/gears.png',
+        backgroundIcon: 'gears.png',
         labEquipment: ['🔥', '🌡️']
       }
     };

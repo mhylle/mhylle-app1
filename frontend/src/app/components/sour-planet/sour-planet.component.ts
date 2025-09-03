@@ -66,7 +66,7 @@ interface SourUpgrade {
     UpgradesPanelComponent
   ],
   template: `
-    <div class="sour-planet-layout" [class.loading]="isLoading">
+    <div class="sour-planet-layout" [style.background]="sourPlanetBackground" [class.loading]="isLoading">
       <!-- Unified Planet Header with Navigation -->
       <app-planet-header
         [theme]="sourTheme"
@@ -159,6 +159,11 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
     backgroundIcon: 'beaker.png',
     labEquipment: ['⚗️', '🧪']
   });
+
+  // Background style with proper gradient and image
+  get sourPlanetBackground(): string {
+    return 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%), url(sour_candy_background.png) center/cover no-repeat';
+  }
 
   // Available planets for navigation
   availablePlanets: PlanetNavItem[] = [
