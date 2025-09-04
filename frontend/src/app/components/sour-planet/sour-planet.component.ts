@@ -66,7 +66,12 @@ interface SourUpgrade {
     UpgradesPanelComponent
   ],
   template: `
-    <div class="sour-planet-layout" [style.background]="sourPlanetBackground" [class.loading]="isLoading">
+    <div class="sour-planet-layout" 
+         [style.background-image]="sourPlanetBackground"
+         [style.background-size]="sourPlanetBackgroundSize"
+         [style.background-position]="sourPlanetBackgroundPosition"
+         [style.background-repeat]="'no-repeat, no-repeat'"
+         [class.loading]="isLoading">
       <!-- Unified Planet Header with Navigation -->
       <app-planet-header
         [theme]="sourTheme"
@@ -162,7 +167,15 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
 
   // Background style with proper gradient and image
   get sourPlanetBackground(): string {
-    return 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%), url(sour_candy_background.png) center/cover no-repeat';
+    return 'linear-gradient(135deg, rgba(26, 26, 46, 0.7) 0%, rgba(22, 33, 62, 0.7) 50%, rgba(15, 52, 96, 0.7) 100%), url(sour_candy_background.png)';
+  }
+
+  get sourPlanetBackgroundSize(): string {
+    return 'cover, cover';
+  }
+
+  get sourPlanetBackgroundPosition(): string {
+    return 'center, center';
   }
 
   // Available planets for navigation
