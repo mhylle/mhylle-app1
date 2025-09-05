@@ -35,40 +35,56 @@ interface FermentationState {
   imports: [CommonModule],
   template: `
     <!-- pH Balance System - Reference Match Layout -->
-    <div class="ph-balance-panel">
+    <section class="ph-balance-panel" role="region" aria-labelledby="ph-system-heading">
       <!-- pH Header -->
-      <div class="ph-header">
-        <h2>pH Balance System</h2>
-      </div>
+      <header class="ph-header">
+        <h2 id="ph-system-heading">pH Balance System</h2>
+      </header>
       
       <!-- Side Status Indicators with pH Bar -->
-      <div class="ph-system-with-sides">
+      <div class="ph-system-with-sides" role="group" aria-labelledby="ph-meter-label">
+        <span id="ph-meter-label" class="sr-only">pH measurement and status indicators</span>
+        
         <!-- Left Side Status -->
-        <div class="ph-side-status left" [class.active]="(phBalance?.level || 7) < 4">
-          <div class="status-text">Too Acidic</div>
-          <div class="status-effect">-50% Production</div>
+        <div class="ph-side-status left" 
+             [class.active]="(phBalance?.level || 7) < 4"
+             role="status"
+             [attr.aria-label]="'Acidic status: ' + ((phBalance?.level || 7) < 4 ? 'active' : 'inactive')">
+          <div class="status-text" aria-hidden="true">Too Acidic</div>
+          <div class="status-effect" aria-hidden="true">-50% Production</div>
+          <span class="sr-only">
+            {{ (phBalance?.level || 7) < 4 ? 'Too acidic: 50% production penalty active' : 'Acidic threshold inactive' }}
+          </span>
         </div>
         
         <!-- Center pH Bar -->
-        <div class="ph-meter-center">
-          <div class="ph-scale">
+        <div class="ph-meter-center" role="meter" 
+             [attr.aria-valuenow]="phBalance?.level || 7"
+             [attr.aria-valuemin]="0"
+             [attr.aria-valuemax]="14"
+             [attr.aria-valuetext]="'pH ' + (phBalance?.level || 7).toFixed(1) + '. Status: ' + getPhStatusText()">
+          <div class="ph-scale" role="presentation">
             <!-- Color segments for different pH ranges -->
-            <div class="ph-segment acidic"></div>
-            <div class="ph-segment optimal">
+            <div class="ph-segment acidic" role="presentation" aria-label="Acidic range"></div>
+            <div class="ph-segment optimal" role="presentation" aria-label="Optimal range">
               <img src="ph_ok.png" 
-                   alt="pH OK" 
+                   alt="pH in optimal range" 
                    class="ph-ok-indicator" 
-                   *ngIf="isPhOptimal">
+                   *ngIf="isPhOptimal"
+                   role="img"
+                   aria-describedby="ph-optimal-description">
+              <span id="ph-optimal-description" class="sr-only">pH is in the optimal range for maximum production</span>
             </div>
-            <div class="ph-segment alkaline"></div>
+            <div class="ph-segment alkaline" role="presentation" aria-label="Alkaline range"></div>
             
             <!-- pH level indicator -->
             <div class="ph-indicator" 
                  [style.left.%]="getPhPercentage()" 
                  [class.optimal]="isPhOptimal" 
-                 [class.danger]="isPhDangerous">
-              <div class="ph-indicator-dot"></div>
-              <div class="ph-indicator-value">{{ (phBalance?.level || 7).toFixed(1) }}</div>
+                 [class.danger]="isPhDangerous"
+                 role="presentation">
+              <div class="ph-indicator-dot" role="presentation"></div>
+              <div class="ph-indicator-value" role="presentation">{{ (phBalance?.level || 7).toFixed(1) }}</div>
             </div>
           </div>
           
@@ -99,28 +115,47 @@ interface FermentationState {
         </div>
         
         <!-- Right Side Status -->
-        <div class="ph-side-status right" [class.active]="(phBalance?.level || 7) > 6.5">
-          <div class="status-text">Too Alkaline</div>
-          <div class="status-effect">-30% Production</div>
+        <div class="ph-side-status right" 
+             [class.active]="(phBalance?.level || 7) > 6.5"
+             role="status"
+             [attr.aria-label]="'Alkaline status: ' + ((phBalance?.level || 7) > 6.5 ? 'active' : 'inactive')">
+          <div class="status-text" aria-hidden="true">Too Alkaline</div>
+          <div class="status-effect" aria-hidden="true">-30% Production</div>
+          <span class="sr-only">
+            {{ (phBalance?.level || 7) > 6.5 ? 'Too alkaline: 30% production penalty active' : 'Alkaline threshold inactive' }}
+          </span>
         </div>
       </div>
 
       <!-- Fermentation System Integration -->
-      <div class="fermentation-integration" *ngIf="isPhOptimal || phBalance?.fermentationActive">
-        <div class="fermentation-status-bar">
+      <section class="fermentation-integration" 
+               *ngIf="isPhOptimal || phBalance?.fermentationActive"
+               role="region" 
+               aria-labelledby="fermentation-heading">
+        <h3 id="fermentation-heading" class="sr-only">Fermentation Process</h3>
+        <div class="fermentation-status-bar" role="group" [attr.aria-label]="phBalance?.fermentationActive ? 'Active fermentation process' : 'Fermentation ready to start'">
           <!-- Fermentation Ready State -->
-          <div *ngIf="!phBalance?.fermentationActive && isPhOptimal" class="fermentation-ready">
+          <div *ngIf="!phBalance?.fermentationActive && isPhOptimal" 
+               class="fermentation-ready"
+               role="status"
+               aria-live="polite">
             <div class="fermentation-ready-indicator">
-              <img src="beaker.png" alt="Ready to Ferment" class="fermentation-icon">
+              <img src="beaker.png" alt="Fermentation ready indicator" class="fermentation-icon" role="img">
               <span class="fermentation-ready-text">Fermentation Ready</span>
             </div>
             <button 
               class="fermentation-start-btn" 
+              type="button"
               (click)="onStartFermentation()"
-              [disabled]="!canStartFermentation">
-              <span class="btn-icon">🫙</span>
+              [disabled]="!canStartFermentation"
+              [attr.aria-label]="'Start fermentation process' + (!canStartFermentation ? ' - currently disabled' : '')"
+              [attr.aria-describedby]="'fermentation-description'">
+              <span class="btn-icon" role="presentation" aria-hidden="true">🫙</span>
               <span class="btn-text">Start Process</span>
             </button>
+            <span id="fermentation-description" class="sr-only">
+              Fermentation will provide bonus production when pH is optimal
+            </span>
           </div>
           
           <!-- Active Fermentation Display -->
@@ -156,24 +191,39 @@ interface FermentationState {
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- pH Adjustment Controls -->
-      <div class="ph-controls">
+      <div class="ph-controls" role="group" aria-labelledby="ph-controls-heading">
+        <h3 id="ph-controls-heading" class="sr-only">pH Adjustment Controls</h3>
         <button 
           class="ph-adjust acidify" 
+          type="button"
           (click)="onAcidify()"
-          [disabled]="!canAdjustPH || (phBalance?.level || 7) <= 1">
-          Acidify (+0.6)
+          [disabled]="!canAdjustPH || (phBalance?.level || 7) <= 1"
+          [attr.aria-label]="'Lower pH by 0.5 points. Current pH: ' + (phBalance?.level || 7).toFixed(1)"
+          [attr.aria-describedby]="'acidify-description'"
+          [attr.aria-pressed]="false">
+          <span aria-hidden="true">Acidify (+0.6)</span>
+          <span id="acidify-description" class="sr-only">
+            {{ (phBalance?.level || 7) <= 1 ? 'Cannot acidify further - pH too low' : 'Decrease pH towards acidic range' }}
+          </span>
         </button>
         <button 
           class="ph-adjust neutralize" 
+          type="button"
           (click)="onNeutralize()"
-          [disabled]="!canAdjustPH || (phBalance?.level || 7) >= 13">
-          Neutralize (+0.5)
+          [disabled]="!canAdjustPH || (phBalance?.level || 7) >= 13"
+          [attr.aria-label]="'Raise pH by 0.5 points. Current pH: ' + (phBalance?.level || 7).toFixed(1)"
+          [attr.aria-describedby]="'neutralize-description'"
+          [attr.aria-pressed]="false">
+          <span aria-hidden="true">Neutralize (+0.5)</span>
+          <span id="neutralize-description" class="sr-only">
+            {{ (phBalance?.level || 7) >= 13 ? 'Cannot neutralize further - pH too high' : 'Increase pH towards neutral range' }}
+          </span>
         </button>
       </div>
-    </div>
+    </section>
   `,
   styleUrl: './ph-balance-system.component.scss'
 })

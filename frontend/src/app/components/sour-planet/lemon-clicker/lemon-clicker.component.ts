@@ -33,41 +33,56 @@ interface ClickEvent {
   imports: [CommonModule],
   template: `
     <!-- Central Lemon Illustration (Design Guide Focal Point) -->
-    <div class="central-lemon-section">
-      <div class="lemon-container">
+    <section class="central-lemon-section" aria-labelledby="lemon-clicker-heading">
+      <div class="lemon-container" role="img" [attr.aria-label]="'Sour lemon with ' + (isOptimalPh ? 'optimal' : 'suboptimal') + ' glow effect'">
         <img 
           src="lemon.png" 
           alt="Sour Lemon" 
           class="central-lemon-illustration"
-          [class.optimal-glow]="isOptimalPh">
+          [class.optimal-glow]="isOptimalPh"
+          role="presentation">
         
         <div class="lemon-glow-effect" 
              [class.optimal]="isOptimalPh"
-             [class.suboptimal]="!isOptimalPh"></div>
+             [class.suboptimal]="!isOptimalPh"
+             role="presentation"
+             [attr.aria-hidden]="true"></div>
         
         <button 
           class="candy-button sour-candy" 
           (click)="onLemonClick($event)"
           [disabled]="disabled"
-          [attr.aria-label]="'Click lemon to produce ' + clickPower + ' sour candy'"
+          type="button"
+          role="button"
+          [attr.aria-label]="'Click lemon to produce ' + clickPower + ' sour candy. Current pH modifier: ' + (phModifier * 100 | number:'1.0-0') + '%'"
+          [attr.aria-describedby]="'lemon-click-instructions'"
+          [attr.aria-pressed]="showClickEffect"
           #lemonButton>
-          <div class="click-effect" *ngIf="showClickEffect"></div>
+          <div class="click-effect" *ngIf="showClickEffect" role="presentation" aria-hidden="true"></div>
         </button>
       </div>
       
-      <div class="candy-clicker">
-        <p class="click-instruction">{{ instructionText }}</p>
-        <div class="click-power" *ngIf="clickPower > 1">
-          Power: {{ clickPower }}x
+      <div class="candy-clicker" role="region" aria-labelledby="lemon-clicker-heading">
+        <h3 id="lemon-clicker-heading" class="sr-only">Lemon Clicking Interface</h3>
+        <p id="lemon-click-instructions" class="click-instruction">{{ instructionText }}</p>
+        <div class="click-power" *ngIf="clickPower > 1" role="status" aria-live="polite">
+          <span class="sr-only">Current click power is </span>Power: {{ clickPower }}x
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- Floating Numbers -->
-    <div class="floating-numbers" #floatingContainer>
+    <div class="floating-numbers" 
+         role="region" 
+         aria-label="Click feedback animations" 
+         aria-live="polite" 
+         aria-atomic="false"
+         #floatingContainer>
       <div 
-        *ngFor="let number of floatingNumbers" 
+        *ngFor="let number of floatingNumbers; trackBy: trackFloatingNumber" 
         class="floating-number"
+        role="status"
+        [attr.aria-label]="'Gained ' + formatNumber(number.value) + ' sour candy'"
         [style.left.px]="number.x"
         [style.top.px]="number.y"
         [style.color]="number.color">
@@ -160,5 +175,12 @@ export class LemonClickerComponent implements OnDestroy {
     if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
     if (value >= 1000) return (value / 1000).toFixed(1) + 'K';
     return Math.floor(value).toString();
+  }
+
+  /**
+   * Track floating numbers for ngFor performance
+   */
+  trackFloatingNumber(index: number, item: FloatingNumber): number {
+    return item.id;
   }
 }

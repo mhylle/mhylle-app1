@@ -1,192 +1,259 @@
-/* Sour Planet - Shared CSS Variables */
+// ===================================
+// Sour Planet Responsive CSS Variables
+// Foundation for responsive layout system
+// ===================================
 
-/* Color Palette */
 :root {
-  /* Primary Theme Colors */
-  --sour-primary: #32CD32;
-  --sour-secondary: #9ACD32; 
-  --sour-accent: #FFD700;
-  --lemon-yellow: #FFFF00;
-  --sour-green: #228B22;
+  // ===== RESPONSIVE SPACING SYSTEM =====
+  // Uses clamp() for fluid scaling between min and max values
+  --spacing-xs: clamp(0.25rem, 0.5vw, 0.5rem);    // 4px → 8px
+  --spacing-sm: clamp(0.5rem, 1vw, 0.75rem);      // 8px → 12px
+  --spacing-md: clamp(0.75rem, 1.5vw, 1rem);      // 12px → 16px
+  --spacing-lg: clamp(1rem, 2vw, 1.5rem);         // 16px → 24px
+  --spacing-xl: clamp(1.5rem, 3vw, 2rem);         // 24px → 32px
+  --spacing-2xl: clamp(2rem, 4vw, 3rem);          // 32px → 48px
   
-  /* pH Color System */
-  --ph-acidic: #FF6B6B;
-  --ph-optimal: #32CD32;
-  --ph-alkaline: #4ECDC4;
-  --ph-danger: #DC143C;
+  // ===== COMPONENT DIMENSIONS =====
+  // Header heights for different screen sizes
+  --header-height-mobile: clamp(60px, 10vh, 80px);
+  --header-height-tablet: clamp(80px, 12vh, 100px);
+  --header-height-desktop: 100px;
+  --header-height: var(--header-height-mobile); // Default to mobile
   
-  /* Background Colors */
-  --primary-bg: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-  --panel-bg: rgba(30, 30, 45, 0.95);
-  --panel-border: rgba(76, 175, 80, 0.3);
-  --upgrade-bg: rgba(40, 40, 60, 0.9);
+  // Header padding responsive
+  --header-padding-mobile: var(--spacing-sm) var(--spacing-md);
+  --header-padding-tablet: var(--spacing-md) var(--spacing-lg);
+  --header-padding-desktop: var(--spacing-lg) var(--spacing-xl);
   
-  /* Text Colors */
-  --text-light: #ffffff;
-  --text-muted: rgba(255, 255, 255, 0.8);
-  --text-secondary: rgba(255, 255, 255, 0.6);
+  // Lemon clicker dimensions
+  --lemon-size-mobile: clamp(100px, 25vmin, 150px);
+  --lemon-size-tablet: clamp(150px, 30vmin, 200px);
+  --lemon-size-desktop: clamp(200px, 25vmin, 250px);
+  --lemon-size: var(--lemon-size-mobile); // Default to mobile
   
-  /* Interactive States */
-  --hover-bg: rgba(76, 175, 80, 0.1);
-  --active-bg: rgba(76, 175, 80, 0.2);
-  --disabled-bg: rgba(128, 128, 128, 0.3);
-  --focus-outline: 3px solid var(--lemon-yellow);
+  // Upgrades panel dimensions
+  --upgrades-width-mobile: 100%; // Full width on mobile (bottom sheet)
+  --upgrades-width-tablet: clamp(300px, 40vw, 400px);
+  --upgrades-width-desktop: clamp(350px, 35vw, 450px);
+  --upgrades-width: var(--upgrades-width-mobile); // Default to mobile
   
-  /* Shadows and Glows */
-  --panel-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  --glow-effect: 0 0 20px rgba(50, 205, 50, 0.3);
-  --lemon-glow: 0 0 30px rgba(255, 255, 0, 0.5);
+  // Upgrades panel heights for mobile bottom sheet
+  --upgrades-height-mobile-min: 150px;
+  --upgrades-height-mobile-max: 40vh;
   
-  /* Animation Timings */
-  --animation-fast: 0.2s;
-  --animation-medium: 0.3s;
-  --animation-slow: 0.5s;
-  --easing: cubic-bezier(0.4, 0, 0.2, 1);
+  // Logo dimensions (already partially in styles.css, adding complete set)
+  --logo-height-mobile: clamp(32px, 6vh, 40px);
+  --logo-height-tablet: clamp(40px, 6vh, 48px);
+  --logo-height-desktop: 56px;
+  --logo-height: var(--logo-height-mobile); // Default to mobile
+  
+  // Content padding
+  --content-padding-mobile: var(--spacing-md);
+  --content-padding-tablet: var(--spacing-lg);
+  --content-padding-desktop: var(--spacing-xl);
+  --content-padding: var(--content-padding-mobile); // Default to mobile
+  
+  // Lemon clicker container padding
+  --lemon-container-padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
+  --lemon-container-padding-tablet: var(--spacing-md) var(--spacing-lg) var(--spacing-sm);
+  --lemon-container-padding-tablet-landscape: var(--spacing-sm) var(--spacing-md) var(--spacing-sm);
+  --lemon-container-padding-mobile: var(--spacing-md) var(--spacing-sm);
+  --lemon-container-padding-small: var(--spacing-sm) var(--spacing-xs);
+  
+  // pH Balance System variables
+  --ph-panel-padding: var(--spacing-md);
+  --ph-panel-padding-tablet: var(--spacing-sm);
+  --ph-panel-padding-mobile: var(--spacing-sm);
+  --ph-panel-padding-small: var(--spacing-sm);
+  
+  --ph-header-padding: var(--spacing-sm) var(--spacing-lg);
+  --ph-header-padding-tablet: var(--spacing-xs) var(--spacing-md);
+  --ph-header-padding-mobile: var(--spacing-xs) var(--spacing-md);
+  --ph-header-padding-small: var(--spacing-xs) var(--spacing-sm);
+  
+  --ph-header-font-size: clamp(1.4rem, 3vw, 1.6rem);
+  --ph-header-font-size-tablet: 1.4rem;
+  --ph-header-font-size-mobile: 1.4rem;
+  --ph-header-font-size-small: 1.3rem;
+  
+  --ph-system-max-width: 600px;
+  --ph-side-status-min-width: 100px;
+  --ph-side-status-min-width-mobile: 90px;
+  --ph-side-status-padding: var(--spacing-sm) var(--spacing-sm);
+  --ph-side-status-padding-mobile: var(--spacing-sm) var(--spacing-xs);
+  
+  --ph-scale-height: 36px;
+  --ph-ok-indicator-size: 24px;
+  --ph-indicator-size: 60px;
+  --ph-indicator-dot-size: 24px;
+  --ph-indicator-border-width: 5px;
+  --ph-indicator-value-padding: var(--spacing-xs) var(--spacing-sm);
+  --ph-indicator-value-font-size: 0.85rem;
+  --ph-indicator-value-min-width: 42px;
+  
+  --ph-button-padding: var(--spacing-md) var(--spacing-xl);
+  --ph-button-padding-tablet: var(--spacing-xs) var(--spacing-sm);
+  --ph-button-padding-mobile: var(--spacing-sm) var(--spacing-lg);
+  --ph-button-padding-small: var(--spacing-md) var(--spacing-lg);
+  --ph-button-border-radius: var(--radius-full);
+  --ph-button-font-size: 1rem;
+  --ph-button-font-size-tablet: 0.85rem;
+  --ph-button-font-size-mobile: 0.95rem;
+  --ph-button-font-size-small: 0.9rem;
+  --ph-button-min-width: 160px;
+  --ph-button-min-width-mobile: 150px;
+  --ph-button-min-width-small: 160px;
+  
+  --ph-fermentation-padding-tablet: var(--spacing-sm) var(--spacing-md);
+  --touch-target-mobile: 42px;
+  --touch-target-small: 40px;
+  
+  // Gap sizes
+  --gap-xs: var(--spacing-xs);
+  --gap-sm: var(--spacing-sm);
+  --gap-md: var(--spacing-md);
+  --gap-lg: var(--spacing-lg);
+  --gap-xl: var(--spacing-xl);
+  
+  // ===== TYPOGRAPHY SCALE =====
+  // Fluid typography that scales with viewport
+  --text-xs: clamp(0.625rem, 1.2vw, 0.75rem);    // 10px → 12px
+  --text-sm: clamp(0.75rem, 1.5vw, 0.875rem);    // 12px → 14px
+  --text-base: clamp(0.875rem, 2vw, 1rem);       // 14px → 16px
+  --text-lg: clamp(1rem, 2.5vw, 1.25rem);        // 16px → 20px
+  --text-xl: clamp(1.25rem, 3vw, 1.5rem);        // 20px → 24px
+  --text-2xl: clamp(1.5rem, 4vw, 2rem);          // 24px → 32px
+  --text-3xl: clamp(2rem, 5vw, 3rem);            // 32px → 48px
+  
+  // ===== TOUCH TARGETS & INTERACTIVE ELEMENTS =====
+  // Minimum sizes for touch-friendly interaction
+  --touch-target-min: 44px; // iOS HIG minimum
+  --button-height-mobile: clamp(44px, 10vw, 56px);
+  --button-height-tablet: 48px;
+  --button-height-desktop: 48px;
+  --button-height: var(--button-height-mobile); // Default to mobile
+  
+  --button-padding-mobile: var(--spacing-sm) var(--spacing-md);
+  --button-padding-desktop: var(--spacing-md) var(--spacing-lg);
+  --button-padding: var(--button-padding-mobile); // Default to mobile
+  
+  // ===== Z-INDEX SCALE =====
+  // Consistent layering system
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-tooltip: 700;
+  --z-notification: 800;
+  
+  // ===== BORDER RADIUS =====
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+  
+  // ===== TRANSITIONS & ANIMATIONS =====
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 350ms ease;
+  
+  // Animation durations
+  --animation-fast: 150ms;
+  --animation-medium: 250ms;
+  --animation-slow: 350ms;
+  
+  // Easing functions
+  --easing: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --easing-in: cubic-bezier(0.4, 0.0, 1, 1);
+  --easing-out: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --easing-in-out: cubic-bezier(0.4, 0.0, 0.2, 1);
+  
+  // ===== SHADOWS =====
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
 }
 
-/* Typography System */
-.typography {
-  --font-primary: 'Inter', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-heading: 'Montserrat', 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  
-  /* Font Weights */
-  --weight-light: 300;
-  --weight-normal: 400;
-  --weight-medium: 500;
-  --weight-semibold: 600;
-  --weight-bold: 700;
-  
-  /* Font Sizes */
-  --text-xs: 0.75rem;
-  --text-sm: 0.85rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 1.875rem;
-  
-  /* Line Heights */
-  --leading-tight: 1.2;
-  --leading-normal: 1.5;
-  --leading-relaxed: 1.6;
-}
-
-/* Layout Dimensions */
-.layout {
-  /* Main Layout (Reference Match) */
-  --main-content-width: 624px;
-  --upgrades-panel-width: 400px;
-  --total-width: 1024px;
-  
-  /* Component Heights */
-  --header-height: 80px;
-  --ph-panel-height: 300px;
-  --lemon-size: 150px;
-  
-  /* Spacing System */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-2xl: 3rem;
-  
-  /* Border Radius */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-full: 50%;
-}
-
-/* Animation Keyframes */
-@keyframes float-up {
-  0% {
-    opacity: 1;
-    transform: translateY(0);
+// ===== TABLET BREAKPOINT (768px+) =====
+@media (min-width: 768px) {
+  :root {
+    // Update dimensions for tablet
+    --header-height: var(--header-height-tablet);
+    --header-padding: var(--header-padding-tablet);
+    --lemon-size: var(--lemon-size-tablet);
+    --upgrades-width: var(--upgrades-width-tablet);
+    --logo-height: var(--logo-height-tablet);
+    --content-padding: var(--content-padding-tablet);
+    --button-height: var(--button-height-tablet);
   }
-  100% {
-    opacity: 0;
-    transform: translateY(-50px);
+}
+
+// ===== DESKTOP BREAKPOINT (1024px+) =====
+@media (min-width: 1024px) {
+  :root {
+    // Update dimensions for desktop
+    --header-height: var(--header-height-desktop);
+    --header-padding: var(--header-padding-desktop);
+    --lemon-size: var(--lemon-size-desktop);
+    --upgrades-width: var(--upgrades-width-desktop);
+    --logo-height: var(--logo-height-desktop);
+    --content-padding: var(--content-padding-desktop);
+    --button-height: var(--button-height-desktop);
+    --button-padding: var(--button-padding-desktop);
   }
 }
 
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: var(--glow-effect);
-  }
-  50% {
-    box-shadow: 0 0 30px rgba(50, 205, 50, 0.6);
-  }
-}
-
-@keyframes lemon-glow {
-  0%, 100% {
-    box-shadow: var(--lemon-glow);
-    transform: scale(1);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(255, 255, 0, 0.8);
-    transform: scale(1.05);
+// ===== LANDSCAPE ORIENTATION ADJUSTMENTS =====
+@media (orientation: landscape) and (max-height: 600px) {
+  :root {
+    // Reduce vertical spacing in landscape on small devices
+    --header-height: clamp(50px, 8vh, 70px);
+    --lemon-size: clamp(80px, 20vmin, 120px);
+    --spacing-lg: clamp(0.75rem, 1.5vw, 1rem);
+    --spacing-xl: clamp(1rem, 2vw, 1.5rem);
   }
 }
 
-@keyframes click-effect {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 0.7;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
+// ===== SAFE AREA SUPPORT FOR NOTCHED DEVICES =====
+@supports (padding: max(0px)) {
+  :root {
+    --safe-area-inset-top: env(safe-area-inset-top);
+    --safe-area-inset-right: env(safe-area-inset-right);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom);
+    --safe-area-inset-left: env(safe-area-inset-left);
   }
 }
 
-/* Responsive Breakpoints */
-.breakpoints {
-  --mobile-sm: 480px;
-  --mobile-md: 640px;
-  --tablet: 768px;
-  --desktop-sm: 1024px;
-  --desktop-md: 1280px;
-  --desktop-lg: 1536px;
+// ===== HIGH DPI DISPLAYS =====
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  :root {
+    // Slightly reduce sizes on high DPI to account for sharper rendering
+    --text-base: clamp(0.8125rem, 1.8vw, 0.9375rem);
+  }
 }
 
-/* Utility Classes */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+// ===== REDUCED MOTION PREFERENCE =====
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0ms;
+    --transition-base: 0ms;
+    --transition-slow: 0ms;
+  }
 }
 
-.transition-all {
-  transition: all var(--animation-medium) var(--easing);
-}
-
-.focus-outline:focus {
-  outline: var(--focus-outline);
-  outline-offset: 2px;
-}
-
-/* pH-specific Variables */
-.ph-system {
-  --ph-bar-height: 12px;
-  --ph-indicator-size: 20px;
-  --ph-scale-width: 100%;
-  
-  /* pH Range Colors */
-  --ph-0-4: var(--ph-acidic);
-  --ph-4-6-5: var(--ph-optimal);
-  --ph-6-5-14: var(--ph-alkaline);
+// ===== PRINT STYLES =====
+@media print {
+  :root {
+    // Fixed sizes for print
+    --header-height: 60px;
+    --lemon-size: 150px;
+    --text-base: 12pt;
+  }
 }
