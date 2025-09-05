@@ -9,11 +9,11 @@
  * - pH adjustment tools
  */
 
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, ElementRef, Inject } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { Router } from '@angular/router';
-import { Subject, interval } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Subject, interval, fromEvent } from 'rxjs';
+import { takeUntil, debounceTime } from 'rxjs/operators';
 
 import { PlanetSystemService } from '../../services/planet-system.service';
 import { 
@@ -99,13 +99,17 @@ interface SourUpgrade {
       </div>
 
       <!-- Main Game Interface -->
-      <div *ngIf="!isLoading && !error" class="planet-game">
+      <main *ngIf="!isLoading && !error" class="planet-game" role="main" aria-label="Sour Planet Game Interface">
 
-        <!-- Game Area with Side-by-Side Layout -->
-        <div class="game-area">
+        <!-- Game Area with Side-by-Side Layout and Viewport Detection -->
+        <section class="game-area" 
+                 [class.mobile-view]="isMobileView"
+                 [class.desktop-view]="!isMobileView"
+                 [attr.data-viewport]="currentViewport"
+                 aria-label="Game play area with controls and upgrades">
           
           <!-- Main Content Area -->
-          <div class="main-content">
+          <div class="main-content" role="region" aria-label="Primary game controls">
             <!-- Planet Container -->
             <div class="planet-container">
               
@@ -116,7 +120,9 @@ interface SourUpgrade {
                 [disabled]="isLoading"
                 [isOptimalPh]="isPhOptimal"
                 [instructionText]="'Click the lemon to make sour candy!'"
-                (candyClicked)="onCandyClicked($event)">
+                (candyClicked)="onCandyClicked($event)"
+                role="button"
+                aria-label="Main lemon clicker for candy production">
               </app-lemon-clicker>
 
               <!-- pH Balance System Component with Integrated Fermentation - BELOW LEMON -->
@@ -125,7 +131,9 @@ interface SourUpgrade {
                 [canAdjustPH]="canAdjustPH"
                 [canStartFermentation]="canStartFermentation"
                 (phAdjusted)="onPhAdjusted($event)"
-                (fermentationStarted)="onFermentationStarted()">
+                (fermentationStarted)="onFermentationStarted()"
+                role="region"
+                aria-label="pH balance control system for optimal candy production">
               </app-ph-balance-system>
 
             </div>
@@ -135,10 +143,12 @@ interface SourUpgrade {
           <app-upgrades-panel
             [upgrades]="sourUpgrades"
             [planetState]="planetState"
-            (upgradePurchased)="onUpgradePurchased($event)">
+            (upgradePurchased)="onUpgradePurchased($event)"
+            role="complementary"
+            aria-label="Upgrades and enhancements panel">
           </app-upgrades-panel>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   `,
   styleUrl: './sour-planet.component.scss'
@@ -155,6 +165,10 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
   // UI state
   isLoading = false; // Start with false to avoid loading issues
   error: string | null = null;
+  
+  // Responsive grid state - Critical for CSS Grid override
+  isMobileView = false;
+  currentViewport = 'desktop';
   // Removed individual UI state - now handled by sub-components
 
   // Unified Header Configuration
@@ -274,10 +288,15 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
 
   constructor(
     private planetSystemService: PlanetSystemService,
-    private router: Router
+    private router: Router,
+    private elementRef: ElementRef,
+    @Inject(DOCUMENT) private document: Document
   ) {}
 
   async ngOnInit(): Promise<void> {
+    // CRITICAL: Initialize viewport detection first to fix CSS Grid issue
+    this.initializeViewportDetection();
+    
     // Initialize default sour planet state immediately for testing
     this.initializeTestState();
     
@@ -303,6 +322,73 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
     await this.loadPlanetData();
   }
   
+  /**
+   * Initialize viewport detection to fix CSS Grid mobile issue
+   * CRITICAL: This addresses Angular ViewEncapsulation CSS Grid problems
+   */
+  private initializeViewportDetection(): void {
+    // Initial viewport check
+    this.updateViewportState();
+    
+    // Listen for window resize events
+    fromEvent(window, 'resize')
+      .pipe(
+        debounceTime(150), // Debounce resize events
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        this.updateViewportState();
+      });
+  }
+
+  /**
+   * Update viewport state and apply CSS Grid fixes
+   */
+  private updateViewportState(): void {
+    const width = window.innerWidth;
+    const wasMobile = this.isMobileView;
+    
+    // Determine viewport state
+    this.isMobileView = width < 768;
+    this.currentViewport = width < 768 ? 'mobile' : width < 1024 ? 'tablet' : 'desktop';
+    
+    // Apply CSS Grid override when switching to/from mobile
+    if (wasMobile !== this.isMobileView) {
+      this.applyCssGridOverride();
+    }
+    
+    console.log(`Viewport: ${width}px (${this.currentViewport}, mobile: ${this.isMobileView})`);
+  }
+
+  /**
+   * Apply CSS Grid override using Angular ElementRef
+   * This bypasses ViewEncapsulation issues with CSS variables
+   */
+  private applyCssGridOverride(): void {
+    const gameArea = this.elementRef.nativeElement.querySelector('.game-area');
+    if (!gameArea) return;
+
+    if (this.isMobileView) {
+      // Mobile: Force single column grid with explicit CSS
+      gameArea.style.setProperty('grid-template-columns', '1fr', 'important');
+      gameArea.style.setProperty('grid-template-rows', '1fr auto', 'important');
+      gameArea.style.setProperty('grid-template-areas', '"main" "upgrades"', 'important');
+      gameArea.style.setProperty('--game-area-upgrades-width', 'initial', 'important');
+      gameArea.style.setProperty('--upgrades-width', 'initial', 'important');
+      
+      console.log('🔧 Applied mobile CSS Grid override via ElementRef');
+    } else {
+      // Desktop: Remove mobile overrides, let CSS take over
+      gameArea.style.removeProperty('grid-template-columns');
+      gameArea.style.removeProperty('grid-template-rows'); 
+      gameArea.style.removeProperty('grid-template-areas');
+      gameArea.style.removeProperty('--game-area-upgrades-width');
+      gameArea.style.removeProperty('--upgrades-width');
+      
+      console.log('🔧 Removed mobile CSS Grid overrides, restored desktop layout');
+    }
+  }
+
   /**
    * Initialize basic test state to ensure the component works
    */

@@ -1,13 +1,9 @@
 /* Sour Planet Main Component - Complete Layout Styles */
 
-/* Import shared variables and layout */
-@import './sour-planet-variables';
-@import './sour-planet-layout';
-
-/* Main Layout Container - PRESERVE REFERENCE MATCH */
+/* Main Layout Container - RESPONSIVE MOBILE-FIRST */
 .sour-planet-layout {
-  height: 100%;
-  max-height: 100%;
+  height: var(--viewport-height, 100vh);
+  max-height: var(--viewport-height, 100vh);
   background: var(--primary-bg);
   color: var(--text-light);
   font-family: var(--font-primary);
@@ -15,8 +11,10 @@
   overflow: hidden;
   line-height: var(--leading-relaxed);
   letter-spacing: 0.02em;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  margin: 0;
+  padding: 0;
 }
 
 /* Unified Planet Header Integration */
@@ -32,7 +30,7 @@ app-planet-header {
   padding: 0;
 }
 
-/* Main Game Layout - REFERENCE MATCH CLEAN LAYOUT */
+/* Main Game Layout - Updated for Phase 3 Layout Container Refactoring */
 .planet-game {
   flex: 1;
   display: flex;
@@ -42,54 +40,89 @@ app-planet-header {
   position: relative;
 }
 
-/* Game Area - Side-by-Side Layout (624px main + 400px upgrades) */
+/* Game Area - Responsive Grid Layout - Mobile First with CSS Variable Override */
 .game-area {
-  display: flex;
-  flex-direction: row;
+  display: grid;
   height: 100%;
   width: 100%;
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
+  
+  /* Mobile First: Vertical stack with explicit CSS variable reset */
+  --game-area-upgrades-width: initial; /* Local variable override */
+  grid-template-rows: 1fr auto;
+  grid-template-columns: 1fr;
+  gap: 0;
+  
+  /* Tablet and Desktop: Side by side with local variable */
+  @media (min-width: 768px) {
+    --game-area-upgrades-width: var(--upgrades-width);
+    grid-template-columns: 1fr var(--game-area-upgrades-width);
+    grid-template-rows: 1fr;
+    gap: 0;
+  }
 }
 
-/* Main Content Area - CENTER FOCUSED LAYOUT */
+/* Main Content Area - Mobile First with Grid Area Assignment */
 .main-content {
-  flex: 1;
-  min-width: 0;
-  max-width: calc(100% - 400px); /* 624px main content at 1024px width */
-  padding: 30px;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 0;
   align-items: center;
   justify-content: flex-start;
+  padding: var(--spacing-sm);
   box-sizing: border-box;
+  width: 100%;
+  min-height: 0;
+  
+  /* Mobile: Scrollable content with explicit grid area */
+  grid-area: main; /* Explicit grid area for mobile */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  
+  /* Desktop: Constrained by grid */
+  @media (min-width: 768px) {
+    grid-area: auto; /* Reset grid area for desktop */
+    padding: var(--container-padding);
+    min-width: 0;
+    overflow: hidden;
+  }
 }
 
-/* Planet Container - CLEAN CENTERED VERTICAL LAYOUT */
+/* Planet Container - Mobile First Layout */
 .planet-container {
-  flex: 1;
-  padding: 0;
-  overflow: visible;
   display: flex;
   flex-direction: column;
-  gap: 20px; /* Clean spacing between components */
-  min-height: 0;
-  height: 100%;
-  max-height: 100%;
-  position: relative;
   align-items: center;
+  justify-content: flex-start;
   width: 100%;
-  max-width: 700px; /* Slightly wider for pH side layout */
+  max-width: 100%;
+  padding: 0;
+  overflow: visible;
+  position: relative;
+  
+  /* Mobile: Flexible content size */
+  flex: 0 0 auto;
+  gap: var(--spacing-sm);
+  min-height: auto;
+  
+  /* Desktop optimization */
+  @media (min-width: 768px) {
+    flex: 1;
+    justify-content: center;
+    gap: var(--component-gap);
+    max-width: 700px;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+  }
 }
 
 /* Component Layout Order - CLEAN VERTICAL STACK */
 app-lemon-clicker {
   order: 1; /* Large lemon at top - reference match */
   flex-shrink: 0;
-  margin-bottom: 20px;
+  margin-bottom: var(--component-gap);
   display: flex;
   justify-content: center;
   width: 100%;
@@ -109,15 +142,30 @@ app-fermentation-panel {
   display: none; /* Hide for reference match */
 }
 
-/* Upgrades Panel - RIGHT SIDEBAR */
+/* Upgrades Panel - RESPONSIVE LAYOUT with Grid Area Assignment */
 app-upgrades-panel {
-  width: 400px; /* Fixed width for consistent layout */
-  max-width: 40vw; /* Never exceed 40% of viewport */
-  min-width: 300px; /* Minimum width for usability */
-  flex-shrink: 0; /* Don't shrink this panel */
-  height: 100%;
-  overflow-y: auto;
   box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  
+  /* Mobile: Bottom sheet with explicit grid area */
+  grid-area: upgrades; /* Explicit grid area for mobile */
+  width: 100%;
+  min-width: auto;
+  max-width: none;
+  max-height: var(--upgrades-height-mobile-max);
+  min-height: var(--upgrades-height-mobile-min);
+  
+  /* Tablet and Desktop: Right sidebar with local variable */
+  @media (min-width: 768px) {
+    grid-area: auto; /* Reset grid area for desktop */
+    width: var(--game-area-upgrades-width, var(--upgrades-width));
+    max-width: 40vw;
+    min-width: 300px;
+    height: 100%;
+    max-height: none;
+    min-height: auto;
+  }
 }
 
 /* Quick Actions - Hidden for clean reference layout */
@@ -136,41 +184,47 @@ app-upgrades-panel {
   text-align: center;
   padding: var(--spacing-2xl);
   min-height: 50vh;
-  gap: 20px;
+  gap: var(--component-gap);
 }
 
 .loading-spinner {
-  font-size: 3rem;
+  font-size: var(--text-3xl);
   animation: spin 2s linear infinite;
 }
 
 .error-icon {
-  font-size: 4rem;
+  font-size: clamp(3rem, 8vw, 4rem);
   color: var(--ph-danger);
 }
 
 .error-message {
-  font-size: 1.2rem;
+  font-size: var(--text-lg);
   color: var(--text-muted);
   max-width: 600px;
-  line-height: 1.5;
+  line-height: var(--leading-relaxed);
 }
 
 .retry-button {
-  padding: 12px 24px;
+  min-height: var(--touch-target-min);
+  padding: var(--button-padding-y) var(--button-padding-x);
   background: var(--sour-primary);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: bold;
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--duration-normal) var(--easing);
+  touch-action: manipulation;
 }
 
 .retry-button:hover {
   background: var(--sour-secondary);
   transform: translateY(-2px);
+}
+
+.retry-button:active {
+  transform: scale(0.98);
 }
 
 @keyframes spin {
@@ -195,34 +249,33 @@ app-upgrades-panel {
 /* Tablet Landscape Optimization (1024x768) */
 @media (min-width: 1000px) and (max-width: 1100px) and (max-height: 800px) {
   .sour-planet-layout {
-    /* Ensure full viewport usage */
-    height: 100vh;
-    max-height: 100vh;
+    /* Use dynamic viewport height */
+    height: var(--viewport-height, 100vh);
+    max-height: var(--viewport-height, 100vh);
   }
 
   .planet-game {
-    /* Optimize for reduced header height */
-    height: calc(100vh - 140px); /* Reduced from 200px due to smaller header */
-    max-height: calc(100vh - 140px);
+    /* Optimize for reduced header height using CSS variables */
+    height: calc(var(--viewport-height, 100vh) - var(--header-height));
+    max-height: calc(var(--viewport-height, 100vh) - var(--header-height));
   }
 
   .main-content {
-    padding: 20px; /* Reduced from 30px */
+    padding: var(--spacing-lg); /* Reduced padding */
   }
 
   .planet-container {
-    gap: 16px; /* Reduced from 20px */
+    gap: var(--spacing-md); /* Smaller gap for tablet */
     max-width: 650px; /* Slightly smaller for tablet */
   }
 
   /* Component spacing optimization */
   app-lemon-clicker {
-    margin-bottom: 16px; /* Reduced from 20px */
+    margin-bottom: var(--spacing-md); /* Use spacing variable */
   }
 
-  /* Upgrades panel optimization */
+  /* Upgrades panel optimization - values will be overridden by CSS variables at 1024px+ */
   app-upgrades-panel {
-    width: 350px; /* Reduced from 400px */
     min-width: 280px; /* Reduced from 300px */
   }
   
@@ -232,45 +285,148 @@ app-upgrades-panel {
   }
 }
 
-/* Responsive Design - Portrait Tablet and Smaller */
-@media (max-width: 768px) {
+/* ==========================================
+   RESPONSIVE DESIGN - MOBILE FIRST APPROACH
+   ========================================== */
+
+/* Angular ViewState Classes - CRITICAL for CSS Grid Override */
+.game-area.mobile-view {
+  /* Force mobile grid layout with highest specificity */
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  grid-template-rows: 1fr auto !important;
+  grid-template-areas: "main" "upgrades" !important;
+  --upgrades-width: initial !important;
+  --game-area-upgrades-width: initial !important;
+}
+
+.game-area.desktop-view {
+  /* Desktop grid layout with CSS variables */
+  grid-template-columns: 1fr var(--game-area-upgrades-width, var(--upgrades-width)) !important;
+  grid-template-rows: 1fr !important;
+  grid-template-areas: none !important;
+}
+
+/* Mobile-first Layout - Base styles above, overrides below */
+.sour-planet-layout {
+  height: var(--viewport-height, 100vh);
+  max-height: var(--viewport-height, 100vh);
+}
+
+.planet-game {
+  height: calc(var(--viewport-height, 100vh) - var(--header-height));
+  max-height: calc(var(--viewport-height, 100vh) - var(--header-height));
+}
+
+/* Mobile Layout (up to 767px) - Explicit CSS Grid Override */
+@media (max-width: 767px) {
+  .sour-planet-layout {
+    height: 100vh; /* Use standard viewport height on mobile */
+    max-height: 100vh;
+  }
   
-  .game-area {
-    flex-direction: column;
-    height: auto;
-    max-height: none;
+  .planet-game {
+    height: calc(100vh - 60px); /* Account for smaller mobile header */
+    max-height: calc(100vh - 60px);
+  }
+  
+  .game-area,
+  .game-area.mobile-view,
+  .game-area[data-viewport="mobile"] {
+    /* CRITICAL: Force grid layout with !important to override Angular ViewEncapsulation */
+    display: grid !important;
+    grid-template-rows: 1fr auto !important;
+    grid-template-columns: 1fr !important; /* Force single column */
+    grid-template-areas: "main" "upgrades" !important;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    gap: 0;
+    
+    /* Multiple approaches to reset CSS variable with different specificities */
+    --upgrades-width: initial !important;
+    --game-area-upgrades-width: initial !important;
   }
   
   .main-content {
     max-width: none;
     width: 100%;
+    padding: var(--spacing-sm);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth iOS scrolling */
+    min-height: 0;
+    flex: 1;
   }
   
   .planet-container {
     flex: 0 0 auto;
-    min-height: 50vh;
-    max-height: 70vh;
+    min-height: auto;
+    max-height: none;
     width: 100%;
+    max-width: 100%;
+    gap: var(--spacing-sm);
+    justify-content: flex-start;
+    align-items: stretch;
+  }
+  
+  /* Mobile Bottom Sheet for Upgrades with Explicit Grid Override */
+  app-upgrades-panel {
+    /* CRITICAL: Force mobile layout with !important */
+    grid-area: upgrades !important;
+    width: 100% !important;
+    min-width: auto !important;
+    max-width: none !important;
+    max-height: var(--upgrades-height-mobile-max) !important;
+    min-height: var(--upgrades-height-mobile-min) !important;
+    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
+    z-index: var(--z-30);
+    
+    /* Visual handle indicator for mobile */
+    &::before {
+      content: '';
+      position: absolute;
+      top: var(--spacing-sm);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 48px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 2px;
+      z-index: 1;
+    }
+  }
+  
+  /* Safe area support for mobile */
+  .main-content {
+    padding-left: max(var(--container-padding), var(--safe-area-left));
+    padding-right: max(var(--container-padding), var(--safe-area-right));
+    padding-top: max(var(--container-padding), var(--safe-area-top));
   }
   
   app-upgrades-panel {
-    width: 100%;
-    min-width: auto;
-    max-width: none;
-    max-height: 50vh;
-    flex-shrink: 1;
+    padding-bottom: max(var(--spacing-md), var(--safe-area-bottom));
   }
 }
 
-/* Mobile Portrait - Smaller Screens */
+/* Small Mobile Portrait (up to 480px) */
 @media (max-width: 480px) {
-  
   .planet-container {
-    min-height: 45vh;
-    max-height: 60vh;
+    max-width: 100%;
+    gap: var(--spacing-sm); /* Tighter spacing on small screens */
   }
   
   app-upgrades-panel {
-    max-height: 40vh;
+    max-height: calc(var(--upgrades-height-mobile-max) * 0.8); /* 32vh instead of 40vh */
+    min-height: calc(var(--upgrades-height-mobile-min) * 0.9); /* 135px instead of 150px */
+  }
+  
+  /* Extra safe area padding for notched phones */
+  .main-content {
+    padding-left: max(var(--spacing-sm), var(--safe-area-left));
+    padding-right: max(var(--spacing-sm), var(--safe-area-right));
   }
 }
