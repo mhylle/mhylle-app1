@@ -205,13 +205,13 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
 
   // Resource data for header display
   get resourceData(): ResourceData {
-    // Always return valid resource data, use current component state as fallback
+    // Always return valid resource data, use planetState with sensible defaults
     return {
-      candy: this.planetState?.candy || this.candy || 0,
+      candy: this.planetState?.candy || 100, // Default starting candy
       crystals: 0, // Sour planet doesn't use crystals
-      productionPerSecond: this.planetState?.productionPerSecond || this.candyPerSecond || 0,
+      productionPerSecond: this.planetState?.productionPerSecond || 2, // Default production
       specialResources: {
-        clickPower: this.planetState?.clickPower || this.clickPower || 1,
+        clickPower: this.planetState?.clickPower || 1, // Default click power
         ph: this.phBalance?.level || 5.0 // Default to neutral sour pH
       }
     };
