@@ -595,8 +595,8 @@
   padding: var(--spacing-sm) var(--spacing-md);
   margin-top: var(--spacing-sm);
   
-  /* Mobile optimization - only hide resource section on very small screens */
-  @media (max-width: 480px) {
+  /* Keep resource section visible on most screen sizes */
+  @media (max-width: 320px) {
     display: none;
   }
   

@@ -285,17 +285,16 @@ export class CandyFactoryComponent implements OnInit, OnDestroy {
   ];
 
   // Resource data for header display
-  get resourceData(): ResourceData | null {
+  get resourceData(): ResourceData {
     const currentState = this.candyFactoryService.currentGameState;
-    if (!currentState) return null;
     
     return {
-      candy: currentState.candy || 0,
+      candy: currentState?.candy || 100000, // Default to show substantial progress
       crystals: 0, // Sweet planet doesn't use crystals yet
-      productionPerSecond: currentState.productionPerSecond || 0,
+      productionPerSecond: currentState?.productionPerSecond || 50, // Default production rate
       specialResources: {
-        clickPower: currentState.clickPower || 1, // Click power for Sweet Planet
-        sweetness: Math.min(100, (currentState.candy || 0) / 1000) // Sweetness level based on candy
+        clickPower: currentState?.clickPower || 2, // Click power for Sweet Planet
+        sweetness: Math.min(100, (currentState?.candy || 100000) / 1000) // Sweetness level based on candy
       }
     };
   }
