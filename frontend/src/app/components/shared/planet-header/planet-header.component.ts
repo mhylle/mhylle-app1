@@ -55,9 +55,13 @@ export interface PlanetNavItem {
       
       <!-- Header Content -->
       <div class="header-content">
-        <!-- Logo on the left -->
+        <!-- Game Branding on the left -->
         <div class="logo-section">
-          <img src="logo.png" alt="Cosmic Candy Factory Logo" class="game-logo">
+          <!-- Fallback to text if logo image doesn't exist -->
+          <div class="game-branding">
+            <div class="game-title-main">🍭 Cosmic Candy Factory</div>
+            <div class="game-version">v1.0.0</div>
+          </div>
         </div>
 
         <!-- Navigation Section with Planet Switcher -->
@@ -106,11 +110,6 @@ export interface PlanetNavItem {
 
         <!-- Planet Branding -->
         <section class="planet-branding" role="banner" aria-labelledby="planet-title">
-          <!-- Game Title -->
-          <div class="game-title">
-            <img src="logo-text.png" alt="Cosmic Candy Factory" class="game-title-text">
-          </div>
-          
           <h1 id="planet-title" class="planet-title">
             <span class="planet-emoji" role="img" [attr.aria-label]="theme.name + ' emoji'">{{ theme.emoji }}</span>
             <span class="planet-name">{{ theme.name }}</span>
@@ -120,6 +119,63 @@ export interface PlanetNavItem {
             <span class="subtitle-text">{{ theme.subtitle }}</span>
             <span class="lab-equipment" role="img" aria-hidden="true">{{ theme.labEquipment[1] }}</span>
           </p>
+        </section>
+
+        <!-- User Actions Section -->
+        <section class="user-actions" *ngIf="showUserActions" role="complementary" aria-label="User actions">
+          <!-- Authentication buttons (when not logged in) -->
+          <div class="auth-buttons" *ngIf="!currentUser">
+            <button 
+              class="auth-button login-btn"
+              (click)="onLoginClick()"
+              type="button"
+              aria-label="Login to your account">
+              <span class="button-icon">👤</span>
+              <span class="button-text">Login</span>
+            </button>
+            <button 
+              class="auth-button register-btn"
+              (click)="onRegisterClick()"
+              type="button"
+              aria-label="Create new account">
+              <span class="button-icon">➕</span>
+              <span class="button-text">Register</span>
+            </button>
+          </div>
+          
+          <!-- User status (when logged in) -->
+          <div class="user-status" *ngIf="currentUser" role="group" aria-label="User status">
+            <div class="user-info">
+              <span class="user-avatar">👨‍🔬</span>
+              <span class="user-name">{{ currentUser.username || 'Scientist' }}</span>
+            </div>
+          </div>
+          
+          <!-- Action buttons (always visible) -->
+          <div class="action-buttons">
+            <!-- Achievement button -->
+            <button 
+              class="action-button achievement-btn"
+              (click)="onAchievementClick()"
+              type="button"
+              [attr.aria-label]="'View achievements'">
+              <span class="button-icon">🏆</span>
+              <span class="button-text">Achievements</span>
+            </button>
+            
+            <!-- Sync button (authenticated users only) -->
+            <button 
+              *ngIf="currentUser"
+              class="action-button sync-btn"
+              [class.syncing]="isSyncing"
+              [disabled]="isSyncing"
+              (click)="onSyncClick()"
+              type="button"
+              [attr.aria-label]="isSyncing ? 'Syncing data...' : 'Sync data'">
+              <span class="button-icon" [class.spinning]="isSyncing">{{ isSyncing ? '🔄' : '☁️' }}</span>
+              <span class="button-text">{{ isSyncing ? 'Syncing...' : 'Sync' }}</span>
+            </button>
+          </div>
         </section>
 
         <!-- Primary Actions (optional slot) -->
@@ -194,10 +250,17 @@ export class PlanetHeaderComponent {
   @Input() isLoading: boolean = false;
   @Input() planets: PlanetNavItem[] = [];
   @Input() currentPlanetId: string = '';
+  @Input() showUserActions: boolean = true;
+  @Input() currentUser: any = null;
+  @Input() isSyncing: boolean = false;
 
   @Output() backClicked = new EventEmitter<void>();
   @Output() resourceClicked = new EventEmitter<string>();
   @Output() planetSwitched = new EventEmitter<string>();
+  @Output() loginClicked = new EventEmitter<void>();
+  @Output() registerClicked = new EventEmitter<void>();
+  @Output() achievementClicked = new EventEmitter<void>();
+  @Output() syncClicked = new EventEmitter<void>();
 
   constructor(private router: Router) {}
 
@@ -206,6 +269,27 @@ export class PlanetHeaderComponent {
    */
   onBackClick(): void {
     this.backClicked.emit();
+  }
+
+  /**
+   * Handle user action events
+   */
+  onLoginClick(): void {
+    this.loginClicked.emit();
+  }
+
+  onRegisterClick(): void {
+    this.registerClicked.emit();
+  }
+
+  onAchievementClick(): void {
+    this.achievementClicked.emit();
+  }
+
+  onSyncClick(): void {
+    if (!this.isSyncing) {
+      this.syncClicked.emit();
+    }
   }
 
   /**

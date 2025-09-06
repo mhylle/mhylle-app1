@@ -30,8 +30,15 @@ import { PlanetHeaderComponent, PlanetTheme, ResourceData, PlanetNavItem } from 
         [isLoading]="false"
         [showBreadcrumb]="false"
         [showPrimaryActions]="true"
-        [showQuickActions]="true"
-        (backClicked)="navigateToSolarSystem()">
+        [showQuickActions]="false"
+        [showUserActions]="true"
+        [currentUser]="currentUser$ | async"
+        [isSyncing]="isSyncing"
+        (backClicked)="navigateToSolarSystem()"
+        (loginClicked)="onLogin()"
+        (registerClicked)="onRegister()"
+        (achievementClicked)="onAchievements()"
+        (syncClicked)="onSync()">
         
         <!-- Primary Actions Slot -->
         <div slot="primary-actions" class="sweet-planet-actions">
@@ -39,29 +46,6 @@ import { PlanetHeaderComponent, PlanetTheme, ResourceData, PlanetNavItem } from 
                   (click)="showPrestigeModal = true"
                   *ngIf="getPrestigeData().canPrestige || (gameState$ | async)?.prestigeLevel! > 0">
             ⭐ Prestige
-          </button>
-        </div>
-        
-        <!-- Quick Actions Slot -->
-        <div slot="quick-actions" class="sweet-planet-quick-actions">
-          <div class="user-controls" *ngIf="currentUser$ | async as user">
-            <button class="sync-btn" (click)="manualSync()" [disabled]="isSyncing" title="Sync progress">
-              <span *ngIf="!isSyncing">🔄</span>
-              <span *ngIf="isSyncing">⏳</span>
-            </button>
-          </div>
-          <div class="offline-status" *ngIf="!(currentUser$ | async)">
-            <span class="offline-mode">Playing offline</span>
-          </div>
-          
-          <button class="login-btn" (click)="showLogin()" *ngIf="!(currentUser$ | async)" title="Login">
-            🔑
-          </button>
-          <button class="register-btn" (click)="showRegister()" *ngIf="!(currentUser$ | async)" title="Register">
-            ✨
-          </button>
-          <button class="achievement-btn" (click)="showAchievementGallery = true" title="Achievements">
-            🏆
           </button>
           <button class="reset-btn" (click)="resetGame()" title="Reset Game">
             🔄
@@ -377,6 +361,25 @@ export class CandyFactoryComponent implements OnInit, OnDestroy {
   showRegister(): void {
     // Dispatch custom event to show registration modal
     window.dispatchEvent(new CustomEvent('show-register'));
+  }
+
+  /**
+   * Header event handlers for unified planet header
+   */
+  onLogin(): void {
+    this.showLogin();
+  }
+
+  onRegister(): void {
+    this.showRegister();
+  }
+
+  onAchievements(): void {
+    this.showAchievementGallery = true;
+  }
+
+  onSync(): void {
+    this.manualSync();
   }
 
   async logout(): Promise<void> {

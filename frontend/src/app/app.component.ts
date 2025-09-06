@@ -457,6 +457,7 @@ export class AppComponent implements OnInit {
   
   private updatePlanetRouteState(url: string): void {
     // Check if current route is a planet route (starts with /planet/)
+    // Planet components have their own unified headers, so hide app header completely
     this.isPlanetRoute = url.startsWith('/planet/');
   }
   

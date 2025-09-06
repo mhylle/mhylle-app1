@@ -100,8 +100,40 @@
     width: auto;
     max-height: 100%;
     filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
+  }
+  
+  .game-branding {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
     
-    /* Ensure logo fits within header height */
+    .game-title-main {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      line-height: 1.2;
+      
+      @media (max-width: 767px) {
+        font-size: 1.2rem;
+      }
+    }
+    
+    .game-version {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.8);
+      background: rgba(102, 126, 234, 0.2);
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  }
+  
+  /* Ensure logo fits within header height */
+  .game-logo {
     object-fit: contain;
   }
 }
@@ -364,6 +396,187 @@
   }
 }
 
+/* User Actions Section - RIGHT SIDE */
+.user-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-left: auto; /* Push to right side */
+  
+  .auth-buttons, .action-buttons {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+  
+  .auth-button, .action-button {
+    background: linear-gradient(135deg, var(--theme-primary, #32CD32), var(--theme-secondary, #9ACD32));
+    color: #ffffff;
+    border: 2px solid transparent;
+    border-radius: var(--radius-md);
+    min-height: var(--button-height);
+    min-width: var(--touch-target-min);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-family: inherit;
+    font-weight: var(--font-medium);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: all var(--duration-normal) var(--ease-out);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    text-decoration: none;
+    touch-action: manipulation;
+    
+    .button-icon {
+      font-size: var(--text-base);
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
+      flex-shrink: 0;
+    }
+    
+    .button-text {
+      white-space: nowrap;
+    }
+    
+    &:hover {
+      background: linear-gradient(135deg, var(--theme-secondary, #9ACD32), var(--theme-primary, #32CD32));
+      border-color: var(--theme-accent, #FFD700);
+      box-shadow: 0 0 15px rgba(50, 205, 50, 0.3);
+      transform: translateY(-2px);
+    }
+    
+    &:active {
+      transform: translateY(0);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    &:focus {
+      outline: 3px solid var(--theme-accent, #FFD700);
+      outline-offset: 2px;
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      
+      &:hover {
+        transform: none;
+        box-shadow: none;
+        border-color: transparent;
+      }
+    }
+  }
+  
+  /* Specific button styling */
+  .register-btn {
+    background: linear-gradient(135deg, var(--theme-accent, #FFD700), #FFA500);
+    
+    &:hover {
+      background: linear-gradient(135deg, #FFA500, var(--theme-accent, #FFD700));
+    }
+  }
+  
+  .achievement-btn {
+    background: linear-gradient(135deg, #8B4513, #CD853F);
+    
+    &:hover {
+      background: linear-gradient(135deg, #CD853F, #8B4513);
+      box-shadow: 0 0 15px rgba(205, 133, 63, 0.3);
+    }
+  }
+  
+  .sync-btn {
+    background: linear-gradient(135deg, #4682B4, #87CEEB);
+    
+    &:hover {
+      background: linear-gradient(135deg, #87CEEB, #4682B4);
+      box-shadow: 0 0 15px rgba(70, 130, 180, 0.3);
+    }
+    
+    &.syncing {
+      background: linear-gradient(135deg, #708090, #A9A9A9);
+      
+      .button-icon.spinning {
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+  
+  /* User status display */
+  .user-status {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      
+      .user-avatar {
+        font-size: var(--text-base);
+        filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
+      }
+      
+      .user-name {
+        font-size: var(--text-sm);
+        font-weight: var(--font-medium);
+        color: #ffffff;
+        text-transform: capitalize;
+      }
+    }
+  }
+  
+  /* Mobile responsiveness */
+  @media (max-width: 767px) {
+    gap: var(--spacing-xs);
+    
+    .auth-buttons, .action-buttons {
+      gap: 4px;
+    }
+    
+    .auth-button, .action-button {
+      padding: var(--spacing-xs);
+      min-width: var(--touch-target-min);
+      
+      .button-text {
+        display: none; /* Hide text on mobile, show only icons */
+      }
+      
+      .button-icon {
+        font-size: var(--text-lg);
+      }
+    }
+    
+    .user-status {
+      padding: var(--spacing-xs);
+      
+      .user-name {
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+  
+  /* Extra small mobile */
+  @media (max-width: 480px) {
+    .user-status {
+      .user-name {
+        display: none; /* Hide username on very small screens */
+      }
+    }
+  }
+}
+
 /* Primary Actions (optional) */
 .primary-actions {
   flex-shrink: 0;
@@ -382,8 +595,8 @@
   padding: var(--spacing-sm) var(--spacing-md);
   margin-top: var(--spacing-sm);
   
-  /* Mobile optimization - hide resource section to save space */
-  @media (max-width: 767px) {
+  /* Mobile optimization - only hide resource section on very small screens */
+  @media (max-width: 480px) {
     display: none;
   }
   
@@ -571,6 +784,15 @@
   }
 }
 
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 /* ==========================================
    RESPONSIVE BREAKPOINTS - CLEAN SYSTEM
    ========================================== */
@@ -653,6 +875,10 @@
   }
   
   .production-display .production-icon {
+    animation: none;
+  }
+  
+  .user-actions .sync-btn .button-icon.spinning {
     animation: none;
   }
 }

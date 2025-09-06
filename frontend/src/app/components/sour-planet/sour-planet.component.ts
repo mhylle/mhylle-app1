@@ -12,10 +12,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { Subject, interval } from 'rxjs';
+import { Subject, interval, Observable } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { PlanetSystemService } from '../../services/planet-system.service';
+import { AuthService } from '../../services/auth.service';
 import { 
   PlanetType, 
   EnhancedGameState, 
@@ -85,7 +86,14 @@ interface SourUpgrade {
         [showBreadcrumb]="false"
         [showPrimaryActions]="false"
         [showQuickActions]="false"
+        [showUserActions]="true"
+        [currentUser]="currentUser$ | async"
+        [isSyncing]="isSyncing"
         (backClicked)="navigateToSolarSystem()"
+        (loginClicked)="onLogin()"
+        (registerClicked)="onRegister()"
+        (achievementClicked)="onAchievements()"
+        (syncClicked)="onSync()"
         role="banner">
       </app-planet-header>
 
@@ -161,6 +169,8 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
   // UI state
   isLoading = false; // Start with false to avoid loading issues
   error: string | null = null;
+  currentUser$!: Observable<any>;
+  isSyncing = false;
   
   // Removed individual UI state - now handled by sub-components and pure CSS Grid
 
@@ -288,10 +298,14 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
 
   constructor(
     private planetSystemService: PlanetSystemService,
+    private authService: AuthService,
     private router: Router
   ) {}
 
   async ngOnInit(): Promise<void> {
+    // Initialize authentication state
+    this.currentUser$ = this.authService.currentUser$;
+    
     // Initialize default sour planet state immediately for testing
     this.initializeTestState();
     
@@ -572,6 +586,41 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
    */
   async navigateToSolarSystem(): Promise<void> {
     await this.router.navigate(['/solar-system']);
+  }
+
+  /**
+   * Header event handlers for unified planet header
+   */
+  onLogin(): void {
+    // Dispatch custom event to show login modal
+    window.dispatchEvent(new CustomEvent('show-login'));
+  }
+
+  onRegister(): void {
+    // Dispatch custom event to show registration modal
+    window.dispatchEvent(new CustomEvent('show-register'));
+  }
+
+  onAchievements(): void {
+    // TODO: Implement achievement gallery for sour planet
+    console.log('Achievement gallery not implemented for sour planet yet');
+  }
+
+  async onSync(): Promise<void> {
+    if (this.isSyncing || !this.authService.isAuthenticated()) {
+      return;
+    }
+
+    this.isSyncing = true;
+    try {
+      // TODO: Implement sync for sour planet data
+      console.log('Sync functionality not implemented for sour planet yet');
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate sync delay
+    } catch (error) {
+      console.error('Sync error:', error);
+    } finally {
+      this.isSyncing = false;
+    }
   }
 
 
