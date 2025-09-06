@@ -24,6 +24,17 @@
   --button-height-tablet: clamp(48px, 8vw, 60px);
   --button-height-desktop: 48px;
   --button-height: var(--button-height-mobile);
+  
+  /* Button padding system */
+  --button-padding-x-mobile: clamp(12px, 3vw, 16px);
+  --button-padding-x-tablet: clamp(16px, 3vw, 20px);
+  --button-padding-x-desktop: 20px;
+  --button-padding-x: var(--button-padding-x-mobile);
+  
+  --button-padding-y-mobile: clamp(8px, 2vw, 12px);
+  --button-padding-y-tablet: clamp(10px, 2vw, 14px);
+  --button-padding-y-desktop: 12px;
+  --button-padding-y: var(--button-padding-y-mobile);
 
   /* ===== SPACING SYSTEM ===== */
   --spacing-xs: clamp(4px, 1vw, 8px);
@@ -103,6 +114,12 @@
   --logo-height-tablet: clamp(40px, 6vh, 48px);
   --logo-height-desktop: 56px;
   --logo-height: var(--logo-height-mobile);
+  
+  /* ===== LEMON CLICKER DIMENSIONS ===== */
+  --lemon-size-mobile: clamp(100px, 25vmin, 150px);
+  --lemon-size-tablet: clamp(150px, 30vmin, 200px);
+  --lemon-size-desktop: clamp(200px, 25vmin, 250px);
+  --lemon-size: var(--lemon-size-mobile);
 
   /* ===== Z-INDEX SYSTEM ===== */
   --z-10: 10;
@@ -117,7 +134,10 @@
   :root {
     --header-height: var(--header-height-tablet);
     --button-height: var(--button-height-tablet);
+    --button-padding-x: var(--button-padding-x-tablet);
+    --button-padding-y: var(--button-padding-y-tablet);
     --logo-height: var(--logo-height-tablet);
+    --lemon-size: var(--lemon-size-tablet);
   }
 }
 
@@ -126,7 +146,10 @@
   :root {
     --header-height: var(--header-height-desktop);
     --button-height: var(--button-height-desktop);
+    --button-padding-x: var(--button-padding-x-desktop);
+    --button-padding-y: var(--button-padding-y-desktop);
     --logo-height: var(--logo-height-desktop);
+    --lemon-size: var(--lemon-size-desktop);
     --upgrades-width: 380px;
     --container-padding: 24px;
     --component-gap: 20px;

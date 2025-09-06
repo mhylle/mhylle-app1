@@ -9,11 +9,11 @@
  * - pH adjustment tools
  */
 
-import { Component, OnInit, OnDestroy, ElementRef, Inject } from '@angular/core';
-import { CommonModule, DOCUMENT } from '@angular/common';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { Subject, interval, fromEvent } from 'rxjs';
-import { takeUntil, debounceTime } from 'rxjs/operators';
+import { Subject, interval } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 import { PlanetSystemService } from '../../services/planet-system.service';
 import { 
@@ -66,13 +66,16 @@ interface SourUpgrade {
     UpgradesPanelComponent
   ],
   template: `
-    <div class="sour-planet-layout" 
-         [style.background-image]="sourPlanetBackground"
-         [style.background-size]="sourPlanetBackgroundSize"
-         [style.background-position]="sourPlanetBackgroundPosition"
-         [style.background-repeat]="'no-repeat, no-repeat'"
-         [class.loading]="isLoading">
-      <!-- Unified Planet Header with Navigation -->
+    <!-- Phase 3: Layout Container Refactoring - Semantic HTML5 Structure -->
+    <main class="sour-planet-layout" 
+          role="main"
+          [style.background-image]="sourPlanetBackground"
+          [style.background-size]="sourPlanetBackgroundSize"
+          [style.background-position]="sourPlanetBackgroundPosition"
+          [style.background-repeat]="'no-repeat, no-repeat'"
+          [class.loading]="isLoading">
+      
+      <!-- Planet Header - Banner Role -->
       <app-planet-header
         [theme]="sourTheme"
         [resources]="resourceData"
@@ -82,74 +85,67 @@ interface SourUpgrade {
         [showBreadcrumb]="false"
         [showPrimaryActions]="false"
         [showQuickActions]="false"
-        (backClicked)="navigateToSolarSystem()">
+        (backClicked)="navigateToSolarSystem()"
+        role="banner">
       </app-planet-header>
 
       <!-- Loading State -->
-      <div *ngIf="isLoading" class="loading-state">
+      <div *ngIf="isLoading" class="loading-state" role="status" aria-live="polite">
         <div class="loading-spinner">🌀</div>
         <p>Loading Sour Planet...</p>
       </div>
 
       <!-- Error State -->
-      <div *ngIf="error && !isLoading" class="error-state">
+      <div *ngIf="error && !isLoading" class="error-state" role="alert" aria-live="assertive">
         <div class="error-icon">⚠️</div>
         <p class="error-message">{{ error }}</p>
         <button class="retry-button" (click)="loadPlanetData()">Retry</button>
       </div>
 
-      <!-- Main Game Interface -->
-      <main *ngIf="!isLoading && !error" class="planet-game" role="main" aria-label="Sour Planet Game Interface">
+      <!-- Game Content Area -->
+      <div *ngIf="!isLoading && !error" class="game-area" role="region" aria-label="Game Content">
+        
+        <!-- Main Game Area -->
+        <section class="main-content" aria-label="Main Game Area">
+          <div class="planet-container">
+            
+            <!-- Lemon Clicker Component -->
+            <app-lemon-clicker
+              [clickPower]="planetState?.clickPower || 1"
+              [phModifier]="phProductionModifier"
+              [disabled]="isLoading"
+              [isOptimalPh]="isPhOptimal"
+              [instructionText]="'Click the lemon to make sour candy!'"
+              (candyClicked)="onCandyClicked($event)"
+              role="button"
+              aria-label="Click to produce sour candy">
+            </app-lemon-clicker>
 
-        <!-- Game Area with Side-by-Side Layout and Viewport Detection -->
-        <section class="game-area" 
-                 [class.mobile-view]="isMobileView"
-                 [class.desktop-view]="!isMobileView"
-                 [attr.data-viewport]="currentViewport"
-                 aria-label="Game play area with controls and upgrades">
-          
-          <!-- Main Content Area -->
-          <div class="main-content" role="region" aria-label="Primary game controls">
-            <!-- Planet Container -->
-            <div class="planet-container">
-              
-              <!-- Lemon Clicker Component - TOP POSITION -->
-              <app-lemon-clicker
-                [clickPower]="planetState?.clickPower || 1"
-                [phModifier]="getPhProductionModifier()"
-                [disabled]="isLoading"
-                [isOptimalPh]="isPhOptimal"
-                [instructionText]="'Click the lemon to make sour candy!'"
-                (candyClicked)="onCandyClicked($event)"
-                role="button"
-                aria-label="Main lemon clicker for candy production">
-              </app-lemon-clicker>
+            <!-- pH Balance System Component -->
+            <app-ph-balance-system
+              [phBalance]="phBalance"
+              [canAdjustPH]="canAdjustPH"
+              [canStartFermentation]="canStartFermentation"
+              (phAdjusted)="onPhAdjusted($event)"
+              (fermentationStarted)="onFermentationStarted()"
+              role="region"
+              aria-label="pH Balance Controls">
+            </app-ph-balance-system>
 
-              <!-- pH Balance System Component with Integrated Fermentation - BELOW LEMON -->
-              <app-ph-balance-system
-                [phBalance]="phBalance"
-                [canAdjustPH]="canAdjustPH"
-                [canStartFermentation]="canStartFermentation"
-                (phAdjusted)="onPhAdjusted($event)"
-                (fermentationStarted)="onFermentationStarted()"
-                role="region"
-                aria-label="pH balance control system for optimal candy production">
-              </app-ph-balance-system>
-
-            </div>
           </div>
-          
-          <!-- Upgrades Panel Component -->
+        </section>
+        
+        <!-- Upgrades Panel - Complementary Content -->
+        <aside class="upgrades-panel" role="complementary" aria-label="Upgrades">
           <app-upgrades-panel
             [upgrades]="sourUpgrades"
             [planetState]="planetState"
-            (upgradePurchased)="onUpgradePurchased($event)"
-            role="complementary"
-            aria-label="Upgrades and enhancements panel">
+            (upgradePurchased)="onUpgradePurchased($event)">
           </app-upgrades-panel>
-        </section>
-      </main>
-    </div>
+        </aside>
+        
+      </div>
+    </main>
   `,
   styleUrl: './sour-planet.component.scss'
 })
@@ -166,10 +162,7 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
   isLoading = false; // Start with false to avoid loading issues
   error: string | null = null;
   
-  // Responsive grid state - Critical for CSS Grid override
-  isMobileView = false;
-  currentViewport = 'desktop';
-  // Removed individual UI state - now handled by sub-components
+  // Removed individual UI state - now handled by sub-components and pure CSS Grid
 
   // Unified Header Configuration
   sourTheme: PlanetTheme = PlanetHeaderComponent.createTheme('sour', {
@@ -286,17 +279,19 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
     return this.isPhOptimal && !this.phBalance?.fermentationActive;
   }
 
+  get phProductionModifier(): number {
+    const ph = this.phBalance?.level || 7;
+    if (ph < 4.0) return 0.5;  // Too acidic
+    if (ph > 6.5) return 0.7;  // Too alkaline  
+    return 1.0; // Optimal
+  }
+
   constructor(
     private planetSystemService: PlanetSystemService,
-    private router: Router,
-    private elementRef: ElementRef,
-    @Inject(DOCUMENT) private document: Document
+    private router: Router
   ) {}
 
   async ngOnInit(): Promise<void> {
-    // CRITICAL: Initialize viewport detection first to fix CSS Grid issue
-    this.initializeViewportDetection();
-    
     // Initialize default sour planet state immediately for testing
     this.initializeTestState();
     
@@ -320,73 +315,6 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
     
     // Load and validate planet data
     await this.loadPlanetData();
-  }
-  
-  /**
-   * Initialize viewport detection to fix CSS Grid mobile issue
-   * CRITICAL: This addresses Angular ViewEncapsulation CSS Grid problems
-   */
-  private initializeViewportDetection(): void {
-    // Initial viewport check
-    this.updateViewportState();
-    
-    // Listen for window resize events
-    fromEvent(window, 'resize')
-      .pipe(
-        debounceTime(150), // Debounce resize events
-        takeUntil(this.destroy$)
-      )
-      .subscribe(() => {
-        this.updateViewportState();
-      });
-  }
-
-  /**
-   * Update viewport state and apply CSS Grid fixes
-   */
-  private updateViewportState(): void {
-    const width = window.innerWidth;
-    const wasMobile = this.isMobileView;
-    
-    // Determine viewport state
-    this.isMobileView = width < 768;
-    this.currentViewport = width < 768 ? 'mobile' : width < 1024 ? 'tablet' : 'desktop';
-    
-    // Apply CSS Grid override when switching to/from mobile
-    if (wasMobile !== this.isMobileView) {
-      this.applyCssGridOverride();
-    }
-    
-    console.log(`Viewport: ${width}px (${this.currentViewport}, mobile: ${this.isMobileView})`);
-  }
-
-  /**
-   * Apply CSS Grid override using Angular ElementRef
-   * This bypasses ViewEncapsulation issues with CSS variables
-   */
-  private applyCssGridOverride(): void {
-    const gameArea = this.elementRef.nativeElement.querySelector('.game-area');
-    if (!gameArea) return;
-
-    if (this.isMobileView) {
-      // Mobile: Force single column grid with explicit CSS
-      gameArea.style.setProperty('grid-template-columns', '1fr', 'important');
-      gameArea.style.setProperty('grid-template-rows', '1fr auto', 'important');
-      gameArea.style.setProperty('grid-template-areas', '"main" "upgrades"', 'important');
-      gameArea.style.setProperty('--game-area-upgrades-width', 'initial', 'important');
-      gameArea.style.setProperty('--upgrades-width', 'initial', 'important');
-      
-      console.log('🔧 Applied mobile CSS Grid override via ElementRef');
-    } else {
-      // Desktop: Remove mobile overrides, let CSS take over
-      gameArea.style.removeProperty('grid-template-columns');
-      gameArea.style.removeProperty('grid-template-rows'); 
-      gameArea.style.removeProperty('grid-template-areas');
-      gameArea.style.removeProperty('--game-area-upgrades-width');
-      gameArea.style.removeProperty('--upgrades-width');
-      
-      console.log('🔧 Removed mobile CSS Grid overrides, restored desktop layout');
-    }
   }
 
   /**
@@ -584,11 +512,20 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
   async onPhAdjusted(delta: number): Promise<void> {
     if (!this.phBalance || !this.canAdjustPH) return;
 
-    const newPH = Math.max(0, Math.min(14, this.phBalance.level + delta));
+    // Make neutralize button more effective - increase delta for neutralization
+    let effectiveDelta = delta;
+    if (delta > 0) { // This is alkaline adjustment (neutralizing acid)
+      effectiveDelta = delta * 1.5; // 50% more effective
+    }
+
+    const newPH = Math.max(0, Math.min(14, this.phBalance.level + effectiveDelta));
     this.phBalance.level = newPH;
     
+    // Track when user made adjustment to reduce drift temporarily
+    this.lastPhAdjustmentTime = Date.now();
+    
     // Update production modifier based on new pH
-    this.phBalance.productionModifier = this.getPhProductionModifier();
+    this.phBalance.productionModifier = this.phProductionModifier;
     
     // Save the change  
     if (this.gameState && this.planetState) {
@@ -602,7 +539,7 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
         totalAcidEvents: this.phBalance.totalAcidEvents
       };
       // In a full implementation, this would trigger a save through the service
-      console.log(`pH adjusted to ${newPH.toFixed(1)}`);
+      console.log(`pH adjusted to ${newPH.toFixed(1)} (effective delta: ${effectiveDelta.toFixed(1)}, reduced drift for 10s)`);
     }
   }
 
@@ -646,12 +583,6 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
     return (ph / 14) * 100;
   }
 
-  getPhProductionModifier(): number {
-    const ph = this.phBalance?.level || 7;
-    if (ph < 4.0) return 0.5;  // Too acidic
-    if (ph > 6.5) return 0.7;  // Too alkaline  
-    return 1.0; // Optimal
-  }
 
   getFermentationBonus(): number {
     if (this.phBalance?.fermentationActive && this.phBalance.fermentationProgress !== undefined) {
@@ -690,21 +621,33 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
       });
   }
 
+  // Add tracking for recent pH adjustments
+  private lastPhAdjustmentTime = 0;
+  private readonly phAdjustmentCooldownMs = 10000; // 10 seconds of reduced drift after adjustment
+
   /**
    * Process natural pH drift over time (becomes more acidic)
    */
   private processPhDrift(): void {
     if (!this.phBalance) return;
 
-    // Natural acidification - pH slowly decreases (becomes more acidic)
-    const driftRate = this.phBalance.naturalAcidification || 0.01; // 0.01 pH per second
+    // Check if we're in a cooldown period after manual pH adjustment
+    const timeSinceAdjustment = Date.now() - this.lastPhAdjustmentTime;
+    const inCooldown = timeSinceAdjustment < this.phAdjustmentCooldownMs;
+    
+    // Reduce drift rate significantly during cooldown to make neutralization more effective
+    let driftRate = this.phBalance.naturalAcidification || 0.01; // 0.01 pH per second normally
+    if (inCooldown) {
+      driftRate *= 0.1; // 90% reduced drift for 10 seconds after user adjustment
+    }
+    
     const newPH = Math.max(1.0, this.phBalance.level - driftRate);
     
     if (newPH !== this.phBalance.level) {
       this.phBalance.level = newPH;
       
       // Update production modifier based on new pH
-      this.phBalance.productionModifier = this.getPhProductionModifier();
+      this.phBalance.productionModifier = this.phProductionModifier;
       
       // Save to planet state
       if (this.planetState?.specialMechanics) {

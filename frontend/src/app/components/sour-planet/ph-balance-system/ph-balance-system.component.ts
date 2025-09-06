@@ -9,7 +9,7 @@
  * - Visual feedback for pH ranges
  */
 
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 interface PHBalanceMechanics {
@@ -35,7 +35,9 @@ interface FermentationState {
   imports: [CommonModule],
   template: `
     <!-- pH Balance System - Reference Match Layout -->
-    <section class="ph-balance-panel" role="region" aria-labelledby="ph-system-heading">
+    <section class="ph-balance-panel" 
+             role="region" 
+             aria-labelledby="ph-system-heading">
       <!-- pH Header -->
       <header class="ph-header">
         <h2 id="ph-system-heading">pH Balance System</h2>
@@ -235,6 +237,10 @@ export class PhBalanceSystemComponent {
   @Output() phAdjusted = new EventEmitter<number>();
   @Output() fermentationStarted = new EventEmitter<void>();
 
+  // Component initialization state
+
+  constructor(private cdr: ChangeDetectorRef) {}
+
   /**
    * Check if pH is in optimal range (4.0 - 6.5)
    */
@@ -394,4 +400,6 @@ export class PhBalanceSystemComponent {
     const remainingProgress = 1 - this.phBalance.fermentationProgress;
     return Math.ceil(remainingProgress * totalTime);
   }
+
+
 }

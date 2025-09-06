@@ -1,0 +1,162 @@
+/* pH Balance Meter - Visual Component Styles */
+/* Fixes white box display issue with proper meter styling */
+
+/* pH Meter Container - Prevents white box issue */
+.ph-meter {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  height: 60px;
+  margin: var(--spacing-md) auto;
+  border: 2px solid var(--border-color, #4a5568);
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+  background: linear-gradient(to right, 
+    #dc2626 0%,     /* Strong red - Very acidic (0-2) */
+    #ea580c 14%,    /* Red-orange - Acidic (2-4) */
+    #eab308 28%,    /* Yellow - Moderately acidic (4-5) */
+    #84cc16 40%,    /* Yellow-green - Optimal start (5-6) */
+    #10b981 52%,    /* Green - Optimal range (6-7) */
+    #06b6d4 64%,    /* Cyan - Optimal end (7-8) */
+    #3b82f6 78%,    /* Blue - Alkaline (8-10) */
+    #6366f1 92%,    /* Indigo - Very alkaline (10-12) */
+    #8b5cf6 100%    /* Purple - Extremely alkaline (12-14) */
+  );
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* pH Value Indicator - Positioned indicator */
+.ph-indicator {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: calc(100% - 8px);
+  background: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 3px;
+  box-shadow: 
+    0 0 8px rgba(255, 255, 255, 0.8),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: left var(--duration-normal, 0.3s) var(--easing, ease-out);
+  z-index: 2;
+}
+
+/* pH Scale Labels - Visible number labels */
+.ph-scale {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-xs, 4px);
+  padding: 0 var(--spacing-sm, 8px);
+  font-size: var(--text-xs, 12px);
+  font-weight: var(--font-medium, 500);
+  color: var(--text-muted, #9ca3af);
+}
+
+.ph-scale-number {
+  position: relative;
+  user-select: none;
+  
+  /* Highlight special pH values */
+  &:nth-child(1) { color: #dc2626; } /* pH 0 - Red */
+  &:nth-child(8) { color: #10b981; } /* pH 7 - Green (neutral) */
+  &:nth-child(15) { color: #8b5cf6; } /* pH 14 - Purple */
+}
+
+/* pH Status Labels - Color coded text */
+.ph-status-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--spacing-xs, 4px);
+  padding: 0 var(--spacing-sm, 8px);
+  font-size: var(--text-xs, 12px);
+  font-weight: var(--font-medium, 500);
+}
+
+.ph-status-acidic {
+  color: #dc2626;
+  text-align: left;
+}
+
+.ph-status-optimal {
+  color: #10b981;
+  text-align: center;
+  font-weight: var(--font-semibold, 600);
+}
+
+.ph-status-alkaline {
+  color: #3b82f6;
+  text-align: right;
+}
+
+/* pH Meter Responsive Design */
+@media (max-width: 480px) {
+  .ph-meter {
+    height: 50px;
+    max-width: 400px;
+  }
+  
+  .ph-indicator {
+    width: 5px;
+    height: calc(100% - 6px);
+  }
+  
+  .ph-scale,
+  .ph-status-labels {
+    font-size: var(--text-2xs, 10px);
+    padding: 0 var(--spacing-xs, 4px);
+  }
+}
+
+/* Accessibility Improvements */
+.ph-meter[aria-label] {
+  /* Ensure screen readers can identify the meter */
+  role: meter;
+}
+
+/* Animation for pH changes */
+.ph-meter.ph-changing .ph-indicator {
+  animation: ph-pulse 0.6s ease-in-out;
+}
+
+@keyframes ph-pulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 8px rgba(255, 255, 255, 0.8),
+      0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    box-shadow: 
+      0 0 16px rgba(255, 255, 255, 1.0),
+      0 4px 8px rgba(0, 0, 0, 0.4);
+    transform: translateY(-50%) scale(1.05);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .ph-meter {
+    border-width: 3px;
+    border-color: #000000;
+  }
+  
+  .ph-indicator {
+    border-width: 3px;
+    background: #ffffff;
+    border-color: #000000;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .ph-indicator {
+    transition: none;
+  }
+  
+  .ph-meter.ph-changing .ph-indicator {
+    animation: none;
+  }
+}

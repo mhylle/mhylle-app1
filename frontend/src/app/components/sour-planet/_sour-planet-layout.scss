@@ -1,6 +1,6 @@
 /* Sour Planet - Layout System */
 
-@import 'sour-planet-variables';
+@import '_sour-planet-variables';
 
 /* Main Layout Container - PRESERVE REFERENCE MATCH */
 .sour-planet-layout {
@@ -17,15 +17,8 @@
   flex-direction: column;
 }
 
-/* Header Layout */
-.planet-header {
-  flex-shrink: 0;
-  height: var(--header-height);
-  background: rgba(26, 26, 46, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--panel-border);
-  z-index: 100;
-}
+/* Header Layout - Removed conflicting styles to fix Phase 3 responsive implementation */
+/* .planet-header styles are now handled in planet-header.component.scss */
 
 .header-main {
   display: flex;

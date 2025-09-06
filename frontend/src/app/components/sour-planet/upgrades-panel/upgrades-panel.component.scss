@@ -1,7 +1,5 @@
 /* Refined Upgrades Panel - Efficient & Integrated Design */
 
-@import '../sour-planet-variables';
-
 /* ===== MAIN PANEL LAYOUT ===== */
 .upgrades-panel {
   /* Optimized Layout & Sizing */
@@ -263,12 +261,16 @@
   
   .buy-btn {
     min-width: 60px;
-    padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
+    min-height: 44px; /* WCAG 2.1 touch target compliance */
+    padding: var(--spacing-sm, 8px) var(--spacing-sm, 8px);
     background: linear-gradient(135deg, var(--sour-primary, #9acd32), var(--ph-optimal, #50fa7b));
     border: none;
     border-radius: var(--radius-sm, 4px);
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     
     .btn-content {
       display: flex;
@@ -398,6 +400,7 @@
   
   .buy-btn {
     min-width: 50px;
+    min-height: 44px; /* Maintain touch target compliance on tablets */
   }
 }
 
@@ -417,6 +420,7 @@
   
   .buy-btn {
     min-width: 45px;
+    min-height: 44px; /* Maintain touch target compliance on small mobile */
     
     .btn-content .btn-cost {
       font-size: 9px;

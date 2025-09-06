@@ -1,6 +1,164 @@
 /* pH Balance System Component - Reference Match Layout */
 
-@import '../sour-planet-variables';
+@import '../_sour-planet-variables';
+
+/* ============================================
+   CRITICAL IMAGE SIZE SAFETY CONSTRAINTS
+   Prevents oversized images from breaking layout
+   ============================================ */
+
+/* ULTRA-STRICT GLOBAL IMAGE SAFETY CONSTRAINTS - PREVENT 2,076px+ BREAKAGE */
+img {
+  max-width: 32px !important;
+  max-height: 32px !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  image-rendering: crisp-edges !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* ULTRA-STRICT SPECIFIC IMAGE TYPE CONSTRAINTS */
+.ph-ok-indicator,
+.fermentation-icon {
+  max-width: 24px !important;
+  max-height: 24px !important;
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* EMERGENCY ULTRA-STRICT FALLBACK - CATCH ANY IMAGE TYPE */
+[src$=".png"], [src$=".jpg"], [src$=".jpeg"], [src$=".svg"], [src$=".webp"],
+[src*="beaker"], [src*="ph_ok"], [src*="fermentation"] {
+  max-width: 32px !important;
+  max-height: 32px !important;
+  width: 32px !important;
+  height: 32px !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* ============================================
+   INITIAL RENDERING STABILITY FIXES
+   Ensures proper layout during component initialization
+   ============================================ */
+
+/* Component Initialization - Ensure stable dimensions */
+.ph-balance-panel {
+  /* Force layout stability during initial render */
+  min-height: 200px; /* Prevent layout collapse */
+  contain: layout style; /* Optimize rendering performance */
+  transform: translateZ(0); /* Force hardware acceleration */
+  will-change: auto; /* Optimize for changes */
+  
+  /* Ensure CSS Grid is properly initialized */
+  display: grid !important;
+  grid-template-rows: auto auto auto !important;
+  
+  /* Prevent content jumping during image loads */
+  &::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    pointer-events: none;
+    z-index: -1;
+  }
+}
+
+/* pH Scale - Ensure stable dimensions */
+.ph-scale {
+  /* Prevent layout shifts during image loading */
+  min-width: 280px; /* Ensure minimum width */
+  min-height: var(--ph-scale-height, 36px); /* Ensure minimum height */
+  contain: layout; /* Contain layout changes */
+  
+  /* Force immediate CSS Grid initialization */
+  display: grid !important;
+  grid-template-columns: 4fr 2.5fr 7.5fr !important;
+  
+  /* Ensure background is immediately visible */
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* pH Indicator - Prevent positioning jumps */
+.ph-indicator {
+  /* Ensure stable positioning during initialization */
+  transform: translateY(-50%) translateZ(0); /* Add hardware acceleration */
+  contain: layout style; /* Optimize rendering */
+  
+  /* Force immediate display */
+  display: grid !important;
+  grid-template-rows: auto auto !important;
+  
+  /* Prevent flash of unstyled content */
+  opacity: 1;
+  visibility: visible;
+}
+
+/* pH Numbers - Ensure immediate visibility */
+.ph-scale-numbers {
+  /* Force immediate grid layout */
+  display: grid !important;
+  grid-template-columns: repeat(9, 1fr) !important;
+  
+  /* Prevent layout shifts */
+  min-height: var(--ph-scale-height, 20px);
+  contain: layout;
+}
+
+/* pH Labels - Stable layout */
+.ph-labels-reference {
+  /* Force immediate grid layout */
+  display: grid !important;
+  grid-template-columns: 1fr 1fr 1.2fr 1fr 1fr !important;
+  
+  /* Prevent content jumping */
+  min-height: 36px;
+  contain: layout;
+}
+
+/* pH System with Sides - Critical Layout */
+.ph-system-with-sides {
+  /* Ensure stable three-column layout immediately */
+  display: grid !important;
+  grid-template-columns: auto 1fr auto !important;
+  
+  /* Prevent layout collapse */
+  min-height: 80px;
+  contain: layout;
+  
+  /* Hardware acceleration for smooth rendering */
+  transform: translateZ(0);
+}
+
+/* Side Status - Immediate dimensions */
+.ph-side-status {
+  /* Prevent width fluctuations */
+  min-width: var(--ph-side-status-min-width, 100px);
+  width: clamp(80px, 12vw, 120px);
+  contain: layout style;
+  
+  /* Force immediate visibility */
+  opacity: 0.5;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
 
 /* Screen Reader Only Content */
 .sr-only {
@@ -51,16 +209,21 @@
 
 .ph-balance-panel {
   margin: 0;
-  padding: var(--ph-panel-padding);
+  padding: clamp(0.5rem, 2vw, 1rem);
   background: transparent;
   border: none;
-  max-width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-sm);
+  max-width: min(100%, 600px);
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: clamp(0.5rem, 1.5vw, 1rem);
   position: relative;
   width: 100%;
+  justify-items: center;
+  
+  /* Override the forced initial styles once component is stable */
+  &:not(.initializing) {
+    min-height: unset;
+  }
 }
 
 /* pH Header - Enhanced Readability and Contrast */
@@ -102,32 +265,28 @@
 
 /* Side Status Layout - INTEGRATED WITH PH BAR */
 .ph-system-with-sides {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: center;
-  gap: var(--spacing-md);
+  gap: clamp(0.75rem, 2vw, 1.5rem);
   width: 100%;
-  max-width: var(--ph-system-max-width);
+  max-width: min(100%, 600px);
   margin: 0 auto;
   position: relative;
 }
 
 /* Side Status Indicators - ENHANCED READABILITY AND CONTRAST */
 .ph-side-status {
-  flex: 0 0 auto;
   text-align: center;
-  opacity: 0.5; /* Slightly more visible when inactive */
-  transition: all var(--animation-medium) var(--easing);
-  min-width: var(--ph-side-status-min-width);
-  padding: var(--ph-side-status-padding);
-  border-radius: var(--radius-md);
-  background: rgba(0, 0, 0, 0.25); /* Darker background for contrast */
+  opacity: 0.5;
+  transition: all 0.3s ease;
+  width: clamp(80px, 12vw, 120px);
+  padding: clamp(0.25rem, 1vw, 0.5rem);
+  border-radius: 0.5rem;
+  background: rgba(0, 0, 0, 0.25);
   border: 1px solid rgba(255, 255, 255, 0.15);
   position: relative;
-  margin-top: 0;
   backdrop-filter: blur(4px);
-  
-  /* Add subtle inner glow for depth */
   box-shadow: 
     inset 0 1px 2px rgba(255, 255, 255, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.2);
@@ -235,14 +394,14 @@
 
 /* Center pH Meter - REFERENCE MATCH LAYOUT */
 .ph-meter-center {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  max-width: 400px;
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: clamp(0.25rem, 1vw, 0.5rem);
+  width: 100%;
+  max-width: clamp(280px, 60vw, 400px);
   position: relative;
   z-index: 5;
+  justify-items: center;
 }
 
 /* Remove pH value display to match reference */
@@ -252,107 +411,86 @@
   50% { opacity: 0.7; }
 }
 
-/* pH Scale - ENHANCED READABILITY WITH IMPROVED CONTRAST */
+/* pH Scale - SMOOTH GRADIENT ACROSS ENTIRE SCALE */
 .ph-scale {
   position: relative;
   width: 100%;
-  height: var(--ph-scale-height);
-  border-radius: calc(var(--ph-scale-height) / 2);
+  height: 36px; /* Fixed height for immediate rendering */
+  border-radius: 18px; /* Fixed border radius */
   overflow: hidden;
-  display: flex;
-  box-shadow: 
-    0 6px 20px rgba(0, 0, 0, 0.5),
-    inset 0 1px 3px rgba(0, 0, 0, 0.2), /* Inner shadow for depth */
-    0 0 0 2px rgba(255, 255, 255, 0.8); /* Bright outer border for definition */
-  border: 3px solid rgba(255, 255, 255, 0.9); /* Even stronger border for maximum contrast */
-  background: linear-gradient(90deg, 
-    #DC143C 0%,           /* Even darker red (acidic left) - maximum contrast */
-    #FF4500 25%,          /* Bright orange-red transition */
-    #228B22 45%,          /* Forest green (optimal center) - maximum contrast */
-    #32CD32 55%,          /* Lime green continuation */
-    #DAA520 80%,          /* Goldenrod (alkaline) - better contrast */
-    #D2691E 100%          /* Saddle brown (alkaline right) - maximum contrast */
+  display: flex; /* Use flexbox instead of grid for immediate layout */
+  border: 2px solid #FFFFFF;
+  
+  /* BEAUTIFUL SMOOTH pH GRADIENT - ENTIRE SCALE */
+  background: linear-gradient(to right, 
+    #DC143C 0%,     /* Deep red - very acidic (pH 0-1) */
+    #E53E3E 10%,    /* Red - acidic (pH 1-2) */
+    #FF4500 25%,    /* Orange-red - moderately acidic (pH 2-4) */
+    #FFA500 35%,    /* Orange - slightly acidic (pH 4-5) */
+    #FFFF00 45%,    /* Yellow - near neutral acidic (pH 5-6) */
+    #32CD32 50%,    /* Green - optimal center (pH 6-7) */
+    #32CD32 55%,    /* Green - optimal center (pH 6-7) */
+    #00CED1 65%,    /* Cyan - slightly alkaline (pH 7-8) */
+    #4169E1 75%,    /* Blue - moderately alkaline (pH 8-10) */
+    #6A5ACD 85%,    /* Slate blue - alkaline (pH 10-12) */
+    #8A2BE2 100%    /* Purple - very alkaline (pH 12-14) */
   );
   
-  /* Add subtle overlay pattern for texture and enhanced contrast */
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.15) 0px,
-      rgba(255, 255, 255, 0.08) 2px,
-      transparent 4px,
-      transparent 8px
-    );
-    pointer-events: none;
-    z-index: 1;
-  }
-  
-  /* Add scale tick marks for better readability */
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: 
-      linear-gradient(90deg, rgba(255, 255, 255, 0.6) 0%, transparent 1%), 
-      linear-gradient(90deg, transparent 13%, rgba(255, 255, 255, 0.4) 14%, transparent 15%),
-      linear-gradient(90deg, transparent 27%, rgba(255, 255, 255, 0.4) 28%, transparent 29%),
-      linear-gradient(90deg, transparent 41%, rgba(255, 255, 255, 0.4) 42%, transparent 43%),
-      linear-gradient(90deg, transparent 49%, rgba(255, 255, 255, 0.8) 50%, transparent 51%),
-      linear-gradient(90deg, transparent 55%, rgba(255, 255, 255, 0.4) 56%, transparent 57%),
-      linear-gradient(90deg, transparent 69%, rgba(255, 255, 255, 0.4) 70%, transparent 71%),
-      linear-gradient(90deg, transparent 83%, rgba(255, 255, 255, 0.4) 84%, transparent 85%),
-      linear-gradient(90deg, transparent 98%, rgba(255, 255, 255, 0.6) 99%);
-    pointer-events: none;
-    z-index: 2;
-  }
+  /* Force immediate layout and prevent rendering delays */
+  transform: translateZ(0); /* Hardware acceleration */
+  contain: layout style; /* Contain changes */
+  opacity: 1; /* Force immediate visibility */
+  visibility: visible; /* Force immediate visibility */
 }
 
 .ph-segment {
   height: 100%;
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--animation-medium) var(--easing);
-  background: transparent !important; /* Remove individual backgrounds */
-  border: none; /* Remove segment borders */
+  display: block;
+  /* Remove individual backgrounds - using gradient on parent */
+  background: transparent !important;
+  border: none;
+  opacity: 1;
+  visibility: visible;
 }
 
 .ph-segment.acidic {
+  /* Use flex: 4 to match the previous 4fr grid proportion */
   flex: 4;
-  position: relative;
-  transition: all 0.3s ease;
-  min-height: 100%;
+  /* Background handled by parent gradient */
+  background: transparent !important;
 }
 
 .ph-segment.optimal {
+  /* Use flex: 2.5 to match the previous 2.5fr grid proportion */
   flex: 2.5;
-  position: relative;
-  transition: all 0.3s ease;
-  min-height: 100%;
+  /* Background handled by parent gradient */
+  background: transparent !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .ph-segment.alkaline {
+  /* Use flex: 7.5 to match the previous 7.5fr grid proportion */
   flex: 7.5;
-  position: relative;
-  transition: all 0.3s ease;
-  min-height: 100%;
+  /* Background handled by parent gradient */
+  background: transparent !important;
 }
 
 .ph-ok-indicator {
-  width: var(--ph-ok-indicator-size);
-  height: var(--ph-ok-indicator-size);
-  object-fit: contain;
-  image-rendering: crisp-edges;
+  /* ULTRA-STRICT IMAGE SIZE CONSTRAINTS - PREVENT ALL LAYOUT BREAKAGE */
+  width: 20px !important;
+  height: 20px !important;
+  max-width: 24px !important;
+  max-height: 24px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  image-rendering: crisp-edges !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
   animation: gentle-pulse 2s ease-in-out infinite alternate;
   
   /* Enhanced visibility with glow and shadow */
@@ -393,69 +531,42 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: var(--ph-indicator-size);
-  height: var(--ph-indicator-size);
-  transition: left 0.5s var(--easing);
-  z-index: 15; /* Higher z-index to ensure visibility over texture */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  margin-left: calc(var(--ph-indicator-size) * -0.5);
+  width: clamp(48px, 8vw, 60px);
+  height: clamp(48px, 8vw, 60px);
+  transition: left 0.5s ease;
+  z-index: 15;
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 0.25rem;
+  justify-items: center;
+  margin-left: calc(clamp(48px, 8vw, 60px) * -0.5);
 }
 
 .ph-indicator-dot {
-  width: var(--ph-indicator-dot-size);
-  height: var(--ph-indicator-dot-size);
+  width: 20px; /* Fixed size for immediate rendering */
+  height: 20px; /* Fixed size for immediate rendering */
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #FFFFFF 0%, #F0F0F0 100%); /* Subtle gradient for depth */
-  border: var(--ph-indicator-border-width) solid var(--ph-acidic);
-  box-shadow: 
-    0 0 25px rgba(0, 0, 0, 0.9), /* Even stronger dark shadow */
-    0 0 12px rgba(255, 255, 255, 0.9), /* Brighter white glow */
-    0 3px 6px rgba(0, 0, 0, 0.6), /* Stronger drop shadow for depth */
-    inset 0 1px 2px rgba(255, 255, 255, 0.8); /* Inner highlight */
-  transition: all var(--animation-medium) var(--easing);
-  
-  /* Add inner highlight for enhanced 3D effect */
+  /* Solid background for immediate rendering */
+  background-color: #FFFFFF;
+  background: #FFFFFF;
+  border: 3px solid #E53E3E; /* Fixed border size and fallback color */
+  /* Remove complex box-shadows for immediate rendering */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* Single simple shadow */
+  /* Remove complex transitions for immediate rendering */
   position: relative;
   
-  &::before {
-    content: '';
-    position: absolute;
-    top: 1px;
-    left: 1px;
-    right: 1px;
-    bottom: 1px;
-    border-radius: 50%;
-    background: radial-gradient(ellipse at 25% 25%, rgba(255, 255, 255, 0.9), transparent 60%);
-    pointer-events: none;
-    z-index: 1;
-  }
+  /* Force immediate visibility */
+  opacity: 1;
+  visibility: visible;
+  transform: translateZ(0); /* Hardware acceleration */
   
-  /* Add outer ring for extra definition */
-  &::after {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    pointer-events: none;
-    z-index: -1;
-  }
+  /* Remove complex pseudo-elements that cause rendering delays */
 }
 
 .ph-indicator.optimal .ph-indicator-dot {
-  border-color: var(--ph-optimal);
-  box-shadow: 
-    0 0 30px rgba(0, 0, 0, 0.8),
-    0 0 15px rgba(56, 161, 105, 0.9), /* Brighter green glow matching optimal color */
-    0 3px 6px rgba(0, 0, 0, 0.6),
-    inset 0 1px 2px rgba(255, 255, 255, 0.8);
-  animation: optimal-pulse 2.5s ease-in-out infinite;
+  border-color: #38A169; /* Fixed color for immediate rendering */
+  /* Remove complex box-shadows and animations for immediate rendering */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 @keyframes optimal-pulse {
@@ -476,12 +587,9 @@
 }
 
 .ph-indicator.danger .ph-indicator-dot {
-  border-color: var(--ph-danger);
-  box-shadow: 
-    0 0 30px rgba(0, 0, 0, 0.9),
-    0 0 15px rgba(220, 20, 60, 0.9), /* Red glow for danger */
-    0 2px 4px rgba(0, 0, 0, 0.6);
-  animation: danger-pulse 1s ease-in-out infinite;
+  border-color: #DC143C; /* Fixed color for immediate rendering */
+  /* Remove complex box-shadows and animations for immediate rendering */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 @keyframes danger-pulse {
@@ -502,31 +610,26 @@
 }
 
 .ph-indicator-value {
-  background: linear-gradient(135deg, rgba(0, 0, 0, 0.98) 0%, rgba(20, 20, 20, 0.95) 100%); /* Rich gradient background */
-  color: #FFFFFF; /* Pure white text */
-  padding: var(--ph-indicator-value-padding);
-  border-radius: var(--radius-lg);
-  font-size: var(--ph-indicator-value-font-size);
-  font-weight: var(--weight-bold);
-  margin-top: var(--spacing-sm);
-  min-width: var(--ph-indicator-value-min-width);
+  /* Solid background instead of gradient for immediate rendering */
+  background-color: rgba(0, 0, 0, 0.95);
+  background: rgba(0, 0, 0, 0.95); /* Fallback solid color */
+  color: #FFFFFF;
+  padding: clamp(0.125rem, 0.5vw, 0.25rem) clamp(0.25rem, 1vw, 0.5rem);
+  border-radius: 0.75rem;
+  font-size: clamp(0.75rem, 1.5vw, 0.85rem);
+  font-weight: 700;
+  min-width: clamp(32px, 6vw, 42px);
   text-align: center;
   box-shadow: 
-    0 5px 15px rgba(0, 0, 0, 0.7), /* Stronger shadow */
-    0 0 0 2px rgba(255, 255, 255, 0.3), /* Stronger subtle border */
-    inset 0 1px 2px rgba(255, 255, 255, 0.1); /* Inner highlight */
+    0 4px 12px rgba(0, 0, 0, 0.6),
+    0 0 0 2px rgba(255, 255, 255, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
   font-family: var(--font-mono);
-  letter-spacing: 0.8px; /* Better character spacing */
-  
-  /* Enhanced text shadow for maximum contrast */
+  letter-spacing: 0.5px;
   text-shadow: 
     0 2px 4px rgba(0, 0, 0, 0.9),
     0 0 6px rgba(0, 0, 0, 0.6);
-  
-  /* Add subtle animation on change */
-  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-  
-  /* Add subtle glow effect */
+  transition: all 0.3s ease;
   position: relative;
   
   &::before {
@@ -537,7 +640,9 @@
     right: -1px;
     bottom: -1px;
     border-radius: 13px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+    /* Solid background instead of gradient for immediate rendering */
+    background-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1); /* Fallback solid color */
     z-index: -1;
     opacity: 0.6;
   }
@@ -547,26 +652,25 @@
 .ph-scale-numbers {
   position: relative;
   width: 100%;
-  height: 20px;
-  margin-top: 6px;
-  margin-bottom: 6px;
-  display: flex;
+  height: clamp(16px, 3vw, 20px);
+  margin: clamp(0.25rem, 1vw, 0.5rem) 0;
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
   align-items: center;
 }
 
 .ph-number {
-  position: absolute;
-  transform: translateX(-50%);
-  font-size: 0.8rem;
+  justify-self: center;
+  font-size: clamp(0.6rem, 1.2vw, 0.8rem);
   font-weight: 700;
   color: #FFFFFF;
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(3px);
-  padding: 2px 6px;
-  border-radius: 8px;
+  padding: clamp(1px, 0.3vw, 2px) clamp(3px, 1vw, 6px);
+  border-radius: clamp(4px, 1vw, 8px);
   border: 1px solid rgba(255, 255, 255, 0.3);
   font-family: var(--font-mono);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   text-shadow: 
     0 2px 4px rgba(0, 0, 0, 0.9),
     0 0 6px rgba(0, 0, 0, 0.7);
@@ -574,18 +678,6 @@
     0 2px 6px rgba(0, 0, 0, 0.4),
     inset 0 1px 1px rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
-  
-  /* Adjust edge positions */
-  &[style*="left: 0%"] {
-    transform: translateX(0%);
-    left: 2px !important;
-  }
-  
-  &[style*="left: 100%"] {
-    transform: translateX(-100%);
-    right: 2px !important;
-    left: auto !important;
-  }
 }
 
 .ph-number.optimal {
@@ -604,37 +696,33 @@
 
 /* pH Labels - ENHANCED READABILITY AND CONTRAST */
 .ph-labels-reference {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr 1fr 1fr;
+  gap: clamp(0.125rem, 0.5vw, 0.25rem);
   align-items: center;
-  margin-top: 8px; /* Less space since we have numbers above */
-  padding: 0 8px;
+  margin-top: clamp(0.25rem, 1vw, 0.5rem);
+  padding: 0 clamp(0.25rem, 1vw, 0.5rem);
   width: 100%;
   position: relative;
-  min-height: 36px; /* Taller for better readability */
+  min-height: clamp(28px, 5vw, 36px);
 }
 
 .ph-label {
-  font-size: 0.8rem; /* Slightly larger base text */
-  font-weight: 600; /* Bolder for better readability */
+  font-size: clamp(0.6rem, 1.2vw, 0.8rem);
+  font-weight: 600;
   text-align: center;
   color: var(--text-light);
   font-family: var(--font-primary);
   text-shadow: 
-    2px 2px 4px rgba(0, 0, 0, 0.9), /* Stronger shadow */
-    0 0 8px rgba(0, 0, 0, 0.6); /* Glow shadow for contrast */
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    2px 2px 4px rgba(0, 0, 0, 0.9),
+    0 0 6px rgba(0, 0, 0, 0.6);
+  display: grid;
+  place-items: center;
   white-space: nowrap;
-  
-  /* Add semi-transparent background for better contrast */
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(2px);
-  border-radius: 6px;
-  padding: 4px 6px;
-  margin: 0 2px;
+  border-radius: clamp(3px, 1vw, 6px);
+  padding: clamp(2px, 0.5vw, 4px) clamp(3px, 1vw, 6px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -664,15 +752,12 @@
 
 /* Center optimal label - Special enhanced formatting */
 .ph-label.optimal-center {
-  flex: 1.2;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px; /* Slightly more space */
-  padding: 6px 8px; /* More padding */
-  background: rgba(56, 161, 105, 0.2); /* Green-tinted background */
+  grid-template-rows: auto auto;
+  gap: clamp(1px, 0.3vw, 2px);
+  padding: clamp(3px, 1vw, 6px) clamp(4px, 1.5vw, 8px);
+  background: rgba(56, 161, 105, 0.2);
   border-color: rgba(56, 161, 105, 0.4);
-  border-width: 2px; /* Thicker border for emphasis */
+  border-width: 2px;
 }
 
 .ph-label.optimal-center .optimal-main {
@@ -723,29 +808,29 @@
 
 /* pH Controls - Clean Button Layout */
 .ph-controls {
-  display: flex;
-  gap: var(--spacing-lg);
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-top: var(--spacing-sm);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+  justify-items: center;
+  margin-top: clamp(0.5rem, 1.5vw, 1rem);
+  max-width: 400px;
 }
 
 .ph-adjust {
-  padding: var(--ph-button-padding);
+  padding: clamp(0.5rem, 1.5vw, 0.75rem) clamp(1rem, 3vw, 1.5rem);
   border: none;
-  border-radius: var(--ph-button-border-radius);
-  font-size: var(--ph-button-font-size);
-  font-weight: var(--weight-bold);
+  border-radius: 9999px;
+  font-size: clamp(0.85rem, 1.5vw, 1rem);
+  font-weight: 700;
   cursor: pointer;
-  transition: all var(--animation-medium) var(--easing);
-  min-width: var(--ph-button-min-width);
-  min-height: var(--touch-target-min);
-  height: var(--touch-target-min);
+  transition: all 0.3s ease;
+  min-width: clamp(120px, 25vw, 160px);
+  min-height: 44px;
+  height: auto;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.1);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   font-family: var(--font-primary);
   color: white;
   letter-spacing: 0.5px;
@@ -795,28 +880,31 @@
 /* Enhanced Responsive Design - Maintains Readability */
 @media (max-width: 768px) {
   .ph-balance-panel {
-    padding: var(--ph-panel-padding-mobile);
+    padding: clamp(0.25rem, 1.5vw, 0.75rem);
+    gap: clamp(0.25rem, 1vw, 0.75rem);
   }
   
   .ph-header {
-    padding: var(--ph-header-padding-mobile);
-    margin-bottom: var(--spacing-xs);
+    padding: clamp(0.25rem, 1vw, 0.5rem) clamp(0.5rem, 2vw, 1rem);
+    margin-bottom: clamp(0.25rem, 1vw, 0.5rem);
   }
   
   .ph-header h2 {
-    font-size: var(--ph-header-font-size-mobile);
-    letter-spacing: 1px;
+    font-size: clamp(1.2rem, 3vw, 1.4rem);
+    letter-spacing: 0.8px;
   }
   
   .ph-system-with-sides {
-    flex-direction: column;
-    gap: var(--spacing-md);
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: clamp(0.5rem, 1.5vw, 1rem);
   }
   
   .ph-side-status {
-    min-width: var(--ph-side-status-min-width-mobile);
-    padding: var(--ph-side-status-padding-mobile);
-    border-radius: var(--radius-sm);
+    width: clamp(200px, 60vw, 300px);
+    padding: clamp(0.25rem, 1vw, 0.5rem);
+    border-radius: 0.375rem;
+    justify-self: center;
   }
   
   .ph-side-status .status-text {
@@ -839,11 +927,12 @@
   }
   
   .ph-meter-center {
-    max-width: 320px; /* Slightly wider on mobile */
+    max-width: min(95vw, 320px);
+    width: 100%;
   }
   
   .ph-scale {
-    height: calc(var(--ph-scale-height) - 2px); /* Slightly smaller on mobile */
+    height: clamp(28px, 4.5vw, 36px);
   }
   
   .ph-indicator {
@@ -913,22 +1002,22 @@
 
 @media (max-width: 480px) {
   .ph-balance-panel {
-    padding: var(--ph-panel-padding-small);
-    gap: var(--spacing-sm);
+    padding: clamp(0.25rem, 1vw, 0.5rem);
+    gap: clamp(0.25rem, 1vw, 0.5rem);
   }
   
   .ph-header {
-    padding: var(--ph-header-padding-small);
-    margin-bottom: var(--spacing-xs);
+    padding: clamp(0.25rem, 1vw, 0.375rem) clamp(0.375rem, 1.5vw, 0.75rem);
+    margin-bottom: clamp(0.25rem, 0.5vw, 0.375rem);
   }
   
   .ph-header h2 {
-    font-size: var(--ph-header-font-size-small);
-    letter-spacing: 0.8px;
+    font-size: clamp(1.1rem, 3.5vw, 1.3rem);
+    letter-spacing: 0.6px;
   }
   
   .ph-scale {
-    height: calc(var(--ph-scale-height) - 4px); /* Still prominent on small screens */
+    height: clamp(26px, 5vw, 32px);
   }
   
   .ph-indicator {
@@ -985,10 +1074,10 @@
   }
   
   .ph-controls {
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    margin-top: 8px;
+    grid-template-columns: 1fr;
+    gap: clamp(0.375rem, 1.5vw, 0.625rem);
+    margin-top: clamp(0.375rem, 1vw, 0.5rem);
+    max-width: clamp(200px, 80vw, 280px);
   }
   
   .ph-adjust {
@@ -1008,6 +1097,17 @@
   margin-top: 12px;
   position: relative;
   z-index: 10;
+  
+  /* CRITICAL FIX: Add container constraints to prevent oversized elements */
+  max-width: min(100%, 600px); /* Match pH system constraints */
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box; /* Ensure padding is included in width */
+  
+  /* CRITICAL HEIGHT FIX: Prevent vertical expansion beyond reasonable bounds */
+  max-height: 300px; /* Reasonable maximum height for fermentation system */
+  overflow: hidden; /* Clip content that exceeds bounds */
 }
 
 .fermentation-status-bar {
@@ -1025,6 +1125,14 @@
     0 0 0 1px rgba(255, 255, 255, 0.1);
   position: relative;
   overflow: hidden;
+  
+  /* CRITICAL FIX: Ensure content stays within bounds */
+  width: 100%;
+  max-width: 100%; /* Prevent expansion beyond parent */
+  box-sizing: border-box;
+  
+  /* CRITICAL HEIGHT FIX: Prevent vertical expansion */
+  max-height: 280px; /* Reasonable maximum height */
   
   /* Add subtle glow for optimal pH state */
   animation: optimal-glow 3s ease-in-out infinite alternate;
@@ -1052,6 +1160,16 @@
   justify-content: space-between;
   align-items: center;
   gap: 16px;
+  
+  /* CRITICAL FIX: Prevent content expansion */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0; /* Allow flex children to shrink */
+  
+  /* CRITICAL HEIGHT FIX: Constrain vertical size */
+  min-height: 60px;
+  max-height: 120px; /* Prevent excessive height */
 }
 
 .fermentation-ready-indicator {
@@ -1061,10 +1179,18 @@
 }
 
 .fermentation-icon {
-  width: var(--ph-ok-indicator-size);
-  height: var(--ph-ok-indicator-size);
-  object-fit: contain;
-  image-rendering: crisp-edges;
+  /* ULTRA-STRICT FERMENTATION ICON CONSTRAINTS - PREVENT ALL LAYOUT BREAKAGE */
+  width: 22px !important;
+  height: 22px !important;
+  max-width: 24px !important;
+  max-height: 24px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  image-rendering: crisp-edges !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
   filter: 
     brightness(1.2) 
     contrast(1.1) 
@@ -1117,7 +1243,7 @@
   gap: 8px;
   padding: 12px 16px;
   min-height: 44px; /* Touch target compliance */
-  background: linear-gradient(135deg, var(--ph-optimal) 0%, #4CAF50 100%);
+  background: linear-gradient(135deg, var(--ph-optimal, #38A169) 0%, #4CAF50 100%);
   border: none;
   border-radius: 20px;
   color: white;
@@ -1132,7 +1258,7 @@
 }
 
 .fermentation-start-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #4CAF50 0%, var(--ph-optimal) 100%);
+  background: linear-gradient(135deg, #4CAF50 0%, var(--ph-optimal, #38A169) 100%);
   transform: translateY(-2px) scale(1.02);
   box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
   border-color: rgba(255, 255, 255, 0.3);
@@ -1166,12 +1292,28 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  
+  /* CRITICAL FIX: Prevent content expansion */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0; /* Allow flex children to shrink */
+  
+  /* CRITICAL HEIGHT FIX: Constrain vertical size */
+  max-height: 240px; /* Reasonable maximum height for active fermentation */
+  overflow-y: auto; /* Add scrolling if content exceeds bounds */
 }
 
 .fermentation-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  
+  /* CRITICAL FIX: Prevent content expansion */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0; /* Allow flex children to shrink */
 }
 
 .fermentation-title {
@@ -1191,7 +1333,7 @@
 }
 
 .fermentation-percentage {
-  color: var(--ph-optimal);
+  color: var(--ph-optimal, #38A169);
   font-weight: var(--weight-bold);
   font-size: 1.2rem;
   font-family: var(--font-mono);
@@ -1208,6 +1350,15 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  
+  /* CRITICAL FIX: Prevent content expansion */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0; /* Allow flex children to shrink */
+  
+  /* CRITICAL HEIGHT FIX: Constrain progress container */
+  max-height: 100px; /* Reasonable maximum height for progress elements */
 }
 
 .fermentation-progress-bar {
@@ -1223,7 +1374,7 @@
 .fermentation-progress-fill {
   height: 100%;
   background: linear-gradient(90deg, 
-    var(--ph-optimal) 0%, 
+    var(--ph-optimal, #38A169) 0%, 
     #66BB6A 50%, 
     #4CAF50 100%
   );
@@ -1334,7 +1485,7 @@
 }
 
 .stat-value.bonus {
-  color: var(--ph-optimal);
+  color: var(--ph-optimal, #38A169);
   text-shadow: 
     2px 2px 4px rgba(0, 0, 0, 0.8),
     0 0 6px rgba(0, 0, 0, 0.6),

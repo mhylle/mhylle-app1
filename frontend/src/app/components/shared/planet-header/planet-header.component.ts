@@ -46,9 +46,9 @@ export interface PlanetNavItem {
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <div class="planet-header" [attr.data-theme]="theme.id">
+    <header class="planet-header" [attr.data-theme]="theme.id" role="banner">
       <!-- Background Pattern -->
-      <div class="header-background">
+      <div class="header-background" aria-hidden="true">
         <div class="lab-pattern" [style.background-image]="'url(' + theme.backgroundIcon + ')'"></div>
         <div class="animated-scan"></div>
       </div>
@@ -61,9 +61,9 @@ export interface PlanetNavItem {
         </div>
 
         <!-- Navigation Section with Planet Switcher -->
-        <div class="navigation-section">
+        <nav class="navigation-section" role="navigation" aria-label="Planet navigation">
           <!-- Planet Navigation (if more than one planet unlocked) -->
-          <div class="planet-nav" *ngIf="planets && planets.length > 1">
+          <div class="planet-nav" *ngIf="planets && planets.length > 1" role="group" aria-label="Planet switcher">
             <a *ngFor="let planet of planets" 
                [routerLink]="planet.route"
                [class.active]="planet.id === currentPlanetId"
@@ -97,30 +97,30 @@ export interface PlanetNavItem {
           </button>
           
           <!-- Breadcrumb (optional) -->
-          <nav class="breadcrumb" *ngIf="showBreadcrumb" aria-label="breadcrumb">
-            <span class="breadcrumb-item">Solar System</span>
-            <span class="breadcrumb-separator">→</span>
-            <span class="breadcrumb-current">{{ theme.name }}</span>
-          </nav>
-        </div>
+          <ol class="breadcrumb" *ngIf="showBreadcrumb" role="list" aria-label="breadcrumb navigation">
+            <li class="breadcrumb-item">Solar System</li>
+            <li class="breadcrumb-separator" aria-hidden="true">→</li>
+            <li class="breadcrumb-current" aria-current="page">{{ theme.name }}</li>
+          </ol>
+        </nav>
 
         <!-- Planet Branding -->
-        <div class="planet-branding">
+        <section class="planet-branding" role="banner" aria-labelledby="planet-title">
           <!-- Game Title -->
           <div class="game-title">
             <img src="logo-text.png" alt="Cosmic Candy Factory" class="game-title-text">
           </div>
           
-          <h1 class="planet-title">
-            <span class="planet-emoji">{{ theme.emoji }}</span>
+          <h1 id="planet-title" class="planet-title">
+            <span class="planet-emoji" role="img" [attr.aria-label]="theme.name + ' emoji'">{{ theme.emoji }}</span>
             <span class="planet-name">{{ theme.name }}</span>
           </h1>
-          <div class="planet-subtitle">
-            <span class="lab-equipment">{{ theme.labEquipment[0] }}</span>
+          <p class="planet-subtitle" role="complementary">
+            <span class="lab-equipment" role="img" aria-hidden="true">{{ theme.labEquipment[0] }}</span>
             <span class="subtitle-text">{{ theme.subtitle }}</span>
-            <span class="lab-equipment">{{ theme.labEquipment[1] }}</span>
-          </div>
-        </div>
+            <span class="lab-equipment" role="img" aria-hidden="true">{{ theme.labEquipment[1] }}</span>
+          </p>
+        </section>
 
         <!-- Primary Actions (optional slot) -->
         <div class="primary-actions" *ngIf="showPrimaryActions">
@@ -129,22 +129,22 @@ export interface PlanetNavItem {
       </div>
 
       <!-- Resource Display Section -->
-      <div class="resource-section" *ngIf="resources">
+      <section class="resource-section" *ngIf="resources" role="complementary" aria-label="Resource information">
         <!-- Main Currency Display -->
-        <div class="currency-display">
-          <div class="currency-item main-currency">
-            <span class="currency-icon">🍭</span>
+        <div class="currency-display" role="group" aria-label="Currency and production status">
+          <div class="currency-item main-currency" role="group" aria-label="Main currency">
+            <span class="currency-icon" role="img" aria-hidden="true">🍭</span>
             <div class="currency-info">
-              <span class="currency-amount">{{ formatNumber(resources.candy) }}</span>
+              <span class="currency-amount" [attr.aria-label]="formatNumber(resources.candy) + ' candy'">{{ formatNumber(resources.candy) }}</span>
               <span class="currency-label">Candy</span>
             </div>
           </div>
 
           <!-- Production Rate -->
-          <div class="production-display" *ngIf="resources.productionPerSecond > 0">
-            <span class="production-icon">⚡</span>
+          <div class="production-display" *ngIf="resources.productionPerSecond > 0" role="group" aria-label="Production rate">
+            <span class="production-icon" role="img" aria-hidden="true">⚡</span>
             <div class="production-info">
-              <span class="production-rate">+{{ formatNumber(resources.productionPerSecond) }}/sec</span>
+              <span class="production-rate" [attr.aria-label]="formatNumber(resources.productionPerSecond) + ' candy per second production'">+{{ formatNumber(resources.productionPerSecond) }}/sec</span>
               <span class="production-label">Production</span>
             </div>
           </div>
@@ -174,13 +174,13 @@ export interface PlanetNavItem {
         <div class="lab-equipment-bg">
           <span class="equipment-icon molecular">🧬</span>
         </div>
-      </div>
+      </section>
 
       <!-- Quick Actions Bar (optional) -->
       <div class="quick-actions-bar" *ngIf="showQuickActions">
         <ng-content select="[slot=quick-actions]"></ng-content>
       </div>
-    </div>
+    </header>
   `,
   styleUrl: './planet-header.component.scss'
 })

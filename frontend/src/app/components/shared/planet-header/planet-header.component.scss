@@ -207,7 +207,7 @@
     touch-action: manipulation;
     
     .lab-icon {
-      font-size: 1rem;
+      font-size: var(--text-base);
       filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
     }
     
@@ -215,7 +215,7 @@
       background: linear-gradient(135deg, #4A5568, #2D3748);
       
       .lab-icon {
-        font-size: 1.1rem;
+        font-size: var(--text-lg);
         filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
       }
       
@@ -247,8 +247,8 @@
   .breadcrumb {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.8rem;
+    gap: var(--spacing-xs);
+    font-size: var(--text-xs);
     color: rgba(255, 255, 255, 0.7);
     
     .breadcrumb-item {
@@ -369,7 +369,7 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-xs);
 }
 
 /* Resource Section - RESPONSIVE */
@@ -390,16 +390,16 @@
   .currency-display {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: var(--spacing-lg);
     flex-wrap: wrap;
     
     .currency-item, .production-display {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--spacing-xs);
       
       .currency-icon, .production-icon {
-        font-size: 1.2rem;
+        font-size: var(--text-lg);
         filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
       }
       
@@ -409,12 +409,12 @@
         
         .currency-amount, .production-rate {
           font-weight: 600;
-          font-size: 1rem;
+          font-size: var(--text-base);
           color: #ffffff;
         }
         
         .currency-label, .production-label {
-          font-size: 0.7rem;
+          font-size: var(--text-xs);
           color: rgba(255, 255, 255, 0.6);
           text-transform: uppercase;
           letter-spacing: 0.5px;
@@ -425,7 +425,7 @@
     .main-currency {
       .currency-amount {
         color: var(--theme-primary, #32CD32);
-        font-size: 1.1rem;
+        font-size: var(--text-lg);
       }
     }
     
@@ -447,16 +447,16 @@
     
     .special-resources {
       display: flex;
-      gap: 12px;
+      gap: var(--spacing-sm);
       
       .special-resource {
         display: flex;
         align-items: center;
-        gap: 4px;
-        font-size: 0.8rem;
+        gap: var(--spacing-xs);
+        font-size: var(--text-xs);
         
         .resource-icon {
-          font-size: 1rem;
+          font-size: var(--text-sm);
         }
         
         .resource-amount {
@@ -475,7 +475,7 @@
     z-index: 0;
     
     .equipment-icon {
-      font-size: 1.5rem;
+      font-size: var(--text-2xl);
       opacity: 0.2;
       &.molecular {
         animation: rotate 20s linear infinite;
