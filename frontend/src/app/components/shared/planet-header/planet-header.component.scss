@@ -10,8 +10,9 @@
     0 8px 32px rgba(0, 0, 0, 0.3),
     0 0 20px rgba(50, 205, 50, 0.2);
   
-  /* Responsive padding and height using CSS variables */
-  height: var(--header-height);
+  /* Responsive padding and minimum height using CSS variables */
+  min-height: var(--header-height);
+  height: auto; /* Allow header to expand for resource section */
   padding: var(--spacing-sm) var(--spacing-md);
   margin: 0; /* Remove margins on mobile for full-width usage */
   
@@ -22,7 +23,7 @@
   
   backdrop-filter: blur(10px);
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* Allow resource section to display outside fixed height */
   color: #ffffff;
   font-family: var(--font-primary);
   box-sizing: border-box;
@@ -595,7 +596,45 @@
   padding: var(--spacing-sm) var(--spacing-md);
   margin-top: var(--spacing-sm);
   
-  /* Keep resource section visible on most screen sizes */
+  /* Responsive resource display - keep visible on all useful screen sizes */
+  @media (max-width: 767px) {
+    /* Tablet and mobile optimization */
+    padding: var(--spacing-xs) var(--spacing-sm);
+    margin-top: var(--spacing-xs);
+    
+    .currency-display {
+      gap: var(--spacing-sm);
+      
+      .currency-item, .production-display {
+        .currency-info, .production-info {
+          .currency-amount, .production-rate {
+            font-size: var(--text-sm);
+          }
+          
+          .currency-label, .production-label {
+            font-size: 10px;
+          }
+        }
+      }
+    }
+  }
+  
+  @media (max-width: 480px) {
+    /* Small mobile - ultra compact but still visible */
+    .currency-display {
+      gap: var(--spacing-xs);
+    }
+    
+    .special-resources {
+      .special-resource {
+        .resource-amount {
+          font-size: var(--text-xs);
+        }
+      }
+    }
+  }
+  
+  /* Only hide on extremely small screens */
   @media (max-width: 320px) {
     display: none;
   }
