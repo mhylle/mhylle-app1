@@ -204,16 +204,15 @@ export class SourPlanetComponent implements OnInit, OnDestroy {
   ];
 
   // Resource data for header display
-  get resourceData(): ResourceData | null {
-    if (!this.planetState) return null;
-    
+  get resourceData(): ResourceData {
+    // Always return valid resource data, use current component state as fallback
     return {
-      candy: this.planetState.candy || 0,
+      candy: this.planetState?.candy || this.candy || 0,
       crystals: 0, // Sour planet doesn't use crystals
-      productionPerSecond: this.planetState.productionPerSecond || 0,
+      productionPerSecond: this.planetState?.productionPerSecond || this.candyPerSecond || 0,
       specialResources: {
-        clickPower: this.planetState.clickPower || 1, // Click power for Sour Planet
-        ph: this.phBalance?.level || 7.0
+        clickPower: this.planetState?.clickPower || this.clickPower || 1,
+        ph: this.phBalance?.level || 5.0 // Default to neutral sour pH
       }
     };
   }
